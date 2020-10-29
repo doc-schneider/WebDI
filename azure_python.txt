@@ -1,0 +1,6 @@
+az login
+
+az webapp up --sku F1 -n docschneider-hello -l westeurope
+
+az webapp log config --name docschneider-hello --resource-group docschneider1_rg_Linux_westeurope --docker-container-logging filesystem
+az webapp log tail --name docschneider-hello --resource-group docschneider1_rg_Linux_westeurope
