@@ -1,0 +1,96 @@
+import pandas as pd
+import datetime as dtm
+import json
+from pathlib import Path
+import re
+
+
+def list_key(column_name):  # String items can appear in lists in these columns.
+    return column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY',
+                           'EVENT_TIME_FROM', 'EVENT_TIME_TO',
+                           'DOCUMENT_TABLE', 'DOCUMENT_TYPE', 'VIEW_TYPE']
+
+def time_keys(column_name):   # Headers standing for date time information
+    return column_name in ['TIME_FROM', 'TIME_TO', 'EVENT_TIME_FROM', 'EVENT_TIME_TO', 'DATE_BIRTH']
+
+def int_keys(column_name):   # Integer information
+    return column_name in ['EVENT_LEVEL']
+
+def get_files_info(pfad):
+    PATH = list()
+    DOCUMENT_NAME = list()
+    DOCUMENT_TYPE = list()
+    TIME_CREATED = list()
+    # Get file names.
+    files = list(pfad.glob('*'))
+    for f in files:
+        PATH.append(pfad)
+        DOCUMENT_NAME.append(f.name)
+        DOCUMENT_TYPE.append(f.suffix[1:])    #  Removes dot . from string.
+        # st_ctime : creation time (of file on computer)
+        # st_mtime : last content modification time (creation time of data, e,g time photo taken)
+        TIME_CREATED.append(
+            dtm.datetime.fromtimestamp(f.stat().st_mtime)   # .strftime('%d.%m.%Y %H:%M:%S')
+        )
+    return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
+                              'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
+
+def strio_to_list(text):
+    return [t for t in text[:-2].split(';')]   # Removing newline
+
+def str_to_list(s):
+    # From external (csv, ..) format to internal table format.
+    # Internal format is always list (and list of lists).
+    # External (csv) string has no [] around highest level 0.
+    # TODO: Restricted to 2 levels of lists.
+    if not s:   # Empty string
+        result = ['']
+    elif s[0]=='[' and s[-1]==']':
+        s = s[1:-1]    # Remove brackets.
+        result = [[ss.lstrip(' ')  for ss in s.split(',')]]
+    else:
+        result = [ss.lstrip(' ') for ss in s.split(',')]
+    return result
+
+def list_to_str(s, column_name):
+    # For writing table to csv
+    if list_key(column_name):
+        if s is None:  # Todo: Where is this still needed?
+            s = ''
+        elif isinstance(s[0], list):  # Todo: only one inner list correct here
+            # 2 nested lists
+            s = s[0]
+            # Assume only one inner list. Turn into string.
+            u = '[' + s[0]
+            for t in s[1:]:
+                u = u + ', ' + t
+            s = u + ']'
+        else:
+            # 1 list
+            u = s[0]
+            for i in range(1,len(s)):
+                u = u + ', ' + s[i]
+            s = u
+    return s
+
+def add_thumbnail_to_filename(DOCUMENT_NAME, DOCUMENT_TYPE):
+    # Input needs to be of type str
+    name = re.sub('\.' + DOCUMENT_TYPE + '$', '', DOCUMENT_NAME)
+    return name + "_thumbnail.jpg"
+
+def add_thumbnail_to_pathname(pathname):
+    # Input needs to be of type Path
+    p = pathname
+    pp = list(pathname.parts)
+    pp[-1] = p.stem + '_thumbnail' + p.suffix
+    return Path(('/').join(pp))
+
+def timestamplist_to_JSON(lst):
+    lstr = [l.strftime('%d.%m.%Y %H:%M:%S') for l in lst]
+    return json.dumps(lstr)  #.encode('utf8')
+
+def JSON_to_timestamplist(data):
+    return [pd.to_datetime(d) for d in json.loads(data)]  #.decode('utf8')
+
+
+

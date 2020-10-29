@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Page</title>
+	
+	<!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"> -->
+	<link rel="stylesheet" media="screen" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+</head>
+<body class="bg-light">
+
+	<div class="container">	
+	
+		<!-- Photos -->
+		<div class="row pt-3 justify-content-center">
+			<div class="col-3 border">
+				<img src="data:image/jpeg;base64,{{ photo }}" class="img-fluid"/>  
+			</div>
+		</div> 
+		
+		<!-- bio table -->
+		<div class="row pt-5 justify-content-center">
+			<div class="col-8">
+				<table class="table table-striped">
+					<tbody>
+					  <tr>
+						<td>First Name:</td>
+						<td>{{ first_name }}</td>
+					  </tr>
+					  <tr>
+						<td>Family Name</td>
+						<td>{{ family_name }}</td>
+					  </tr>
+					  <tr>
+						<td>Who am I:</td>
+						<td>{{ description }}</td>
+					  </tr>
+					</tbody>
+				</table>
+			</div>  
+	    </div>  
+		
+		<!-- view table -->
+		<!-- TODO: add table header -->
+		<div class="row pt-5 justify-content-center">
+			<div class="col">
+				<table class="table table-bordered">
+					<tbody>
+						{% for i in range(n_views) %}
+						<tr>
+							<td>{{ document_table[i] }}</td>
+							<td>{{ document_type[i] }}</td>
+							<td>{{ view_type[i] }}</td>
+							<td>
+								<form method="post" action="/{{ view_type[i] }}/all" target="_blank">  
+									<button type="submit" class="btn btn-info" name="submit" value="{{ i }}">view</button>
+								</form> 
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>  
+	    </div>  
+		
+	</div>
+	
+	<!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="/static/bootstrap/bootstrap.min.js"></script>
+	<!--	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script> -->
+</body>
+</html>
