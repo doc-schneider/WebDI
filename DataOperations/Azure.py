@@ -8,7 +8,7 @@ class AzureFactory:
 
     @staticmethod
     def connection_string():
-        return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=5ZeX29Uky/PZYXiFWDMAXrGLH8UG5Btg6PmqB4DI8IPlCE5GUqDr6KSnqe8xQC6IpIDXb76LpJsZYkGj6n+z0A==;EndpointSuffix=core.windows.net'
+        return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=XYZ;EndpointSuffix=core.windows.net'
 
     @staticmethod
     def create_container(container_name):
