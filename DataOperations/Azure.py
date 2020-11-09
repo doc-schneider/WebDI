@@ -1,5 +1,7 @@
 from azure.storage.blob import BlobClient, ContainerClient, BlobServiceClient
 from azure.core.exceptions import ResourceExistsError
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 from DataOperations.Utilities import add_thumbnail_to_filename
 
@@ -8,7 +10,11 @@ class AzureFactory:
 
     @staticmethod
     def connection_string():
-        return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=XYZ;EndpointSuffix=core.windows.net'
+        credential = DefaultAzureCredential()
+        secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
+        secret = secret_client.get_secret("keyStorage")
+        return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=' + secret.value + \
+               ';EndpointSuffix=core.windows.net'
 
     @staticmethod
     def create_container(container_name):

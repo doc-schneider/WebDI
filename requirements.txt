@@ -6,3 +6,5 @@ Jinja2==2.10
 MarkupSafe==1.1.1
 Werkzeug==0.14.1
 azure-storage-blob
+azure-keyvault-secrets
+azure-identity
