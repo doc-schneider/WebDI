@@ -6,13 +6,14 @@ from Views.Utilities import view_data
 
 
 class ParentViewer:
-    def __init__(self, n_boxes=None, index_documents=list(), document_pathtype='PATH'):
+    def __init__(self, n_boxes=None, index_documents=list(), document_pathtype='PATH', environment='LOCAL'):
         self.n_boxes = n_boxes    #  Number of viewing boxes on page.
         self.index_documents = index_documents   #  Series of lists, one list for every view box.
         self.index_show = list()     #  Shown document per viewing box
         self.location_document = list()   #  Locations of shown documents
         self.encode_type = None     #  Encode type to be sent to webpage
         self.document_pathtype = document_pathtype
+        self.environment = environment
 
     def find_list_column(self, documenttable, column, entry):   #  If column consists of list
         mask = documenttable.data[column].apply(lambda x: entry in x)
@@ -63,6 +64,7 @@ class ParentViewer:
             if self.index_show[i] is None:
                 list_data.append(None)
             else:
-                data = view_data(self.location_document[i], self.encode_type, self.document_pathtype)
+                data = view_data(self.location_document[i], self.encode_type,
+                                 self.document_pathtype, self.environment)
                 list_data.append(data)
         return list_data

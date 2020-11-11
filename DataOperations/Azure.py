@@ -9,11 +9,16 @@ from DataOperations.Utilities import add_thumbnail_to_filename
 class AzureFactory:
 
     @staticmethod
-    def connection_string():
-        credential = DefaultAzureCredential()
-        secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
-        secret = secret_client.get_secret("keyStorage")
-        return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=' + secret.value + \
+    def connection_string(environment):
+        if environment == 'LOCAL':
+            with open('azure_connectionstring.txt', 'r') as f:
+                key = f.read()
+        else:
+            credential = DefaultAzureCredential()
+            secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
+            secret = secret_client.get_secret("keyStorage")
+            key = secret.value
+        return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=' + key + \
                ';EndpointSuffix=core.windows.net'
 
     @staticmethod
@@ -55,9 +60,9 @@ class AzureFactory:
         return PATH_AZURE_CONTAINER, PATH_AZURE_BLOB
 
     @staticmethod
-    def download_blob_single(container_name, blob_name):
+    def download_blob_single(container_name, blob_name, environment):
         container_client = ContainerClient.from_connection_string(
-            conn_str=AzureFactory.connection_string(),
+            conn_str=AzureFactory.connection_string(environment),
             container_name=container_name
         )
         return container_client.download_blob(blob_name)

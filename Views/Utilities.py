@@ -37,14 +37,15 @@ def show_documents(index_documents, which=0):
     return index_show
 
 
-def view_data(location_document, encode_type, document_pathtype):
+def view_data(location_document, encode_type, document_pathtype, environment):
     if encode_type == 'html_path':
         # data = path to html source
         data = location_document + '.html'
     elif encode_type == 'base64':
         if document_pathtype == 'AZURE':
             downloaded_blob = AzureFactory.download_blob_single(location_document[0],
-                                                                location_document[1])
+                                                                location_document[1],
+                                                                environment)
             data = base64.b64encode(downloaded_blob.readall()).decode('ascii')
         else:
             if location_document is not None:

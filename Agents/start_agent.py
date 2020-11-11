@@ -26,15 +26,15 @@ def show_start():
     if request.method == 'GET':
         
         # Initial
-        config.starttable = get_documenttable(config.document_pathtype,
+        config.starttable = get_documenttable(config.environment, config.document_pathtype,
                                                   config.path, config.starttable_name)
         # StartViewer
-        config.startview = StartViewer(config.starttable, config.document_pathtype)
+        config.startview = StartViewer(config.starttable, config.document_pathtype, config.environment)
 
         #  DocumentTable
         # - Only first table of list for the time being
         view_type = config.startview.view_type[0]
-        config.documenttable = get_documenttable(config.document_pathtype,
+        config.documenttable = get_documenttable(config.environment, config.document_pathtype,
                                                  config.startview.document_azure_container + '/' +
                                                  config.startview.document_azure_blob,
                                                  config.startview.document_table[0])
@@ -45,7 +45,8 @@ def show_start():
         # EventTable
         event_table_name = config.startview.event_table
         if event_table_name:
-            config.eventtable = get_documenttable(config.document_pathtype,config.path,
+            config.eventtable = get_documenttable(config.environment, config.document_pathtype,
+                                                  config.path,
                                                   event_table_name, table_type='event')
 
     return render_template('/start.html', **render_start())

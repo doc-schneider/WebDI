@@ -3,7 +3,7 @@ from DataOperations.Document import DocumentTable
 from DataOperations.Event import EventTable
 
 
-def get_documenttable(document_pathtype, table_path_0, table_path_1, table_type='document'):
+def get_documenttable(environment, document_pathtype, table_path_0, table_path_1, table_type='document'):
     # TODO Generalize over table types
     # Get documents and events
     if document_pathtype == 'PATH':
@@ -18,6 +18,6 @@ def get_documenttable(document_pathtype, table_path_0, table_path_1, table_type=
         container_name = table_path_0
         table_name_azure = table_path_1
         if table_type == 'document':
-            return DocumentTable(DataTableFactory.importFromAzure(container_name, table_name_azure))
+            return DocumentTable(DataTableFactory.importFromAzure(container_name, table_name_azure, environment))
         elif table_type == 'event':
-            return EventTable(DataTableFactory.importFromAzure(container_name, table_name_azure))
+            return EventTable(DataTableFactory.importFromAzure(container_name, table_name_azure, environment))

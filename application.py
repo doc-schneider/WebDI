@@ -15,6 +15,7 @@ if __name__ == "__main__":
     #config.document_pathtype = 'PATH'
     #config.path = '//192.168.178.53/Stefan/DigitalImmortality/Document and Event Tables/'
     #config.starttable_name = 'Startliste_Papa_utf8.csv'
+    config.environment = 'LOCAL'  #'AZURE'
     config.document_pathtype = 'AZURE'
     config.path = 'modest-di'   # container
     config.starttable_name = 'tables/' + 'Startliste_Papa_utf8.csv'
@@ -35,4 +36,4 @@ if __name__ == "__main__":
     app.register_blueprint(listen, url_prefix='/listen')
     app.register_blueprint(play, url_prefix='/play')
 
-    #app.run(host='0.0.0.0', port=82)
+    app.run(host='0.0.0.0', port=82)

@@ -48,8 +48,8 @@ class DataTable:
 class DataTableFactory:
 
     @staticmethod
-    def importFromAzure(container_name, blob_name):
-        downloaded_blob = AzureFactory.download_blob_single(container_name, blob_name)
+    def importFromAzure(container_name, blob_name, environment):
+        downloaded_blob = AzureFactory.download_blob_single(container_name, blob_name, environment)
         buf = StringIO(downloaded_blob.content_as_text())
         return DataTableFactory.importHelper(buf)
 

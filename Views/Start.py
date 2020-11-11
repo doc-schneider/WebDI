@@ -5,10 +5,11 @@ from Views.Utilities import view_data
 
 
 class StartViewer(ParentViewer):
-    def __init__(self, documenttable, document_pathtype):
+    def __init__(self, documenttable, document_pathtype, environment):
         super().__init__(n_boxes=1)
         self.encode_type = 'base64'
         self.document_pathtype = document_pathtype
+        self.environment = environment
         # Assumes only a single row in table so far
         # photo
         self.index_show = [0]
