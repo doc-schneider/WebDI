@@ -36,4 +36,4 @@ if __name__ == "__main__":
     app.register_blueprint(listen, url_prefix='/listen')
     app.register_blueprint(play, url_prefix='/play')
 
-    app.run(host='0.0.0.0', port=82)
+    #app.run(host='0.0.0.0', port=82)
