@@ -8,6 +8,17 @@ from Agents.timeline_agent import timeline
 from Agents.play_agent import play
 
 
+## Flask
+app = Flask(__name__)
+
+# Secret key is needed for session
+app.secret_key = 'geheim'
+
+app.register_blueprint(start, url_prefix='/start')
+app.register_blueprint(timeline, url_prefix='/timeline')
+app.register_blueprint(listen, url_prefix='/listen')
+app.register_blueprint(play, url_prefix='/play')
+
 ## Global parameters
 # path: root path
 #config.document_pathtype = 'PATH'
@@ -23,17 +34,5 @@ config.start_interval = (dtm.datetime.strptime('2020-06-11 10:44:00', '%Y-%m-%d 
     #(dtm.datetime.strptime('1969-03-18 00:44:00', '%Y-%m-%d %H:%M:%S'),
     #                     dtm.datetime.now())
 
-## Flask
-app = Flask(__name__)
-
-# Secret key is needed for session
-app.secret_key = 'geheim'
-
-app.register_blueprint(start, url_prefix='/start')
-app.register_blueprint(timeline, url_prefix='/timeline')
-app.register_blueprint(listen, url_prefix='/listen')
-app.register_blueprint(play, url_prefix='/play')
-
-if __name__ == "__main__":
-
-    app.run(host='0.0.0.0', port=82)
+#if __name__ == "__main__":
+#    app.run(host='0.0.0.0', port=82)
