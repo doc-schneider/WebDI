@@ -18,6 +18,6 @@ def show_list_single():
             i = int(i)
             config.playview = PlayViewer()
             config.playview.init_play(config.documenttable, config.document_pathtype,
-                                               session.get('index_single', None)[i])
+                                      config.environment, session.get('index_single', None)[i])
 
     return render_template('/play/audio.html', **render_play_audio())

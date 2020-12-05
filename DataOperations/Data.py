@@ -56,7 +56,7 @@ class DataTableFactory:
     @staticmethod
     def importFromCsv(filename, encoding='utf8'):  # table_type='document'
         # TODO: newline=None instead of '' removes last character. Why?
-        with open(filename, 'r', encoding=encoding, newline='') as csvfile:
+        with open(filename, 'r', newline='') as csvfile:   # , encoding=encoding
             return DataTableFactory.importHelper(csvfile)
 
     @staticmethod

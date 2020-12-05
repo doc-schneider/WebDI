@@ -8,13 +8,16 @@ import re
 def list_key(column_name):  # String items can appear in lists in these columns.
     return column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY',
                            'EVENT_TIME_FROM', 'EVENT_TIME_TO',
-                           'DOCUMENT_TABLE', 'DOCUMENT_TYPE', 'VIEW_TYPE']
+                           'DOCUMENT_TABLE', 'DOCUMENT_TYPE', 'VIEW_TYPE', 'TAG']
 
 def time_keys(column_name):   # Headers standing for date time information
     return column_name in ['TIME_FROM', 'TIME_TO', 'EVENT_TIME_FROM', 'EVENT_TIME_TO', 'DATE_BIRTH']
 
 def int_keys(column_name):   # Integer information
     return column_name in ['EVENT_LEVEL']
+
+def add_mintimedelta(list_time):
+    return [t + dtm.timedelta(seconds=1) for t in list_time]
 
 def get_files_info(pfad):
     PATH = list()
@@ -35,21 +38,23 @@ def get_files_info(pfad):
     return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
                               'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
 
+# csv row converted to list (with ; separator)
 def strio_to_list(text):
     return [t for t in text[:-2].split(';')]   # Removing newline
 
 def str_to_list(s):
     # From external (csv, ..) format to internal table format.
     # Internal format is always list (and list of lists).
-    # External (csv) string has no [] around highest level 0.
-    # TODO: Restricted to 2 levels of lists.
-    if not s:   # Empty string
-        result = ['']
+    # External (csv) string can have no [] if only single item.
+    # TODO: More levels of lists.
+    if not s:
+        result = ['']    # Empty string
     elif s[0]=='[' and s[-1]==']':
         s = s[1:-1]    # Remove brackets.
-        result = [[ss.lstrip(' ')  for ss in s.split(',')]]
+        result = [ss.strip() for ss in s.split('|')]
     else:
-        result = [ss.lstrip(' ') for ss in s.split(',')]
+        # Exception case: single str can be without []
+        result = [s]
     return result
 
 def list_to_str(s, column_name):

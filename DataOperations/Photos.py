@@ -21,6 +21,7 @@ class PhotoFactory:
         CATEGORY = []
         PARENT_CATEGORY = []
         EVENT = list()
+        TAG = list()
         # STATE = list()
 
         df = get_files_info(path_photo)
@@ -38,7 +39,9 @@ class PhotoFactory:
             CATEGORY.append(['photo'])
             PARENT_CATEGORY.append(None)
             EVENT.append(None)    # Folder name as a simple proxy?
-            # DOCUMENT_NAME in pretbale?
+            TAG.append(None)
+
+            # DOCUMENT_NAME in pretable?
             # TODO: pretable = None
             ix = pretable.data.loc[pretable.data['DOCUMENT_NAME'] == DOCUMENT_NAME[-1]].index.values
             if ix.size != 0:
@@ -47,13 +50,15 @@ class PhotoFactory:
                 PARENT_DESCRIPTION[-1] = pretable.data['PARENT_DESCRIPTION'].iloc[ix]
                 PARENT_CATEGORY[-1] = pretable.data['PARENT_CATEGORY'].iloc[ix]
                 EVENT[-1] = pretable.data['EVENT'].iloc[ix]
+                TAG[-1] = pretable.data['TAG'].iloc[ix]
             PhotoFactory.make_thumbnail(PATH[-1], DOCUMENT_NAME[-1], DOCUMENT_TYPE[-1])
 
         return DocumentTable(
             pd.DataFrame(data={'TIME_FROM': TIME_FROM, 'TIME_TO': TIME_TO, 'PATH': PATH,
                                'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE,
                                'DESCRIPTION': DESCRIPTION, 'PARENT_DESCRIPTION': PARENT_DESCRIPTION,
-                               'CATEGORY': CATEGORY, 'PARENT_CATEGORY': PARENT_CATEGORY, 'EVENT': EVENT})
+                               'CATEGORY': CATEGORY, 'PARENT_CATEGORY': PARENT_CATEGORY, 'EVENT': EVENT,
+                               'TAG': TAG})
         )
 
     @staticmethod

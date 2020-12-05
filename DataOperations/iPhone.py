@@ -1,46 +1,60 @@
 import pandas as pd
 import datetime as dtm
 import csv
-from pathlib import Path
+#from pathlib import Path
 
-from DataOperations import Data
-import importlib
-importlib.reload(Data)
+from DataOperations.Utilities import add_mintimedelta
 
 
 class iPhoneFactory:
 
     @staticmethod
     def table_from_path(path_root, name, category=None, descriptions=None, events=None):
-        # Export files of iExplorer:
-        # - 'Chat with [name].txt': contains smileys
-        # - 'Chat with [name].csv': contains name of photos (in 'Chat Attachments - [name]')
+        # Exported Messages from iExplorer:
+        # - 'Chat with [name].csv':
+        # - csv header: "Name","Address","Time","Message","Attachment","iMessage"
+        # - Text line including emojis
+        # - Another line with the same timestamp can have the link to an <image> or <attachement>
+        # - Encoding: utf-8
         #
-        # Type: iphone_sms / sms (text with smileys)
-        # Description: Content of SMS
-        # Category: SMS sender 1/2 - sender 2/1
-        # Event: Same as Category?
-        # Path: To attachment
+        # Table:
+        # - TIME FROM / TO: Timestamp + min delta
+        # - PATH / DOCUMENT_NAME: To attachment
+        # - TYPE: Attachement type
+        # - DESCRIPTION: Message text
+        # - CATEGORY: iphone_sms / sms
+        # - EVENT: SMS sender 1/2 - sender 2/1
 
-        TIME_FROM = list()
-        TIME_TO = list()
-        PATH = list()
-        DOCUMENT_NAME = list()
-        DOCUMENT_TYPE = list()
-        DESCRIPTION = list()
-        CATEGORY = list()
-        EVENT = list()
-        STATE = list()
-
-        # txt file
-        # - Every SMS begins with a date time entry [..]. But can span multiple lines.
-        #file_txt = path_root + 'Chat with ' + name + '.txt'
-        #with open(file_txt, encoding='utf-8') as f:
-        #    lines_txt = [line.rstrip() for line in f]
-        #f.close()
-        #del lines_txt[:3] # Skip first 3 lines.
-        # csv file
         file_csv = path_root + 'Chat with ' + name + '.csv'
+
+        df_iexplorer = pd.read_csv(file_csv)
+        df_iexplorer.drop(columns=['iMessage'], inplace=True)
+        df_iexplorer['TIME_FROM'] = pd.to_datetime(df_iexplorer['Time'])
+        df_iexplorer.drop(columns=['Time'], inplace=True)
+
+        # Messages with attachment
+        df_attachment = df_iexplorer.loc[(df_iexplorer['Attachment'].notnull())].copy()
+        df_iexplorer.drop(df_attachment.index, inplace=True)
+
+        df = pd.DataFrame(data={'TIME_FROM': df_iexplorer['TIME_FROM'].tolist()})
+        df['TIME_TO'] = add_mintimedelta(df_iexplorer['TIME_FROM'])
+
+        df['DESCRIPTION'] = df_iexplorer['Message']
+
+        df['CATEGORY'] = 'iphone_message'
+
+        # TODO: Replace "Unknown" - occasionally occuring - name Chat name
+        # TODO: Good category? Use TAG?
+        df['EVENT'] = 'Message from ' + df_iexplorer['Name']
+
+        # Find attachments belonging to a message
+        df_attachment['TIME_FROM']
+
+        'Backup Explorer/Media/Library/'  # SMS
+
+
+
+
         with open(file_csv, newline='', encoding='utf-8') as f:
             lines_csv = list(csv.reader(f))
         f.close()

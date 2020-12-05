@@ -9,11 +9,11 @@ path_root = '//192.168.178.53/'
 
 
 # Pre-description
-path_pre = path_root + 'Fotos/2020/2020_10_24_Zur Heide/' + 'PreDokumentliste_utf8.csv'
+path_pre = path_root + 'Fotos/2020/2020_11_23_Stefan Urlaubstag/' + 'PreDokumentliste.csv'
 pretable = DocumentTable(DataTableFactory.importFromCsv(path_pre))
 
 # Main table
-path_photo = Path(path_root + 'Fotos/2020/2020_06_11_Schloss Dyck/')
+path_photo = Path(path_root + 'Fotos/2020/2020_11_23_Stefan Urlaubstag/')
 phototable = PhotoFactory.table_from_folder(path_photo, pretable)
 
 # Event extraction
@@ -22,9 +22,9 @@ phototable = PhotoFactory.table_from_folder(path_photo, pretable)
 
 # Write Tables
 path_table = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/'
-filename = 'Dokumentliste_2020_06_11_Schloss Dyck_photo.csv'
-phototable.write_to_csv(path_table + filename)
+filename = 'Dokumentliste_2020_11_23_Stefan Urlaubstag_photo.csv'
+#phototable.write_to_csv(path_table + filename)
 
 
 # Generate a thumbnail
-PhotoFactory.make_thumbnail(path_root + '/' + 'Musik/H-J Schneider/MeinCembalo', 'MeinCembalo.JPG', 'JPG')
+#PhotoFactory.make_thumbnail(path_root + '/' + 'Musik/H-J Schneider/MeinCembalo', 'MeinCembalo.JPG', 'JPG')

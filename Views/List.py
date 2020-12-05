@@ -6,8 +6,9 @@ class ListViewer(ParentViewer):
     def __init__(self):
         super().__init__()
 
-    def init_cd_list(self, document_pathtype):
+    def init_cd_list(self, document_pathtype, environment):
         self.document_pathtype = document_pathtype
+        self.environment = environment
         self.encode_type = 'base64'
 
 
@@ -15,8 +16,8 @@ class ListAllViewer(ListViewer):
     def __init__(self):
         super().__init__()
 
-    def init_cd_list(self, documenttable, document_pathtype, use_thumbnail):
-        super().init_cd_list(document_pathtype)
+    def init_cd_list(self, documenttable, document_pathtype, environment, use_thumbnail):
+        super().init_cd_list(document_pathtype, environment)
 
         self.use_thumbnail = use_thumbnail
         # CD cover are documenttable items to be shown
@@ -38,8 +39,8 @@ class ListSingleViewer(ListViewer):
     def __init__(self):
         super().__init__()
 
-    def init_cd_list(self, documenttable, document_pathtype, ix_cover):
-        super().init_cd_list(document_pathtype)
+    def init_cd_list(self, documenttable, document_pathtype, environment, ix_cover):
+        super().init_cd_list(document_pathtype, environment)
 
         # TODO: index_documents should be list of lists (but doesn't matter here)
         self.index_documents = self.find_list_column(documenttable, 'PARENT_DESCRIPTION',

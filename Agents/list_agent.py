@@ -21,7 +21,7 @@ def show_list():
         if not hasattr(config, 'listview'):
             config.listview = ListAllViewer()
             config.listview.init_cd_list(config.documenttable, config.document_pathtype,
-                                         config.use_thumbnail)
+                                         config.environment, config.use_thumbnail)
 
     init_listview()
     # Store index_show in session
@@ -44,7 +44,7 @@ def show_list_single():
             i = int(i)
             config.listsingleview = ListSingleViewer()
             config.listsingleview.init_cd_list(config.documenttable, config.document_pathtype,
-                                               session.get('index_all', None)[i])
+                                               config.environment, session.get('index_all', None)[i])
             session['index_single'] = [int(ix) for ix in config.listsingleview.index_documents]
 
     return render_template('/listen/single.html', **render_list_single())
