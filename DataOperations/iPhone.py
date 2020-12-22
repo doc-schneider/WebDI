@@ -1,9 +1,9 @@
 import pandas as pd
 import datetime as dtm
 import csv
-#from pathlib import Path
 
-from DataOperations.Utilities import add_mintimedelta
+from DataOperations.Utilities import add_mintimedelta, split_path_list, list_column
+from DataOperations.Document import DocumentTable
 
 
 class iPhoneFactory:
@@ -12,74 +12,68 @@ class iPhoneFactory:
     def table_from_path(path_root, name, category=None, descriptions=None, events=None):
         # Exported Messages from iExplorer:
         # - 'Chat with [name].csv':
-        # - csv header: "Name","Address","Time","Message","Attachment","iMessage"
+        # - csv header: "Name","Address","Time","Message","Attachment","iMessage" (yes/no)
         # - Text line including emojis
-        # - Another line with the same timestamp can have the link to an <image> or <attachement>
         # - Encoding: utf-8
+        # - More lines with the same timestamp can have
+        #  -- Links to <image> or <attachement>
+        #  -- More text messages (possibly only a pathological case when several sms got stuck and then
+        #  sent concurrently)
         #
         # Table:
         # - TIME FROM / TO: Timestamp + min delta
         # - PATH / DOCUMENT_NAME: To attachment
-        # - TYPE: Attachement type
+        # - DOCUMENT_TYPE: Attachement type
         # - DESCRIPTION: Message text
-        # - CATEGORY: iphone_sms / sms
+        # - DOCUMENT_GROUP: Links all rows with same timestamp. Timestamp as string(any better solution?)
+        # - CATEGORY: iphone_sms / sms  (distinguish between iMessage and normal sms?)
         # - EVENT: SMS sender 1/2 - sender 2/1
+
+        # TODO: Still contains broken special symbols
+        # TODO: Replace "Unknown" - occasionally occurring - name by Chat name
+        # TODO: Good category? Use TAG?
 
         file_csv = path_root + 'Chat with ' + name + '.csv'
 
         df_iexplorer = pd.read_csv(file_csv)
-        df_iexplorer.drop(columns=['iMessage'], inplace=True)
-        df_iexplorer['TIME_FROM'] = pd.to_datetime(df_iexplorer['Time'])
+        df_iexplorer.drop(columns=['iMessage', 'Address'], inplace=True)
+        df_iexplorer['TIME_FROM'] = pd.to_datetime(df_iexplorer['Time'], format='%d.%m.%Y %H:%M:%S')
         df_iexplorer.drop(columns=['Time'], inplace=True)
+        df_iexplorer['TIME_TO'] = add_mintimedelta(df_iexplorer['TIME_FROM'])
+        df_iexplorer['DOCUMENT_GROUP'] = df_iexplorer['TIME_FROM'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        df_iexplorer['CATEGORY'] = 'iphone_message'
+
+        df_iexplorer.rename(columns={"Message": "DESCRIPTION"}, inplace=True)
+        # Remove image/attachment marker
+        df_iexplorer['DESCRIPTION'] = df_iexplorer['DESCRIPTION'].str.replace('<image>', '')
+        df_iexplorer['DESCRIPTION'] = df_iexplorer['DESCRIPTION'].str.replace('<attachment>', '')
+
+        df_iexplorer['EVENT'] = 'Message from ' + df_iexplorer['Name']
+        df_iexplorer.drop(columns='Name', inplace=True)
 
         # Messages with attachment
         df_attachment = df_iexplorer.loc[(df_iexplorer['Attachment'].notnull())].copy()
-        df_iexplorer.drop(df_attachment.index, inplace=True)
+        df_iexplorer.drop(columns=['Attachment'], inplace=True)
+        # attachment: PATH / DOCUMENT_NAME / DOCUMENT_TYEP
+        path, name, type = split_path_list(df_attachment['Attachment'])
+        df_attachment.drop(columns=['Attachment'], inplace=True)
+        # Remove everything before SMS and replace by new
+        path = [p.replace('Backup Explorer/Media/Library/',
+                             '//192.168.178.53/Stefan/Biographie/Stefan/iPhone/2020-12-01/')
+                for p in path]
+        df_attachment['PATH'] = path
+        df_attachment['DOCUMENT_NAME'] = name
+        df_attachment['DOCUMENT_TYPE'] = type
 
-        df = pd.DataFrame(data={'TIME_FROM': df_iexplorer['TIME_FROM'].tolist()})
-        df['TIME_TO'] = add_mintimedelta(df_iexplorer['TIME_FROM'])
+        # Final merge
+        df = df_iexplorer.merge(df_attachment, how='outer')
 
-        df['DESCRIPTION'] = df_iexplorer['Message']
+        # PATH can contain nans
+        df.fillna('', inplace=True)
 
-        df['CATEGORY'] = 'iphone_message'
+        df = list_column(df, 'DOCUMENT_TYPE')
+        df = list_column(df, 'CATEGORY')
+        df = list_column(df, 'DESCRIPTION')
 
-        # TODO: Replace "Unknown" - occasionally occuring - name Chat name
-        # TODO: Good category? Use TAG?
-        df['EVENT'] = 'Message from ' + df_iexplorer['Name']
-
-        # Find attachments belonging to a message
-        df_attachment['TIME_FROM']
-
-        'Backup Explorer/Media/Library/'  # SMS
-
-
-
-
-        with open(file_csv, newline='', encoding='utf-8') as f:
-            lines_csv = list(csv.reader(f))
-        f.close()
-        del lines_csv[:1]  # Skip first lines.
-
-        for line in lines_csv:
-            DOCUMENT_TYPE.append('iphone_sms')
-            CATEGORY.append('SMS von ' + line[0])
-            created = dtm.datetime.strptime(line[2], '%d.%m.%Y %H:%M:%S')
-            TIME_FROM.append(created.strftime('%d.%m.%Y %H:%M:%S'))
-            TIME_TO.append((created + dtm.timedelta(minutes=1)).strftime('%d.%m.%Y %H:%M:%S'))   # Artificial time to avoid 0 interval.
-            DESCRIPTION.append(line[3])
-            # line[3] = '<image>'
-            if line[4]=='':
-                PATH.append(None)
-                DOCUMENT_NAME.append(None)
-            else:
-                pth = Path(line[4])
-                DOCUMENT_NAME.append(pth.name)
-                PATH.append(Path(path_root + '/Chat Attachments - ' + name))
-
-            EVENT.append(None)
-
-        df = pd.DataFrame(data={'TIME_FROM': TIME_FROM, 'TIME_TO': TIME_TO, 'PATH': PATH,
-                                'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE,
-                                'DESCRIPTION': DESCRIPTION,
-                                'CATEGORY': CATEGORY, 'EVENT': EVENT})
-        return Data.DocumentTable(df)
+        return DocumentTable(df)

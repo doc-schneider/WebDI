@@ -3,9 +3,13 @@ import datetime as dtm
 import json
 from pathlib import Path
 import re
+from os import path
 
 
-def list_key(column_name):  # String items can appear in lists in these columns.
+#  Column properties of DataTable
+
+# Datatable columns that are defined as list
+def list_key(column_name):
     return column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY',
                            'EVENT_TIME_FROM', 'EVENT_TIME_TO',
                            'DOCUMENT_TABLE', 'DOCUMENT_TYPE', 'VIEW_TYPE', 'TAG']
@@ -16,8 +20,22 @@ def time_keys(column_name):   # Headers standing for date time information
 def int_keys(column_name):   # Integer information
     return column_name in ['EVENT_LEVEL']
 
+# Conver column values to list
+def list_column(df, col_name):
+    if list_key(col_name):
+        df[col_name] = df[col_name].apply(lambda x: [x])
+    return df
+
+
 def add_mintimedelta(list_time):
     return [t + dtm.timedelta(seconds=1) for t in list_time]
+
+# List or datafram column of file path strings. Split into head, tail and type
+def split_path_list(path_list):
+    head = [path.split(p)[0] for p in path_list]
+    tail = [path.split(p)[1] for p in path_list]
+    extension = [path.splitext(p)[1][1:] for p in tail]
+    return head, tail, extension
 
 def get_files_info(pfad):
     PATH = list()
@@ -38,7 +56,7 @@ def get_files_info(pfad):
     return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
                               'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
 
-# csv row converted to list (with ; separator)
+# Csv row converted to list (with ; separator)
 def strio_to_list(text):
     return [t for t in text[:-2].split(';')]   # Removing newline
 
@@ -89,6 +107,15 @@ def add_thumbnail_to_pathname(pathname):
     pp = list(pathname.parts)
     pp[-1] = p.stem + '_thumbnail' + p.suffix
     return Path(('/').join(pp))
+
+
+# SQLite
+
+def textlist_to_JSON(lst):
+    return json.dumps(lst)
+
+def JSON_to_textlist(jsn):
+    return json.loads(jsn)
 
 def timestamplist_to_JSON(lst):
     lstr = [l.strftime('%d.%m.%Y %H:%M:%S') for l in lst]

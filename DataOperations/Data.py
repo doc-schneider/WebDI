@@ -1,10 +1,8 @@
-import csv as csvtools
 import pandas as pd
 import numpy as np
-import datetime as dtm
-from azure.storage.blob import ContainerClient
 from io import StringIO
 from io import open
+import datetime as dtm
 
 from DataOperations.Utilities import str_to_list, list_to_str, list_key, strio_to_list, int_keys, time_keys
 from DataOperations.Azure import AzureFactory
@@ -54,7 +52,7 @@ class DataTableFactory:
         return DataTableFactory.importHelper(buf)
 
     @staticmethod
-    def importFromCsv(filename, encoding='utf8'):  # table_type='document'
+    def importFromCsv(filename):  #  encoding='utf8', table_type='document'
         # TODO: newline=None instead of '' removes last character. Why?
         with open(filename, 'r', newline='') as csvfile:   # , encoding=encoding
             return DataTableFactory.importHelper(csvfile)
@@ -97,4 +95,17 @@ class DataTableFactory:
                         datatable[headers[i]].append(row[i])
         df = pd.DataFrame(datatable)
         return df
+
+    @staticmethod
+    def key_types(value, column_name):
+        # All allowed column names of DataTable and their types
+        if column_name in ['TIME_FROM', 'TIME_TO']:
+            result = isinstance(value, dtm.datetime)
+            # TODO: Chekc correct forma?
+        elif column_name in ['DESCRIPTION', 'CATEGORY']:
+            # List of strings
+            result = isinstance(value[0], str)  # Check first element only.
+        # else:
+            # error column is not allowed
+        return result
 
