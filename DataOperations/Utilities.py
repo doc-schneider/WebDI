@@ -1,6 +1,5 @@
 import pandas as pd
 import datetime as dtm
-import json
 from pathlib import Path
 import re
 from os import path
@@ -107,22 +106,5 @@ def add_thumbnail_to_pathname(pathname):
     pp = list(pathname.parts)
     pp[-1] = p.stem + '_thumbnail' + p.suffix
     return Path(('/').join(pp))
-
-
-# SQLite
-
-def textlist_to_JSON(lst):
-    return json.dumps(lst)
-
-def JSON_to_textlist(jsn):
-    return json.loads(jsn)
-
-def timestamplist_to_JSON(lst):
-    lstr = [l.strftime('%d.%m.%Y %H:%M:%S') for l in lst]
-    return json.dumps(lstr)  #.encode('utf8')
-
-def JSON_to_timestamplist(data):
-    return [pd.to_datetime(d) for d in json.loads(data)]  #.decode('utf8')
-
 
 
