@@ -29,9 +29,7 @@ class iPhoneFactory:
         # - CATEGORY: iphone_sms / sms  (distinguish between iMessage and normal sms?)
         # - EVENT: SMS sender 1/2 - sender 2/1
 
-        # TODO: Still contains broken special symbols
         # TODO: Replace "Unknown" - occasionally occurring - name by Chat name
-        # TODO: Good category? Use TAG?
 
         file_csv = path_root + 'Chat with ' + name + '.csv'
 
@@ -59,9 +57,7 @@ class iPhoneFactory:
         path, name, type = split_path_list(df_attachment['Attachment'])
         df_attachment.drop(columns=['Attachment'], inplace=True)
         # Remove everything before SMS and replace by new
-        path = [p.replace('Backup Explorer/Media/Library/',
-                             '//192.168.178.53/Stefan/Biographie/Stefan/iPhone/2020-12-01/')
-                for p in path]
+        path = [p.replace('Backup Explorer/Media/Library/', path_root) for p in path]
         df_attachment['PATH'] = path
         df_attachment['DOCUMENT_NAME'] = name
         df_attachment['DOCUMENT_TYPE'] = type
@@ -72,6 +68,7 @@ class iPhoneFactory:
         # PATH can contain nans
         df.fillna('', inplace=True)
 
+        # Convert to lists
         df = list_column(df, 'DOCUMENT_TYPE')
         df = list_column(df, 'CATEGORY')
         df = list_column(df, 'DESCRIPTION')

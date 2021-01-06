@@ -2,11 +2,15 @@ import sqlite3
 import datetime as dtm
 import pandas as pd
 import numpy as np
-import json
+
+from DataOperations.Utilities import textlist_to_JSON, JSON_to_textlist
+from DataOperations.Document import DocumentTable
 
 
-#class SQLiteTable:
+# TODO Can use this instead of DataTable
+# class SQLiteTable:
 #
+
 
 class SQLiteFactory:
 
@@ -19,8 +23,7 @@ class SQLiteFactory:
         sqlite3.register_converter("json_str", JSON_to_textlist)
 
         # Open database
-        conn = sqlite3.connect('//192.168.178.53/Stefan/DigitalImmortality/Document and Event Tables/' +
-                               database_name + '.db',
+        conn = sqlite3.connect(database_name,
                                detect_types=sqlite3.PARSE_DECLTYPES)
         c = conn.cursor()
 
@@ -49,15 +52,26 @@ class SQLiteFactory:
         conn.commit()
         conn.close()
 
-        #def read_sqlite_table
-        #    # Check
-        #    c.execute('SELECT * FROM ' + table_name)
-        #    row = c.fetchone()
-    #
-    #        # Get columns of table
-    #        sql = "select * from %s where 1=0;" % 'events'
-    #        c.execute(sql)
-     #       sqlite_cols = [d[0] for d in c.description]
+    @staticmethod
+    def read_sqlite_table(database_name, table_name):
+
+        # Adapters and converters
+        # TODO Put into method
+        sqlite3.register_adapter(list, textlist_to_JSON)
+        sqlite3.register_converter("json_str", JSON_to_textlist)
+
+        # Open database
+        conn = sqlite3.connect(database_name,
+                               detect_types=sqlite3.PARSE_DECLTYPES)
+        c = conn.cursor()
+
+        # Get table description that is in the cursor object
+        sql = "select * from %s;" % table_name
+        c.execute(sql)
+        table_columns = [d[0] for d in c.description]
+        df = pd.DataFrame.from_records(data=c.fetchall(), columns=table_columns)
+
+        return DocumentTable(df)
 
     @staticmethod
     def map_keytypes(column_name):
@@ -68,13 +82,6 @@ class SQLiteFactory:
         if column_name in ['DOCUMENT_GROUP', 'EVENT', 'PATH', 'DOCUMENT_NAME']:
             return 'text'
 
-
-def textlist_to_JSON(lst):
-    # TODO text converted into strange format.
-    return json.dumps(lst)
-
-def JSON_to_textlist(jsn):
-    return json.loads(jsn)
 
 #def timestamplist_to_JSON(lst):
 #    lstr = [l.strftime('%d.%m.%Y %H:%M:%S') for l in lst]

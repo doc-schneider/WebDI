@@ -4,7 +4,7 @@ from io import StringIO
 from io import open
 import datetime as dtm
 
-from DataOperations.Utilities import str_to_list, list_to_str, list_key, strio_to_list, int_keys, time_keys
+from DataOperations.Utilities import str_to_list, list_to_str, strio_to_list, textlist_to_JSON, JSON_to_textlist
 from DataOperations.Azure import AzureFactory
 
 
@@ -37,14 +37,19 @@ class DataTable:
 
     def write_to_csv(self, pathname):
         table = self.data.copy()
+        # TODO Inefficent
         for i in range(table.shape[0]):
             for h in list(table.columns.values):
-                table.at[i,h] = list_to_str(table[h].iloc[i], h)
-        table.to_csv(pathname, index=False, sep=';', date_format='%d.%m.%Y %H:%M:%S', encoding='iso-8859-15')
+                # Convert list to str?
+                if DataTableFactory.list_key(h):
+                    table.at[i,h] = list_to_str(table[h].iloc[i])
+                    #table.at[i, h] = textlist_to_JSON(table[h].iloc[i])
+        table.to_csv(pathname, index=False, sep=';', date_format='%d.%m.%Y %H:%M:%S')
 
 
 class DataTableFactory:
 
+    # Importing data
     @staticmethod
     def importFromAzure(container_name, blob_name, environment):
         downloaded_blob = AzureFactory.download_blob_single(container_name, blob_name, environment)
@@ -53,29 +58,31 @@ class DataTableFactory:
 
     @staticmethod
     def importFromCsv(filename):  #  encoding='utf8', table_type='document'
+        # TODO utf8 not correctly read from csv unless explicitely specified. Because of ANSI default?
         # TODO: newline=None instead of '' removes last character. Why?
-        with open(filename, 'r', newline='') as csvfile:   # , encoding=encoding
+        with open(filename, 'r', newline='', encoding='utf8') as csvfile:   # , encoding=encoding
             return DataTableFactory.importHelper(csvfile)
 
     @staticmethod
     def importHelper(text):
         # Returns the headers or `None` if the input is empty
+        # TODO Complicated code
         headers = strio_to_list(next(text, None))
         n_headers = len(headers)
         datatable = {}
         col_time = []         #  Note where the date time information is.
         for i in range(n_headers):
             datatable[headers[i]] = []
-            if time_keys(headers[i]):
+            if DataTableFactory.time_keys(headers[i]):
                 col_time.append(i)
         for r in text:
             row = strio_to_list(r)
             for i in range(n_headers):
                 if i in col_time:
                     # TODO Unify
-                    if not list_key(headers[i]):
+                    if not DataTableFactory.list_key(headers[i]):
                         if row[i]:
-                            # Excel / csv standard formats clip the seconds
+                            # Excel / csv standard formats clips the seconds
                             try:
                                 datatable[headers[i]].append(pd.to_datetime(row[i], format='%d.%m.%Y %H:%M:%S'))
                             except:
@@ -87,14 +94,33 @@ class DataTableFactory:
                                                       else pd.NaT
                                                       for d in str_to_list(row[i])])
                 else:
-                    if int_keys(headers[i]):
+                    if DataTableFactory.int_keys(headers[i]):
                         datatable[headers[i]].append(np.int(row[i]))
-                    elif list_key(headers[i]):
+                    elif DataTableFactory.list_key(headers[i]):
                         datatable[headers[i]].append(str_to_list(row[i]))
+                        #datatable[headers[i]].append(JSON_to_textlist(row[i]))
                     else:          # str. Can be empty.
                         datatable[headers[i]].append(row[i])
         df = pd.DataFrame(datatable)
         return df
+
+    # Data types
+    @staticmethod
+    def list_key(column_name):
+        # Datatable columns that are defined as list
+        return column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY',
+                               'EVENT_TIME_FROM', 'EVENT_TIME_TO',
+                               'DOCUMENT_TABLE', 'DOCUMENT_TYPE', 'VIEW_TYPE', 'TAG']
+
+    @staticmethod
+    def time_keys(column_name):
+        # Headers standing for date time information
+        return column_name in ['TIME_FROM', 'TIME_TO', 'EVENT_TIME_FROM', 'EVENT_TIME_TO', 'DATE_BIRTH']
+
+    @staticmethod
+    def int_keys(column_name):
+        # Integer information
+        return column_name in ['EVENT_LEVEL']
 
     @staticmethod
     def key_types(value, column_name):

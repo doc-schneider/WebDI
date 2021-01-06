@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime as dtm
 from PIL import Image
-import re
+from os import path
 
 from DataOperations.Document import DocumentTable
 from DataOperations.Utilities import get_files_info, add_thumbnail_to_filename
@@ -67,9 +67,30 @@ class PhotoFactory:
         return input.lower() in allowed_formats
 
     @staticmethod
+    def table_thumbnails(table):
+        # Make thumbnails form media documents references in table.
+        # TODO Some / all jpg photos seem to have iphone previews in the same folder?
+        # TODO Photos in the Parts / StickerCache section (PNG) are already small enough?
+        # TODO Some files are missing because the iphone path was too long for copying
+        # TODO Assume that list DOCUMENT_TYPE only contains a single element
+        type_series = pd.Series(t[0] for t in table.data['DOCUMENT_TYPE'])
+        # jpg, vcf, png, amr, mov, caf, gif, heic
+        types = type_series.unique()
+        # TODO jpg for the time being. PNG should only be for low size pictures (?)
+        ix = type_series.isin(['jpg', 'JPG', 'jpeg'])
+        pth = list(table.data['PATH'].loc[ix])
+        nms = list(table.data['DOCUMENT_NAME'].loc[ix])
+        tps = list(type_series.loc[ix])
+        for p,n,t in zip(pth,nms,tps):
+            if path.exists(p + '/' + n):   # File existing?
+                PhotoFactory.make_thumbnail(p,n,t)
+
+    @staticmethod
     def make_thumbnail(pathname, filename, documenttype):
         # TODO: Turning of "Hochkant"
+        thmb_name = add_thumbnail_to_filename(filename, documenttype)
+        thmb_filename = pathname + '/' + thmb_name
         name = pathname + '/' + filename
         im = Image.open(name)
         im.thumbnail((512, 512))  # Keeps aspect ratio of original image. Max dimension 512.
-        im.save(pathname + '/' + add_thumbnail_to_filename(filename, documenttype), "JPEG")
+        im.save(thmb_filename, "JPEG")

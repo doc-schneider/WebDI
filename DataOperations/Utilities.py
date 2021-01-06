@@ -3,31 +3,59 @@ import datetime as dtm
 from pathlib import Path
 import re
 from os import path
+import json
 
 
-#  Column properties of DataTable
+##  Columns of DataTable
 
-# Datatable columns that are defined as list
-def list_key(column_name):
-    return column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY',
-                           'EVENT_TIME_FROM', 'EVENT_TIME_TO',
-                           'DOCUMENT_TABLE', 'DOCUMENT_TYPE', 'VIEW_TYPE', 'TAG']
+# Csv row converted to list (with ; separator)
+def strio_to_list(text):
+    return [t for t in text[:-2].split(';')]   # Removing newline
 
-def time_keys(column_name):   # Headers standing for date time information
-    return column_name in ['TIME_FROM', 'TIME_TO', 'EVENT_TIME_FROM', 'EVENT_TIME_TO', 'DATE_BIRTH']
+def textlist_to_JSON(lst):
+    # TODO text converted into strange format.
+    return json.dumps(lst)
 
-def int_keys(column_name):   # Integer information
-    return column_name in ['EVENT_LEVEL']
+def JSON_to_textlist(jsn):
+    return json.loads(jsn)
 
-# Conver column values to list
+def str_to_list(s):
+    # From external (csv, ..) format to internal table format.
+    # Internal format is always list (and list of lists).
+    # External (csv) string can have no [] if only single item.
+    # TODO: More levels of lists.
+    # TODo Switch to json?
+    if not s:
+        result = ['']    # Empty string
+    elif s[0]=='[' and s[-1]==']':
+        s = s[1:-1]    # Remove brackets.
+        result = [ss.strip() for ss in s.split('|')]
+    else:
+        # Exception case: single str can be without []
+        result = [s]
+    return result
+
+def list_to_str(s):
+    # For writing table to csv
+    # Only a single list level
+    if s is None:  # TODO: Where is this still needed?
+        result = ''
+    else:
+        result = '[' + s[0]
+        for ss in s[1:]:
+            result += ' | ' + ss
+        result += ']'
+    return result
+
+# Convert column values to list
 def list_column(df, col_name):
-    if list_key(col_name):
-        df[col_name] = df[col_name].apply(lambda x: [x])
+    df[col_name] = df[col_name].apply(lambda x: [x])
     return df
 
 
 def add_mintimedelta(list_time):
     return [t + dtm.timedelta(seconds=1) for t in list_time]
+
 
 # List or datafram column of file path strings. Split into head, tail and type
 def split_path_list(path_list):
@@ -55,45 +83,6 @@ def get_files_info(pfad):
     return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
                               'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
 
-# Csv row converted to list (with ; separator)
-def strio_to_list(text):
-    return [t for t in text[:-2].split(';')]   # Removing newline
-
-def str_to_list(s):
-    # From external (csv, ..) format to internal table format.
-    # Internal format is always list (and list of lists).
-    # External (csv) string can have no [] if only single item.
-    # TODO: More levels of lists.
-    if not s:
-        result = ['']    # Empty string
-    elif s[0]=='[' and s[-1]==']':
-        s = s[1:-1]    # Remove brackets.
-        result = [ss.strip() for ss in s.split('|')]
-    else:
-        # Exception case: single str can be without []
-        result = [s]
-    return result
-
-def list_to_str(s, column_name):
-    # For writing table to csv
-    if list_key(column_name):
-        if s is None:  # Todo: Where is this still needed?
-            s = ''
-        elif isinstance(s[0], list):  # Todo: only one inner list correct here
-            # 2 nested lists
-            s = s[0]
-            # Assume only one inner list. Turn into string.
-            u = '[' + s[0]
-            for t in s[1:]:
-                u = u + ', ' + t
-            s = u + ']'
-        else:
-            # 1 list
-            u = s[0]
-            for i in range(1,len(s)):
-                u = u + ', ' + s[i]
-            s = u
-    return s
 
 def add_thumbnail_to_filename(DOCUMENT_NAME, DOCUMENT_TYPE):
     # Input needs to be of type str
