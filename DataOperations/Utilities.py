@@ -19,6 +19,13 @@ def textlist_to_JSON(lst):
 def JSON_to_textlist(jsn):
     return json.loads(jsn)
 
+def timelist_to_JSON(lst):
+    lstr = [l.strftime('%d.%m.%Y %H:%M:%S') for l in lst]
+    return json.dumps(lstr)  #.encode('utf8')
+
+def JSON_to_timelist(data):
+    return [pd.to_datetime(d) for d in json.loads(data)]  #.decode('utf8')
+
 def str_to_list(s):
     # From external (csv, ..) format to internal table format.
     # Internal format is always list (and list of lists).
@@ -89,6 +96,7 @@ def add_thumbnail_to_filename(DOCUMENT_NAME, DOCUMENT_TYPE):
     name = re.sub('\.' + DOCUMENT_TYPE + '$', '', DOCUMENT_NAME)
     return name + "_thumbnail.jpg"
 
+# TODO Remove
 def add_thumbnail_to_pathname(pathname):
     # Input needs to be of type Path
     p = pathname

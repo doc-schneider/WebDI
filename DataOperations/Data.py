@@ -4,7 +4,7 @@ from io import StringIO
 from io import open
 import datetime as dtm
 
-from DataOperations.Utilities import str_to_list, list_to_str, strio_to_list, textlist_to_JSON, JSON_to_textlist
+from DataOperations.Utilities import str_to_list, list_to_str, strio_to_list
 from DataOperations.Azure import AzureFactory
 
 
@@ -22,7 +22,7 @@ class DataTable:
         self.data.reset_index(drop=True, inplace=True)
 
     def add_time_to(self):
-        # If no end time (but start time) add current time (for graphics depiction).
+        # If no end time (but only start time) add current time (for graphics depiction).
         for i in range(self.length):
             if not np.isnat(self.data['TIME_FROM'].iloc[i].to_datetime64()) and \
                     np.isnat(self.data['TIME_TO'].iloc[i].to_datetime64()):
@@ -34,6 +34,21 @@ class DataTable:
             dummy.append(pd.Interval(self.data['TIME_FROM'].iloc[i],
                                      self.data['TIME_TO'].iloc[i], closed='both'))
         self.data['TIME_INTERVAL'] = dummy
+
+    def find_in_timeinterval(self, timeinterval):
+        # Returns the index of all documents whose time_interval overlaps a requested time interval
+        iix = pd.IntervalIndex.from_arrays(self.data['TIME_FROM'], self.data['TIME_TO'], closed='both')
+        return self.data.index[iix.overlaps(timeinterval)].to_list()
+
+    def document_groups(self):
+        # TODO Takes very long
+        # Add an index column for groups
+        self.data['GROUP_INDEX'] = None
+        groups = list(self.data['DOCUMENT_GROUP'].unique())
+        ix_group = 0
+        for g in groups:
+            self.data.loc[self.data['DOCUMENT_GROUP'] == g, 'GROUP_INDEX'] = ix_group
+            ix_group += 1
 
     def write_to_csv(self, pathname):
         table = self.data.copy()
@@ -57,10 +72,9 @@ class DataTableFactory:
         return DataTableFactory.importHelper(buf)
 
     @staticmethod
-    def importFromCsv(filename):  #  encoding='utf8', table_type='document'
-        # TODO utf8 not correctly read from csv unless explicitely specified. Because of ANSI default?
+    def importFromCsv(filename, encoding='utf8'):
         # TODO: newline=None instead of '' removes last character. Why?
-        with open(filename, 'r', newline='', encoding='utf8') as csvfile:   # , encoding=encoding
+        with open(filename, 'r', newline='', encoding=encoding) as csvfile:
             return DataTableFactory.importHelper(csvfile)
 
     @staticmethod
@@ -82,7 +96,7 @@ class DataTableFactory:
                     # TODO Unify
                     if not DataTableFactory.list_key(headers[i]):
                         if row[i]:
-                            # Excel / csv standard formats clips the seconds
+                            # TODO Excel / csv standard formats clips the seconds -> Format csv
                             try:
                                 datatable[headers[i]].append(pd.to_datetime(row[i], format='%d.%m.%Y %H:%M:%S'))
                             except:
@@ -126,8 +140,8 @@ class DataTableFactory:
     def key_types(value, column_name):
         # All allowed column names of DataTable and their types
         if column_name in ['TIME_FROM', 'TIME_TO']:
+            # TODO: Timestpam? Chekc correct forma?
             result = isinstance(value, dtm.datetime)
-            # TODO: Chekc correct forma?
         elif column_name in ['DESCRIPTION', 'CATEGORY']:
             # List of strings
             result = isinstance(value[0], str)  # Check first element only.

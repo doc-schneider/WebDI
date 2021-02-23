@@ -7,7 +7,7 @@ from DataOperations.SQLite import SQLiteFactory
 
 path_root = '//192.168.178.53/'
 
-# Make table
+# Make table from csv
 #path = path_root + 'Stefan/Biographie/Stefan/iPhone/2020-12-28/'
 #name = 'Konstanze Walther'
 #iphonetable = iPhoneFactory.table_from_path(path, name)
