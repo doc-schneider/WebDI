@@ -6,7 +6,7 @@ from os import path
 import json
 
 
-##  Columns of DataTable
+##  Conversions
 
 # Csv row converted to list (with ; separator)
 def strio_to_list(text):

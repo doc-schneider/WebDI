@@ -2,7 +2,8 @@ from DataOperations.Data import DataTableFactory
 from DataOperations.Document import DocumentTable
 from DataOperations.Event import EventTable
 
-
+# Get and compile correct path and name parts
+# Route to readers
 def get_documenttable(environment, document_pathtype, table_path_0, table_path_1, table_type='document'):
     # TODO Generalize over table types
     # Get documents and events

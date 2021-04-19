@@ -20,19 +20,18 @@ app.register_blueprint(listen, url_prefix='/listen')
 app.register_blueprint(play, url_prefix='/play')
 
 ## Global parameters
+config.environment = 'LOCAL'      # 'LOCAL'  #'AZURE'
+config.document_pathtype = 'PATH'  #  'PATH'   #'AZURE'
 # path: root path
-#config.document_pathtype = 'PATH'
-#config.path = '//192.168.178.53/Stefan/DigitalImmortality/Document and Event Tables/'
-#config.starttable_name = 'Startliste_Papa_utf8.csv'
-config.environment = 'AZURE'      # 'LOCAL'  #'AZURE'
-config.document_pathtype = 'AZURE'  #
-config.path = 'modest-di'   # container
-config.starttable_name = 'tables/' + 'Startliste_Papa_utf8.csv'
+config.path = '//192.168.178.53/Stefan/DigitalImmortality/Document and Event Tables/'
+config.starttable_name = 'Startliste_Papa.csv'
+# - Azure container +
+#config.path = 'modest-di'
+#config.starttable_name = 'tables/' + 'Startliste_Papa_utf8.csv'
 config.use_thumbnail = True
 config.start_interval = (dtm.datetime.strptime('2020-06-11 10:44:00', '%Y-%m-%d %H:%M:%S'),
                          dtm.datetime.strptime('2020-06-11 22:44:00', '%Y-%m-%d %H:%M:%S'))
-    #(dtm.datetime.strptime('1969-03-18 00:44:00', '%Y-%m-%d %H:%M:%S'),
-    #                     dtm.datetime.now())
+    #(dtm.datetime.strptime('1969-03-18 00:44:00', '%Y-%m-%d %H:%M:%S'), dtm.datetime.now())
 
-#if __name__ == "__main__":
-#    app.run(host='0.0.0.0', port=82)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=82)

@@ -14,20 +14,35 @@ timeline = Blueprint('timeline', __name__)
 def show_timeline():
 
     def render_timeline():
-        return {
+        dct = {
             'n_boxes': config.timelineview.n_boxes,
             'usr_src': config.timelineview.data_for_view(),
+            'img_format': config.timelineview.type_document,
             'usr_txt': config.timelineview.description_document,
             'usr_time': [config.timelineview.timegrid['TIME_FROM'].loc[i].strftime('%Y-%m-%d %H:%M')
-                          for i in range(n_boxes)],
-            'document_timeline_marker': config.timelineview.markers_time_documents,
-            'event_timeline_marker': config.timelineview.markers_time_events,
-            'event_timeline_label': config.timelineview.labels_time_events
-                }
+                         for i in range(n_boxes)],
+            'document_timeline_marker': config.timelineview.markers_time_documents
+        }
+        if config.eventtable is not None:
+            dct.update(
+                {
+                    'event_timeline_marker': config.timelineview.markers_time_events,
+                    'event_timeline_label': config.timelineview.labels_time_events
+                 }
+            )
+        else:
+            dct.update(
+                {
+                    'event_timeline_marker': None,
+                    'event_timeline_label': None
+                 }
+            )
+        return dct
 
     def init_timelineview():
         # Initialize at first call
         if not hasattr(config, 'timelineview'):
+            # TODO Initialize general Viewer
             config.timelineview = TimelineAllViewer(n_boxes)
             config.timelineview.init_photo_timeline(config.documenttable, config.document_pathtype,
                                                     config.use_thumbnail, config.eventtable, config.start_interval)

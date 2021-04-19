@@ -21,11 +21,15 @@
 				{% if usr_src[i] == None %}	
 				<img src="{{ url_for('static', filename='blue.jpg') }}" class="img-fluid">	
 				{% else %}
-				<form method="post" action="/timeline/single" target="_blank"> 
+					<form method="post" action="/timeline/single" target="_blank"> 
 					<button class="btn" type="submit" name="{{ i }}">
-						<img src="data:image/jpeg;base64,{{ usr_src[i] }}" class="img-fluid"/>  
+					{% if img_format[i] == "png" %}					
+						<img src="data:image/png;base64,{{ usr_src[i] }}" class="img-fluid"/>  
+					{% else %}
+						<img src="data:image/jpeg;base64,{{ usr_src[i] }}" class="img-fluid"/> 
+					{% endif %}
 					</button>
-				</form> 
+					</form> 
 				{% endif %}
 			</div>
 			{% endfor %}
@@ -51,6 +55,7 @@
 		</div>	
 
 		<!-- Event timelines -->
+		{% if event_timeline_marker is not none %}	
 		<div class="row"> 
 			<div class="col pt-2 px-0">	
 				<svg width="100%" height="5">
@@ -65,6 +70,7 @@
 				<span style="position: relative; left: {{event_timeline_label[1]}}%;">{{event_timeline_label[0]}}</span>
 			</div>
 		</div>
+		{% endif %}
 		
 		<!-- Time axis -->
 		<div class="row"> 	

@@ -9,7 +9,7 @@ path_root = '//192.168.178.53/'
 
 # Make table from csv
 #event_file = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/' + \
-#           'EventListe.csv'
+#             'EventListe.csv'
 #eventtable = EventTable(DataTableFactory.importFromCsv(event_file, encoding='ANSI'))
 
 

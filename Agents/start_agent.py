@@ -16,7 +16,7 @@ def show_start():
             'photo': config.startview.data_for_view()[0],
             'first_name': config.startview.first_name,
             'family_name': config.startview.family_name,
-            'description': config.startview.description,
+            'description': config.startview.description[0],
             'n_views': len(config.startview.document_table),
             'document_table': config.startview.document_table,
             'document_type': config.startview.document_type,

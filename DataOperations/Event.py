@@ -9,6 +9,9 @@ class EventTable(DataTable):
     def __init__(self, table):
         super().__init__(table)
 
+    def find_eventlevel(self, eventlevel):
+        return self.data.index[self.data['EVENT_LEVEL'] == eventlevel].to_list()
+
     def add_eventlevel(self):
         # Enhance Event list by an Event level.
         # - Events without Parent Event are level 0
@@ -35,6 +38,11 @@ class EventTable(DataTable):
             else:
                 parent_events.append(None)
         return parent_events
+
+    def create_timeinterval_simple(self):
+        # Temporary helper to converting EVENT_TIME (list) to TIME_FROM ..
+        self.data['TIME_FROM'] = [t[0] for t in self.data['EVENT_TIME_FROM']]
+        self.data['TIME_TO'] = [t[0] for t in self.data['EVENT_TIME_TO']]
 
 
 class EventFactory:

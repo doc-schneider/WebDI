@@ -28,6 +28,11 @@ class DataTable:
                     np.isnat(self.data['TIME_TO'].iloc[i].to_datetime64()):
                 self.data.at[i, 'TIME_TO'] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    def replace_NaT(self):
+        # Default: Replace by now
+        ix = self.data['TIME_TO'].apply(lambda x: not isinstance(x, pd.Timestamp))
+        self.data.loc[ix, 'TIME_TO'] = pd.Timestamp.now()
+
     def add_timeinterval(self):
         dummy = []
         for i in range(self.length):
@@ -109,7 +114,10 @@ class DataTableFactory:
                                                       for d in str_to_list(row[i])])
                 else:
                     if DataTableFactory.int_keys(headers[i]):
-                        datatable[headers[i]].append(np.int(row[i]))
+                        if row[i]:
+                            datatable[headers[i]].append(np.int(row[i]))
+                        else:
+                            datatable[headers[i]].append(None)
                     elif DataTableFactory.list_key(headers[i]):
                         datatable[headers[i]].append(str_to_list(row[i]))
                         #datatable[headers[i]].append(JSON_to_textlist(row[i]))

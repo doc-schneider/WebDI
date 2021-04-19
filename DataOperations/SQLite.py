@@ -105,8 +105,8 @@ class SQLiteFactory:
     @staticmethod
     def add_column(database_name, table_name, column_name, df):
 
-        sqlite3.register_adapter(list, textlist_to_JSON)
-        sqlite3.register_converter("json_str", JSON_to_textlist)
+        # TODO Adapters and converters
+
         conn = sqlite3.connect(database_name,
                                detect_types=sqlite3.PARSE_DECLTYPES)
         c = conn.cursor()
@@ -132,13 +132,14 @@ class SQLiteFactory:
             return 'json_str'
         if column_name in ['EVENT_TIME_FROM', 'EVENT_TIME_TO']:
             return 'json_time'
-        if column_name in ['GROUP_INDEX']:
+        if column_name in ['GROUP_INDEX', 'EVENT_LEVEL']:
             return 'integer'
         else:
             return 'text'  # Default
         #['DOCUMENT_GROUP', 'EVENT', 'PATH', 'DOCUMENT_NAME', 'EVENT_NAME']:
 
 
+# TODO: Do I need __repr__ ?
 class TextList:
     def __init__(self, textlist):
         self.textlist = textlist
@@ -153,6 +154,7 @@ def convert_textlist(jsn):
     return TextList(json.loads(jsn))
 
 
+# TODO: If-else makes it slow?
 class Time:
     def __init__(self, time):
         self.time = time

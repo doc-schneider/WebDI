@@ -25,6 +25,5 @@ path_table = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/'
 filename = 'Dokumentliste_2020_11_23_Stefan Urlaubstag_photo.csv'
 #phototable.write_to_csv(path_table + filename)
 
-
 # Generate a thumbnail
 #PhotoFactory.make_thumbnail(path_root + '/' + 'Musik/H-J Schneider/MeinCembalo', 'MeinCembalo.JPG', 'JPG')

@@ -1,10 +1,13 @@
 import pandas as pd
 import numpy as np
 import base64
+from random import shuffle
+from os import path
 
 from DataOperations.Azure import AzureFactory
 
 
+# TODO Improve spees with linspace or so instead of loop
 def timegrid(t_start, t_end, n_t):
     t_delta = (t_end - t_start)
     dt = t_delta / n_t
@@ -13,7 +16,7 @@ def timegrid(t_start, t_end, n_t):
         df.loc[i] = [t_start + i * dt, t_start + (i + 1) * dt]
     return df
 
-
+# TODO Remove
 # The indexes of all documents in timegrid.
 def find_documents(documenttable, tg):
     index_documents = list()
@@ -25,8 +28,8 @@ def find_documents(documenttable, tg):
     return index_documents
 
 
+# TODO: Should be part of Parent class. REMOVE
 # Which document to show in each time cell. Default: first.
-# TODO: Shouldn't index_show be a relative index within a box?
 def show_documents(index_documents, which=0):
     index_show = list()
     for i in range(len(index_documents)):
@@ -36,6 +39,35 @@ def show_documents(index_documents, which=0):
             index_show.append(index_documents[i][which])
     return index_show
 
+
+# Convert list of strings elements to string only.
+# If empty string than convert to None
+# TODO Move to Data Operations list_to_str
+def list_column_to_str(x):
+    # TODO List of multiple elements
+    y = x[0]
+    if y == '':
+        y = None
+    return y
+
+# Load data from file and return base64 for viewing in website
+def encode_data(file, encode_type):
+    if encode_type == 'base64':
+        if (file is not None) and path.isfile(file):
+            with open(file, "rb") as data_file:
+                data = base64.b64encode(data_file.read()).decode('ascii')
+        else:
+            data = None
+    return data
+
+# Converts a list of texts to text only
+# - Separates list elements by large space
+# TODO: Merge with above functions
+def view_text(text_list):
+    text = text_list[0]
+    for c in text_list[1:]:
+        text = text + '  ' + c
+    return text
 
 def view_data(location_document, encode_type, document_pathtype, environment):
     if encode_type == 'html_path':
@@ -48,7 +80,7 @@ def view_data(location_document, encode_type, document_pathtype, environment):
                                                                 environment)
             data = base64.b64encode(downloaded_blob.readall()).decode('ascii')
         else:
-            if location_document is not None:
+            if (location_document is not None) and path.isfile(location_document):
                 with open(location_document, "rb") as data_file:
                     data = base64.b64encode(data_file.read()).decode('ascii')
             else:
@@ -57,52 +89,4 @@ def view_data(location_document, encode_type, document_pathtype, environment):
     return data
 
 
-# All events  referenced in documenttable.
-def find_events(eventtable, documenttable):
-    events = np.unique(documenttable.data['EVENT'].values).tolist()
-    df = eventtable.data[eventtable.data['EVENT_NAME'].isin(events)].copy()
-    df['TIME_FROM'] = df['EVENT_TIME_FROM']
-    df['TIME_TO'] = df['EVENT_TIME_TO']
-    return df
 
-
-def graphics_event_label():
-    # Position of event label (left edge)
-    pass
-
-
-# Calculates the svg graphics numbers for depicting intervals timeline
-def graphics_markers_time(table, index_documents, time_interval):
-    rect_width_min = 0.5  # Percentage
-    # Tuples for left corner and width of rectangles
-    lst_graphics = list()
-    int_all = pd.Interval(time_interval[0], time_interval[1], closed='both')
-    for i in range(len(index_documents)):
-        for ix in index_documents[i]:
-            # Coordinates as percentages
-            if not isinstance(table['TIME_FROM'].iloc[ix], list):
-                rect_left = 100. * (pd.Interval(time_interval[0], table['TIME_FROM'].iloc[ix],
-                                        closed='both').length / int_all.length)
-                rect_width = 100. * (pd.Interval(table['TIME_FROM'].iloc[ix], table['TIME_TO'].iloc[ix],
-                                         closed='both').length / int_all.length)
-            else:
-                # TODO event: List, Can be beyond interval
-                rect_left = 100. * (pd.Interval(time_interval[0],
-                                               max(time_interval[0], table['TIME_FROM'].iloc[ix][0]),
-                                               closed='both').length / int_all.length)
-                rect_width = 100. * (pd.Interval(table['TIME_FROM'].iloc[ix][0],
-                                                min(time_interval[1], table['TIME_TO'].iloc[ix][0]),
-                                                closed='both').length / int_all.length)
-            rect_mid = rect_left + 0.5*rect_width
-            # Ensure min width. But keep inside [0,1]
-            rect_left_new = rect_mid - np.max((0.5*rect_width_min, 0.5*rect_width))
-            rect_right_new = rect_mid + np.max((0.5*rect_width_min, 0.5*rect_width))
-            if rect_left_new < 0.:
-                rect_left_new = 0.
-                rect_right_new = rect_width_min
-            elif rect_right_new > 100.:
-                rect_left_new = 100. - rect_width_min
-                rect_right_new = 100.
-            rect_width_new = rect_right_new - rect_left_new
-            lst_graphics.append((rect_left_new, rect_width_new))
-    return lst_graphics

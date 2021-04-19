@@ -1,60 +1,65 @@
-from Views.Parent import ParentViewer
-from Views.Utilities import timegrid, find_documents, show_documents, \
-    graphics_markers_time, find_events
-from DataOperations.Utilities import add_thumbnail_to_pathname
+import pandas as pd
+import numpy as np
+
+from Views.Box import BoxViewer
+from Views.Utilities import timegrid
+from DataOperations.Event import EventTable
 
 
-class TimelineViewer(ParentViewer):
-    def __init__(self, n_boxes):
-        super().__init__(n_boxes)
+class TimelineViewer():
+    def __init__(self, View, n_boxes, photos, markers, events):
+        # Not so pretty
+        self.View = View
+        self.n_boxes = n_boxes
+        self.display_photos = photos
+        self.display_markers = markers
+        self.markers = None
+        self.display_events = events
+        self.event_markers = None
+        self.event_labels = None
 
-    def init_photo_timeline(self, document_pathtype):
-        self.document_pathtype = document_pathtype
-        self.encode_type = 'base64'
+    def init_photoTimeline(self, time_interval):
+        self.timegrid = timegrid(time_interval['TIME_FROM'],
+                                 time_interval['TIME_TO'], self.n_boxes
+                                 )
+        self.BoxSeries = pd.Series(data=[BoxViewer(self.View) for i in range(self.n_boxes)])
+        for i in range(self.n_boxes):
+            self.BoxSeries[i].init_photoTimeline(use_thumbnail=True)
 
+    def update_photoTimeline(self, documenttable):
+        for i in range(self.n_boxes):
+            self.BoxSeries[i].update_photoTimeline(documenttable, self.timegrid.loc[i])
 
-class TimelineAllViewer(TimelineViewer):
-    def __init__(self, n_boxes):
-        super().__init__(n_boxes)
+    def update_Timeline(self, documenttable, eventtable=None):
+        if self.display_photos:
+            self.update_photoTimeline(documenttable)
 
-    def init_photo_timeline(self, documenttable, document_pathtype, use_thumbnail, eventtable,
-                            start_interval=None):
-        super().init_photo_timeline(document_pathtype)
-        self.use_thumbnail = use_thumbnail
-        if start_interval is None:
-            # Use documenttable as time interval default.
-            self.timegrid = timegrid(documenttable.data['TIME_FROM'].iloc[0],
-                                     documenttable.data['TIME_TO'].iloc[-1], self.n_boxes)
-        else:
-            self.timegrid = timegrid(start_interval[0], start_interval[1], self.n_boxes)
-        self.events = find_events(eventtable, documenttable)
-        self.update(documenttable)
+        # Lists for flask agent / Jinja
+        # TODO Simplify
+        self.n_subboxes = [Box.n_subboxes for Box in self.BoxSeries]
+        self.descriptions = [Box.descriptions() for Box in self.BoxSeries]
+        self.data_type = [Box.document_type() for Box in self.BoxSeries]
+        self.data = [Box.encode_data() for Box in self.BoxSeries]
 
-    def update(self, documenttable):
-        self.index_documents = find_documents(documenttable, self.timegrid)
-        self.index_show = show_documents(self.index_documents)
-        self.location_document = self.document_location(documenttable)
-        self.description_document = self.document_description(documenttable, 'DESCRIPTION')
+        # Markers for documents
+        if self.display_markers:
+            self.markers = TimelineFactory.grid_markers(documenttable,
+                                                        pd.Interval(
+                                                            self.timegrid['TIME_FROM'].iloc[0],
+                                                            self.timegrid['TIME_TO'].iloc[-1],
+                                                            closed='left')
+                                                        )
 
-        if self.use_thumbnail:
-            for i in range(self.n_boxes):
-                if self.index_show[i] is not None:
-                    self.location_document[i] = add_thumbnail_to_pathname(self.location_document[i])
+        # Event time lines
+        if self.display_events:
+            self.make_events(eventtable)
 
-        # Document occurrence timeline
-        self.markers_time_documents = graphics_markers_time(documenttable.data, self.index_documents,
-                                                            (self.timegrid['TIME_FROM'].iloc[0],
-                                                             self.timegrid['TIME_TO'].iloc[-1]))
-        # Event timeline
-        ix = list(range(0,self.events.shape[0]))
-        self.markers_time_events = graphics_markers_time(self.events, [ix],
-                                                            (self.timegrid['TIME_FROM'].iloc[0],
-                                                             self.timegrid['TIME_TO'].iloc[-1]))
-        self.labels_time_events = [self.events['EVENT_NAME'].iloc[0],
-                                   self.markers_time_events[0][0]]  # Left edge of label = leftmost event time
-        #graphics_event_label()
+        # Time line
+        self.timestr = [self.timegrid['TIME_FROM'].loc[i].strftime('%Y-%m-%d %H:%M')
+                        for i in range(self.n_boxes)]
 
-    def earlier(self, documenttable):
+    # Time buttons
+    def earlier(self, documenttable, eventtable=None):
         # Shift one block
         t_start = self.timegrid['TIME_FROM'].iloc[0]
         t_end = self.timegrid['TIME_TO'].iloc[-1]
@@ -62,9 +67,9 @@ class TimelineAllViewer(TimelineViewer):
         t_start = t_start - time_delta
         t_end = t_end - time_delta
         self.timegrid = timegrid(t_start, t_end, self.n_boxes)
-        self.update(documenttable)
+        self.update_Timeline(documenttable, eventtable)
 
-    def later(self, documenttable):
+    def later(self, documenttable, eventtable=None):
         # Shift one block
         t_start = self.timegrid['TIME_FROM'].iloc[0]
         t_end = self.timegrid['TIME_TO'].iloc[-1]
@@ -72,23 +77,80 @@ class TimelineAllViewer(TimelineViewer):
         t_start = t_start + time_delta
         t_end = t_end + time_delta
         self.timegrid = timegrid(t_start, t_end, self.n_boxes)
-        self.update(documenttable)
+        self.update_Timeline(documenttable, eventtable)
 
-    def zoom_in(self, documenttable):
+    def zoom_in(self, documenttable, eventtable=None):
         # Make 2 middle blocks new total time interval
         t_start = self.timegrid['TIME_FROM'].iloc[2]   # TODO: make general
         t_end = self.timegrid['TIME_TO'].iloc[3]
         self.timegrid = timegrid(t_start, t_end, self.n_boxes)
-        self.update(documenttable)
+        self.update_Timeline(documenttable, eventtable)
 
-    def zoom_out(self, documenttable):
+    def zoom_out(self, documenttable, eventtable=None):
         # Make all blocks into the 2 middle blocks
         t_1 = self.timegrid['TIME_FROM'].iloc[0]
         t_2 = self.timegrid['TIME_TO'].iloc[-1]
         t_start = t_1 - (t_2 - t_1)  # 2 blocks to start   # TODO: make general
         t_end = t_2 + (t_2 - t_1)
         self.timegrid = timegrid(t_start, t_end, self.n_boxes)
-        self.update(documenttable)
+        self.update_Timeline(documenttable, eventtable)
+
+    def make_events(self, eventtable):
+        min_width = 1.0    # Percentage
+
+        self.event_markers = list()
+        self.event_labels = list()
+        time_interval = pd.Interval(self.timegrid['TIME_FROM'].iloc[0],
+                                    self.timegrid['TIME_TO'].iloc[-1],
+                                    closed='left')
+        # TODO Only level 0 elements for the time being
+        ix = list(
+            set(eventtable.find_in_timeinterval(time_interval)) &
+            set(eventtable.find_eventlevel(0))
+        )
+        self.event_markers = TimelineFactory.grid_markers(
+            EventTable(eventtable.data.loc[ix,:]), time_interval
+        )
+        # Label for events, but require minimum length
+        position, width = TimelineFactory.position_width(
+            EventTable(eventtable.data.loc[ix,:]), time_interval
+        )
+        for i in range(len(ix)):
+            # TODO Very short events: Tooltip?
+            if width[i] > min_width:
+                self.event_labels.append((position[i],
+                                          eventtable.data['EVENT_NAME'].iloc[ix[i]]))
+
+
+# Timeline utilities
+class TimelineFactory:
+    # TODO rect_width_min
+
+    # Position and width of an event / time intervals
+    # - As percentage
+    @staticmethod
+    def position_width(documenttable, time_interval):
+        left = 100.0 * (documenttable.data['TIME_FROM'] - time_interval.left) / time_interval.length
+        width = 100.0 * (documenttable.data['TIME_TO'] - documenttable.data['TIME_FROM']) / time_interval.length
+        
+        return left.tolist(), width.tolist()
+
+    # Marker for marking existing documents / time intervals on a grid.
+    @staticmethod
+    def grid_markers(documenttable, time_interval):
+        rect_width_min = 0.5  # Percentage
+
+        markers = list()
+        marker_grid = timegrid(time_interval.left, time_interval.right, int(100 / rect_width_min))
+        for i in range(int(100 / rect_width_min)):
+            if documenttable.find_in_timeinterval(pd.Interval(
+                    marker_grid['TIME_FROM'].iloc[i],
+                    marker_grid['TIME_TO'].iloc[i], closed='left')):
+                markers.append((i * rect_width_min, rect_width_min))
+
+        return markers
+
+
 
 
 # Single frame view on documents within one time interval (index_documents)
@@ -130,29 +192,3 @@ class TimelineSingleViewer(TimelineViewer):
             self.index_show = [self.index_documents[self.index]]
         self.update(documenttable)
 
-
-'''
-
-class FrameViewer(ParentViewer):
-    def __init__(self, documenttable, eventtable, t_start, t_end, viewtype, document_pathtype,
-                 index_documents):
-        super().__init__(documenttable, eventtable, t_start, t_end, viewtype, document_pathtype,
-                         index_documents)
-        self.n_boxes = 1
-        self.index = 0    # Initially show first document
-        self.index_show = [index_documents[0]]
-        self.n_documents = len(index_documents)
-        self.location_document = self.document_location(documenttable)
-        self.description_document = self.document_description(documenttable)
-        self.timeinterval_document = documenttable.data['TIME_INTERVAL'].loc[self.index_show[0]]
-        self.event_document = documenttable.data['EVENT'].loc[self.index_show[0]]
-        #self.event_parent = eventtable.get_ParentEvent(self.event_document)
-
-    def update(self, documenttable, eventtable):
-        self.location_document = self.document_location(documenttable)
-        self.description_document = self.document_description(documenttable)
-        self.timeinterval_document = documenttable.data['TIME_INTERVAL'].loc[self.index_show[0]]
-        self.event_document = documenttable.data['EVENT'].loc[self.index_show[0]]
-        #self.event_parent = eventtable.get_ParentEvent(self.event_document)
-
-'''

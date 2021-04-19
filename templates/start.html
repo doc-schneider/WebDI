@@ -31,7 +31,7 @@
 						<td>{{ first_name }}</td>
 					  </tr>
 					  <tr>
-						<td>Family Name</td>
+						<td>Family Name:</td>
 						<td>{{ family_name }}</td>
 					  </tr>
 					  <tr>
@@ -48,6 +48,14 @@
 		<div class="row pt-5 justify-content-center">
 			<div class="col">
 				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>document name</th>
+							<th>document type</th>
+							<th>document view</th>
+							<th></th>
+						</tr>	
+					</thead>
 					<tbody>
 						{% for i in range(n_views) %}
 						<tr>
