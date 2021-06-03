@@ -8,9 +8,7 @@ import json
 
 ##  Conversions
 
-# Csv row converted to list (with ; separator)
-def strio_to_list(text):
-    return [t for t in text[:-2].split(';')]   # Removing newline
+# SQL utilities
 
 def textlist_to_JSON(lst):
     # TODO text converted into strange format.
@@ -25,6 +23,12 @@ def timelist_to_JSON(lst):
 
 def JSON_to_timelist(data):
     return [pd.to_datetime(d) for d in json.loads(data)]  #.decode('utf8')
+
+# csv utilties
+
+# Csv row converted to list (with ; separator)
+def strio_to_list(text):
+    return [t for t in text[:-2].split(';')]   # Removing newline
 
 def str_to_list(s):
     # From external (csv, ..) format to internal table format.
@@ -54,6 +58,7 @@ def list_to_str(s):
         result += ']'
     return result
 
+
 # Convert column values to list
 def list_column(df, col_name):
     df[col_name] = df[col_name].apply(lambda x: [x])
@@ -77,7 +82,7 @@ def get_files_info(pfad):
     DOCUMENT_TYPE = list()
     TIME_CREATED = list()
     # Get file names.
-    files = list(pfad.glob('*'))
+    files = list(Path(pfad).glob('*'))
     for f in files:
         PATH.append(pfad)
         DOCUMENT_NAME.append(f.name)

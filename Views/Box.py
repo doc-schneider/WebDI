@@ -23,19 +23,19 @@ class BoxViewer():
                 if self.boxShow['LOCATION_DOCUMENT'].iloc[i]:
                     self.boxShow.loc[i, 'LOCATION_DOCUMENT'] = add_thumbnail_to_filename(
                         self.boxShow['LOCATION_DOCUMENT'].iloc[i],
-                        self.boxShow['DOCUMENT_TYPE'].iloc[i][0]
+                        self.boxShow['DOCUMENT_TYPE'].iloc[i]
                     )
 
     # General update method for BoxView
-    def update(self, documenttable):
+    def update(self, documenttable, shift_show=None):
         if 'GROUP_INDEX' in documenttable.data:
             self.index_groups = documenttable.data.loc[self.index_documents, 'GROUP_INDEX'].unique().tolist()
         else:
             self.index_groups = None
-        self.select_show()
+        self.select_show(shift_show)
         # TODO Define empty box
         # Dataframe holding the current document to show
-        if self.index_show:
+        if self.index_show is not None:
             if self.index_groups:
                 self.boxShow = \
                     documenttable.data.loc[documenttable.data['GROUP_INDEX']==self.index_show, ].copy()
@@ -50,9 +50,25 @@ class BoxViewer():
         self.boxShow['DOCUMENT_TYPE'] = self.boxShow['DOCUMENT_TYPE'].apply(list_column_to_str)
         self.boxShow['DESCRIPTION'] = self.boxShow['DESCRIPTION'].apply(list_column_to_str)
 
-    # Which document to show in box. Default: first.
-    def select_show(self, which=0):
-        self.index_show = []
+    # Which document to show in box.
+    # - Initial Default: first.
+    # - Shift: + / - 1
+    def select_show(self, shift_show=None):
+
+        if shift_show is None:
+            # Initial
+            self.index_show = None
+            which = 0
+        else:
+            if self.index_groups is not None:
+                # TODO
+                pass
+            else:
+                n = len(self.index_documents)
+                which = self.index_documents.index(self.index_show)
+            which += shift_show
+            which = max(0, min(which, n))
+
         if self.index_groups is not None:
             if self.index_groups:
                 self.index_show = self.index_groups[which]

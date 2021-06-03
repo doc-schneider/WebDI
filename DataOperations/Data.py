@@ -120,13 +120,13 @@ class DataTableFactory:
                             datatable[headers[i]].append(None)
                     elif DataTableFactory.list_key(headers[i]):
                         datatable[headers[i]].append(str_to_list(row[i]))
-                        #datatable[headers[i]].append(JSON_to_textlist(row[i]))
                     else:          # str. Can be empty.
                         datatable[headers[i]].append(row[i])
         df = pd.DataFrame(datatable)
         return df
 
     # Data types
+    # If not specified type is str
     @staticmethod
     def list_key(column_name):
         # Datatable columns that are defined as list

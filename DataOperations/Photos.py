@@ -4,13 +4,14 @@ from PIL import Image
 from os import path
 
 from DataOperations.Document import DocumentTable
-from DataOperations.Utilities import get_files_info, add_thumbnail_to_filename
+from DataOperations.Utilities import get_files_info, add_thumbnail_to_filename, \
+    add_mintimedelta, list_column
 
 
 class PhotoFactory:
 
     @staticmethod
-    def table_from_folder(path_photo, pretable=None):
+    def table_from_folder(path_photo, pretable=None, ignore_thumbnails=True):
         TIME_FROM = list()
         TIME_TO = list()
         PATH = list()
@@ -27,31 +28,40 @@ class PhotoFactory:
         df = get_files_info(path_photo)
         # Filter for photo formats.
         df = df.loc[df['DOCUMENT_TYPE'].apply(lambda x: PhotoFactory.allowed_photo_formats(x))]
+        # Turn into list items
+        df = list_column(df, 'DOCUMENT_TYPE')
+        # Remove thumbnails
+        if ignore_thumbnails:
+            df = df.loc[df['DOCUMENT_NAME'].apply(lambda x: 'thumbnail' not in x)]
 
         for i in range(df.shape[0]):
-            TIME_FROM.append(df['TIME_CREATED'].iloc[i])  
-            TIME_TO.append((df['TIME_CREATED'].iloc[i] + dtm.timedelta(seconds=1)))   # Artificial time to avoid 0 interval.
-            PATH.append(str(df['PATH'].iloc[i]))
+            TIME_FROM.append(df['TIME_CREATED'].iloc[i])
+            TIME_TO.append(add_mintimedelta([df['TIME_CREATED'].iloc[i]])[0])   # Artificial time to avoid 0 interval.
+            PATH.append(df['PATH'].iloc[i])
             DOCUMENT_NAME.append(df['DOCUMENT_NAME'].iloc[i])
             DOCUMENT_TYPE.append(df['DOCUMENT_TYPE'].iloc[i])
-            DESCRIPTION.append(None)
-            PARENT_DESCRIPTION.append(None)
+            DESCRIPTION.append([''])
+            PARENT_DESCRIPTION.append([''])
             CATEGORY.append(['photo'])
-            PARENT_CATEGORY.append(None)
+            PARENT_CATEGORY.append([''])
             EVENT.append(None)    # Folder name as a simple proxy?
-            TAG.append(None)
+            TAG.append([''])
 
             # DOCUMENT_NAME in pretable?
-            # TODO: pretable = None
-            ix = pretable.data.loc[pretable.data['DOCUMENT_NAME'] == DOCUMENT_NAME[-1]].index.values
-            if ix.size != 0:
-                ix = ix[0]
-                DESCRIPTION[-1] = pretable.data['DESCRIPTION'].iloc[ix]
-                PARENT_DESCRIPTION[-1] = pretable.data['PARENT_DESCRIPTION'].iloc[ix]
-                PARENT_CATEGORY[-1] = pretable.data['PARENT_CATEGORY'].iloc[ix]
-                EVENT[-1] = pretable.data['EVENT'].iloc[ix]
-                TAG[-1] = pretable.data['TAG'].iloc[ix]
-            PhotoFactory.make_thumbnail(PATH[-1], DOCUMENT_NAME[-1], DOCUMENT_TYPE[-1])
+            if pretable is not None:
+                ix = pretable.data.loc[pretable.data['DOCUMENT_NAME'] == DOCUMENT_NAME[-1]].index.values
+                if ix.size != 0:
+                    ix = ix[0]
+                    # TODO Pretable attributes beforehand
+                    DESCRIPTION[-1] = pretable.data['DESCRIPTION'].iloc[ix]
+                    PARENT_DESCRIPTION[-1] = pretable.data['PARENT_DESCRIPTION'].iloc[ix]
+                    PARENT_CATEGORY[-1] = pretable.data['PARENT_CATEGORY'].iloc[ix]
+                    EVENT[-1] = pretable.data['EVENT'].iloc[ix]
+                    #TAG[-1] = pretable.data['TAG'].iloc[ix]
+
+            # Add thumbnail
+            if not ignore_thumbnails:
+                PhotoFactory.make_thumbnail(PATH[-1], DOCUMENT_NAME[-1], DOCUMENT_TYPE[-1])
 
         return DocumentTable(
             pd.DataFrame(data={'TIME_FROM': TIME_FROM, 'TIME_TO': TIME_TO, 'PATH': PATH,

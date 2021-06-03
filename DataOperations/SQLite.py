@@ -128,7 +128,8 @@ class SQLiteFactory:
     def map_keytypes(column_name):
         if column_name in ['TIME_FROM', 'TIME_TO']:
             return 'time'
-        if column_name in ['DESCRIPTION', 'CATEGORY', 'DOCUMENT_TYPE']:
+        if column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY',
+                           'DOCUMENT_TYPE', 'TAG']:
             return 'json_str'
         if column_name in ['EVENT_TIME_FROM', 'EVENT_TIME_TO']:
             return 'json_time'

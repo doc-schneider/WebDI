@@ -1,8 +1,8 @@
-import pandas as pd
-from pathlib import Path
+#import pandas as pd
+#from pathlib import Path
 
-from DataOperations.Utilities import list_to_str
-from Views.Utilities import view_data, view_text
+#from DataOperations.Utilities import list_to_str
+#from Views.Utilities import view_data, view_text
 
 
 class Viewer:
@@ -11,6 +11,8 @@ class Viewer:
         self.encode_type = encode_type
 
 
+
+'''
 # TODO: Mover more methods here. Move more init here.
 class ParentViewer:
     def __init__(self, n_boxes=None, index_documents=list(), document_pathtype='PATH', environment='LOCAL'):
@@ -101,3 +103,4 @@ class ParentViewer:
                                  self.document_pathtype, self.environment)
                 list_data.append(data)
         return list_data
+'''

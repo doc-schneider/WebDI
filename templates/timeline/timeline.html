@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Timeline</title>
+	
+	<!-- Required meta tags -->
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> -->
+    <!-- Bootstrap CSS -->
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"> -->
+	<link rel="stylesheet" media="screen" href="{{ url_for('static', filename='bootstrap/bootstrap.min.css') }}">
+		
+	<!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="/static/bootstrap/bootstrap.min.js"></script>
+	<!--	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script> -->
+
+</head>
+<body class="bg-light">
+
+	<div class="container">		
+	
+		<div class="row pt-3">	
+			{%for i in range(6) %}
+			<div class="col-2 border">
+				
+				{% for j in range(n_subboxes[i]) %}
+				
+					<!-- Photos -->
+					{% if data[i][j] != None %}
+					<div class="row justify-content-center border">
+						<div class="col">		
+							<form method="post" action="/timeline/single" target="_blank"> 
+							<button class="btn" type="submit" name="{{ i }}">
+								{% if data_type[i][j] == "png" %}					
+									<img src="data:image/png;base64,{{ data[i][j] }}" class="img-fluid"/>  
+								{% else %}
+									<img src="data:image/jpeg;base64,{{ data[i][j] }}" class="img-fluid"/> 
+								{% endif %}
+							</button>
+							</form> 
+						</div>
+					</div>
+					{% endif %}
+					
+					<!-- Description -->
+					{% if description[i][j] != None %}
+					<div class="row justify-content-center border text-dark">
+						<div class="col text-dark">					
+							{{ description[i][j] }}
+						</div>
+					</div>	
+					{% endif %}
+					
+				{% endfor %}		
+				
+			</div>
+			{% endfor %}		
+		</div>	
+		
+		<!-- Document markers -->
+		<div class="row"> 
+			<div class="col pt-2 px-0">	
+				<svg width="100%" height="5">
+					{% for i in range(markers|length) %}
+						<rect x="{{markers[i][0]}}%" width="{{markers[i][1]}}%" height="5" style="fill:black;" />	
+					{% endfor %}
+				</svg>
+			</div>
+		</div>	
+		
+		<!-- Event timelines -->
+		{% if event_markers is not none %}	
+			<div class="row"> 
+				<div class="col pt-2 px-0">	
+					<svg width="100%" height="5">
+						{% for i in range(event_markers|length) %}
+							<rect x="{{event_markers[i][0]}}%" width="{{event_markers[i][1]}}%" height="2" style="fill:DarkGray;" />	
+						{% endfor %}
+					</svg>
+				</div>
+			</div>	
+			<div class="row">	
+				<div class="col px-0">
+					{% for i in range(event_labels|length) %}					
+						<span style="position: absolute; left: {{event_labels[i][0]}}%; width: 10%; background: LightGray; border:1px solid DodgerBlue;">
+						{{event_labels[i][1]}}</span>
+					{% endfor %}
+				</div>
+			</div>
+		{% endif %}
+	
+		<!-- Time axis -->
+		<div class="row"> 	
+			{% for i in range(6) %}			
+			<div class="col-2 px-0 pt-5">	
+				<svg width="100%" height="11">
+					<rect width="100%" height="2" style="fill:black;" />
+					<rect width="2" height="100%" style="fill:black;" />
+				</svg>
+			</div>
+			{% endfor %}
+		</div>
+		<div class="row"> 	
+			{% for i in range(6) %}			
+			<div class="col-2 px-0">	
+				{{ timegrid[i] }}
+			</div>
+			{% endfor %}
+		</div>
+	
+		<!-- Buttons -->
+		<div class="row pt-5"> 	
+			<div class="col">	
+				<form method="post">  
+					<div class="row justify-content-center"> 	
+						<button type="submit" name="submit" class="btn btn-outline-primary" value="zoom in">zoom in</button>
+					</div>
+					<div class="row justify-content-center">
+						<div class="btn-group">
+							<button type="submit" name="submit" class="btn btn-outline-primary" value="earlier">earlier</button>
+							<button type="submit" name="submit" class="btn btn-outline-primary" value="later">later</button>
+						</div>
+					</div>
+					<div class="row justify-content-center"> 
+						<button type="submit" name="submit" class="btn btn-outline-primary" value="zoom out">zoom out</button>
+					</div>
+				</form> 
+			</div>
+		</div>
+	
+	</div>	
+	
+</body>
+</html>
