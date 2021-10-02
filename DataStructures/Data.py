@@ -28,6 +28,9 @@ class DataTable:
                     np.isnat(self.data['TIME_TO'].iloc[i].to_datetime64()):
                 self.data.at[i, 'TIME_TO'] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    def add_timedelta(self, timedelta):
+        self.data["TIME_TO"] = self.data["TIME_FROM"].apply(lambda x: x + timedelta)
+
     def replace_NaT(self):
         # Default: Replace by now
         ix = self.data['TIME_TO'].apply(lambda x: not isinstance(x, pd.Timestamp))
@@ -55,7 +58,15 @@ class DataTable:
             self.data.loc[self.data['DOCUMENT_GROUP'] == g, 'GROUP_INDEX'] = ix_group
             ix_group += 1
 
-    def write_to_csv(self, pathname):
+    def to_csv(self, pathname, tablename):
+        self.data.to_csv(
+            pathname +tablename + '.csv',
+            index=False,
+            sep=';',
+            date_format='%d.%m.%Y %H:%M:%S',
+            encoding='ANSI'
+        )
+        '''
         table = self.data.copy()
         # TODO Inefficent
         for i in range(table.shape[0]):
@@ -65,7 +76,7 @@ class DataTable:
                     table.at[i,h] = list_to_str(table[h].iloc[i])
                     #table.at[i, h] = textlist_to_JSON(table[h].iloc[i])
         table.to_csv(pathname, index=False, sep=';', date_format='%d.%m.%Y %H:%M:%S')
-
+        '''
 
 class DataTableFactory:
 

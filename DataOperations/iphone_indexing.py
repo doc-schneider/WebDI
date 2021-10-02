@@ -1,5 +1,3 @@
-from DataOperations.Data import DataTableFactory
-from DataOperations.Document import DocumentTable
 from DataOperations.iPhone import iPhoneFactory
 from DataOperations.SQLite import SQLiteFactory
 
@@ -10,10 +8,6 @@ path_root = '//192.168.0.117/'
 path = path_root + 'Stefan/Biographie/Stefan/iPhone/2020-12-28/'
 name = 'Konstanze Walther'
 iphonetable = iPhoneFactory.table_from_path(path, name)
-
-# Make thumbnails
-# TODO In the last run some error occurred
-#PhotoFactory.table_thumbnails(iphonetable)
 
 # Write to csv
 path = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/'
@@ -29,5 +23,5 @@ filename = 'Dokumentliste_Konstanze SMS_iphone.csv'
 #                                  'iphone')
 
 # Read table from database
-path = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/'
-iphonetable = SQLiteFactory.read_sqlite_table(path + 'stefan.db', 'iphone')
+#path = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/'
+#iphonetable = SQLiteFactory.read_sqlite_table(path + 'stefan.db', 'iphone')

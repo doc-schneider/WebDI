@@ -1,4 +1,4 @@
-from DataOperations.Data import DataTable
+from DataStructures.Data import DataTable
 
 
 # TODO Has this class any distinctive purpose?

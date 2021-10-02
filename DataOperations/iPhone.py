@@ -1,9 +1,7 @@
 import pandas as pd
-import datetime as dtm
-import csv
 
 from DataOperations.Utilities import add_mintimedelta, split_path_list, list_column
-from DataOperations.Document import DocumentTable
+from DataStructures.Document import DocumentTable
 
 
 class iPhoneFactory:

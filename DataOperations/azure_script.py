@@ -1,6 +1,6 @@
 from azure.storage.blob import BlobClient
 
-from DataOperations.Data import DataTableFactory, DataTable
+from DataStructures.Data import DataTableFactory, DataTable
 from DataOperations.Azure import AzureFactory
 
 

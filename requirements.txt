@@ -8,3 +8,10 @@ Werkzeug==0.14.1
 azure-storage-blob
 azure-keyvault-secrets
 azure-identity
+dash
+dash-renderer
+dash-html-components
+dash-core-components
+plotly
+mysql-connector-python
+sqlalchemy

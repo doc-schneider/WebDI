@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from DataOperations.Data import DataTable
+from DataStructures.Data import DataTable
 
 
 class EventTable(DataTable):

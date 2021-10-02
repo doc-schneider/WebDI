@@ -4,7 +4,7 @@ import datetime as dtm
 import config
 from Agents.test_agent import test
 from DataOperations.SQLite import SQLiteFactory
-from DataOperations.Event import EventTable
+from DataStructures.Event import EventTable
 
 
 print('Starting ..')

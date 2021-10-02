@@ -1,12 +1,10 @@
 import sqlite3
-import datetime as dtm
 import pandas as pd
-import numpy as np
 import json
 
-from DataOperations.Utilities import textlist_to_JSON, JSON_to_textlist,\
-    timelist_to_JSON, JSON_to_timelist
-from DataOperations.Document import DocumentTable
+from DataOperations.Utilities import JSON_to_textlist, \
+    JSON_to_timelist
+from DataStructures.Document import DocumentTable
 
 
 # TODO Can use this instead of DataTable

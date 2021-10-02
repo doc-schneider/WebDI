@@ -1,17 +1,14 @@
 from flask import render_template, request, Blueprint
 
 import config
-from Views.Parent import Viewer
-from Views.Timeline import TimelineViewer
-from Views.Utilities import timegrid
 
 
 ## Blueprint
-timeline = Blueprint('timeline', __name__)
+mysql = Blueprint('mysql', __name__)
 
 
-@timeline.route('/timeline', methods=["GET","POST"])
-def show_timeline():
+@mysql.route('/databases', methods=["GET","POST"])
+def show_databases():
 
     def render_timeline():
         dct = {
@@ -26,13 +23,19 @@ def show_timeline():
         }
         return dct
 
+    query = "show databases"
+    config.cursor.execute(query)
+    list_databases = list()
+    for databases in config.cursor:
+        list_databases.append(databases[0])
+
     def init_timelineview():
         # Initialize at first call
         if not hasattr(config, 'TimelineView'):
             start_interval = timegrid(config.start_interval[0], config.start_interval[1], 1)
             config.View = Viewer(document_pathtype=config.document_pathtype, encode_type='base64')
             config.TimelineView = TimelineViewer(config.View, n_boxes=6, photos=True,
-                                                 markers=True, marker_show=False, events=False)
+                                                 markers=True, marker_show=False, events=True)
             config.TimelineView.init_photoTimeline(start_interval.iloc[0], use_thumbnail=True)
             config.TimelineView.update_Timeline(config.documenttable, config.eventtable)
 
@@ -49,10 +52,14 @@ def show_timeline():
         elif request.form['submit'] == 'zoom out':
             config.TimelineView.zoom_out(config.documenttable, config.eventtable)
 
-    return render_template('/timeline/timeline.html', **render_timeline())
+    return render_template('/mysql/databases.html', **render_timeline())
 
-@timeline.route('/single', methods=["GET","POST"])
-def show_single():
+@mysql.route('/databasetables', methods=["GET","POST"])
+def show_databasetables():
+
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/papa'
+    db_connection = create_engine(db_connection_str)
+    metadata = db.MetaData()
 
     def render_single():
         dct = {
@@ -86,4 +93,36 @@ def show_single():
                 config.SingleView.init_photoTimeline(timeinterval.iloc[0], use_thumbnail=False)
                 config.SingleView.update_Timeline(config.documenttable, config.eventtable)
 
-    return render_template('/timeline/single.html', **render_single())
+    return render_template('/test/single.html', **render_single())
+
+@mysql.route('/table', methods=["GET","POST"])
+def show_table():
+
+    def render_box():
+        n_subboxes = config.BoxView.boxShow.shape[0]
+        data_type = config.BoxView.boxShow['DOCUMENT_TYPE'].tolist()  # TODO Like data as method in BoxViewer
+        descriptions = config.BoxView.descriptions()
+        data = config.BoxView.encode_data()
+        dct = {
+            'n_subboxes': n_subboxes,
+            'data': data,
+            'data_type': data_type,
+            'description': descriptions
+        }
+        return dct
+
+    def init_boxview():
+        # Initialize at first call
+        if not hasattr(config, 'BoxView'):
+            start_interval = timegrid(config.start_interval[0], config.start_interval[1], 1)
+            config.View = Viewer(document_pathtype=config.document_pathtype, encode_type='base64')
+            config.BoxView = BoxViewer(config.View)
+            config.BoxView.init_photoTimeline(use_thumbnail=config.use_thumbnail)
+            config.BoxView.update_photoTimeline(
+                config.documenttable, start_interval.iloc[0]
+            )
+
+    if request.method == 'GET':
+        init_boxview()
+
+    return render_template('/test/box.html', **render_box())

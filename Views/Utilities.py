@@ -27,7 +27,6 @@ def find_documents(documenttable, tg):
         index_documents.append(documenttable.find_in_timeinterval(timeinterval))
     return index_documents
 
-
 # TODO: Should be part of Parent class. REMOVE
 # Which document to show in each time cell. Default: first.
 def show_documents(index_documents, which=0):
@@ -39,7 +38,6 @@ def show_documents(index_documents, which=0):
             index_show.append(index_documents[i][which])
     return index_show
 
-
 # Convert list of strings elements to string only.
 # If empty string than convert to None
 # TODO Move to Data Operations list_to_str
@@ -49,16 +47,6 @@ def list_column_to_str(x):
     if y == '':
         y = None
     return y
-
-# Load data from file and return base64 for viewing in website
-def encode_data(file, encode_type):
-    if encode_type == 'base64':
-        if (file is not None) and path.isfile(file):
-            with open(file, "rb") as data_file:
-                data = base64.b64encode(data_file.read()).decode('ascii')
-        else:
-            data = None
-    return data
 
 # Converts a list of texts to text only
 # - Separates list elements by large space

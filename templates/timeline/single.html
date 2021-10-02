@@ -14,6 +14,17 @@
 
 	<div class="container">	
 	
+		<!-- Button for going back to timeline page -->
+		<div class="row pt-3"> 	
+			<div class="col">	
+				<form method="post" action="/timeline/timeline" target="_self">  
+					<div class="row justify-content-left">
+						<button type="submit" name="submit" class="btn btn-outline-secondary" value="back">back</button>
+					</div>
+				</form> 
+			</div>
+		</div>
+	
 		<div class="row pt-3 justify-content-center">	
 			<div class="col-6 border">		
 				{% for j in range(n_subboxes[0]) %}	
@@ -44,7 +55,7 @@
 			
 		<!-- Document markers -->
 		<div class="row"> 
-			<div class="col pt-2 px-0">	
+			<div class="col pt-3 px-0">	
 				<svg width="100%" height="5">
 					{% for i in range(markers|length) %}
 						<rect x="{{markers[i][0]}}%" width="{{markers[i][1]}}%" height="5" style="fill:black;" />	
@@ -58,7 +69,7 @@
 		
 		<!-- Time axis -->
 		<div class="row"> 			
-			<div class="col pt-4 px-0">	
+			<div class="col pt-3 px-0">	
 				<svg width="100%" height="11">
 					<rect width="100%" height="2" style="fill:black;" />
 					<rect width="2" height="100%" style="fill:black;" />
@@ -71,8 +82,8 @@
 			</div>
 		</div>
 		
-		<!-- Buttons -->
-		<div class="row pt-5"> 	
+		<!-- Buttons for stepping through images -->
+		<div class="row pt-3"> 	
 			<div class="col">	
 				<form method="post">  
 					<div class="row justify-content-center">

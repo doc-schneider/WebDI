@@ -1,4 +1,4 @@
-from DataOperations.Data import DataTableFactory
+from DataStructures.Data import DataTableFactory
 from DataOperations.Music import MusicFactory
 
 

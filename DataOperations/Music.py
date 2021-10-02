@@ -1,10 +1,7 @@
 import pandas as pd
-import datetime as dtm
-import csv
-import time
 import os
 
-from DataOperations.Data import DocumentTable
+from DataStructures.Data import DocumentTable
 
 
 class CD(DocumentTable):

@@ -1,9 +1,5 @@
 from DataOperations.SQLite import SQLiteFactory
 
-from DataOperations.Data import DataTableFactory
-from DataOperations.Event import EventTable, EventFactory
-
-
 path_root = '//192.168.178.53/'
 
 

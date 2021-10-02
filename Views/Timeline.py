@@ -1,10 +1,9 @@
 import pandas as pd
-import numpy as np
 
 from Views.Box import BoxViewer
 from Views.Utilities import timegrid
-from DataOperations.Event import EventTable
-from DataOperations.Document import DocumentTable
+from DataStructures.Event import EventTable
+from DataStructures.Document import DocumentTable
 
 
 class TimelineViewer():
@@ -68,7 +67,7 @@ class TimelineViewer():
         self.n_subboxes = [Box.n_subboxes for Box in self.BoxSeries]
         self.descriptions = [Box.descriptions() for Box in self.BoxSeries]
         self.data_type = [Box.document_type() for Box in self.BoxSeries]
-        self.data = [Box.encode_data() for Box in self.BoxSeries]
+        self.data = [Box.get_data() for Box in self.BoxSeries]
 
     def update_marker_show(self):
         # TODO: Box 0 for the the time being (it's only meant for Single Box View anyway)

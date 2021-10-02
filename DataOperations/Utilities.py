@@ -76,26 +76,6 @@ def split_path_list(path_list):
     extension = [path.splitext(p)[1][1:] for p in tail]
     return head, tail, extension
 
-def get_files_info(pfad):
-    PATH = list()
-    DOCUMENT_NAME = list()
-    DOCUMENT_TYPE = list()
-    TIME_CREATED = list()
-    # Get file names.
-    files = list(Path(pfad).glob('*'))
-    for f in files:
-        PATH.append(pfad)
-        DOCUMENT_NAME.append(f.name)
-        DOCUMENT_TYPE.append(f.suffix[1:])    #  Removes dot . from string.
-        # st_ctime : creation time (of file on computer)
-        # st_mtime : last content modification time (creation time of data, e,g time photo taken)
-        TIME_CREATED.append(
-            dtm.datetime.fromtimestamp(f.stat().st_mtime)   # .strftime('%d.%m.%Y %H:%M:%S')
-        )
-    return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
-                              'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
-
-
 def add_thumbnail_to_filename(DOCUMENT_NAME, DOCUMENT_TYPE):
     # Input needs to be of type str
     name = re.sub('\.' + DOCUMENT_TYPE + '$', '', DOCUMENT_NAME)

@@ -7,32 +7,27 @@ from shutil import copyfile
 from distutils.dir_util import copy_tree
 import xml.etree.ElementTree as ET
 
-from DataOperations import Data
-import importlib
-importlib.reload(Data)
+from DataStructures.Document import DocumentTable
 
 
 class EvernoteFactory:
 
     @staticmethod
-    def table_from_path(path_root, path_note, category=None, descriptions=None, events=None):
-        # The enex file gives the meta-information, title of note. Content is in the same folder
-        # as title_html and potentially title_files.
-        #
-        # Default description are Note entry titles.
+    # TODO PreTable, DESCRIPTION
+    def table_from_path(path_root, path_note, category=None, events=None):
+        # The enex file (xml) gives the meta-information, title of note.
+        # Content is in the same folder as title_html and potentially title_files.
         # Default category is the Notebook name. Parent category is Notebook stack, if it exists.
 
-        if descriptions is not None:
-            descriptions_iter = iter(descriptions)
-        TIME_FROM = list()
-        TIME_TO = list()
+        DATETIME = list()
         PATH = list()
         DOCUMENT_NAME = list()
         DOCUMENT_TYPE = list()
+        TITLE = list()
         DESCRIPTION = list()
         CATEGORY = list()
+        ATTACHMENT = list()
         EVENT = list()
-        STATE = list()
 
         pth = os.path.normpath(os.path.join(path_root, path_note))
         pth_base = os.path.basename(pth)
@@ -42,40 +37,55 @@ class EvernoteFactory:
         tree = ET.parse(path_enex)
         root = tree.getroot()
         for note in root:  # note is one diary unit. Oldest comes first.
-            DOCUMENT_TYPE.append('evernote')
+            DOCUMENT_TYPE.append('html')  # Extra export from Evernote
+
             title = note[0].text
-            if descriptions is not None:
-                DESCRIPTION.append(next(descriptions_iter))
-            else:
-                # html files get counter when occuring multiple times.
-                count = 1
-                title_0 = title
-                while title in DESCRIPTION:
-                    count += 1
-                    title = title_0 + ' [' + str(count) + ']'
-                DESCRIPTION.append(title)
+            TITLE.append(title)
+
+            # html files get counter when occurring multiple times.
+            # TODO max 45 correct for additional counting?
+            name = title[:45]  # max 45 characters
+            count = 1
+            while (name + '.html') in DOCUMENT_NAME:
+                count += 1
+                name = title + ' [' + str(count) + ']'
+            DOCUMENT_NAME.append(name + '.html')
+
+            PATH.append((path_root + path_note).replace("\\","/"))
+
             created = dtm.datetime.strptime(note[2].text, '%Y%m%dT%H%M%S%z')  # date time in UTC
             created = created.astimezone(timezone('Europe/Berlin')).replace(tzinfo=None)
-            TIME_FROM.append(created.strftime('%d.%m.%Y %H:%M:%S'))
-            TIME_TO.append(
-                (created + dtm.timedelta(minutes=1)).strftime('%d.%m.%Y %H:%M:%S'))  # Artificial time to avoid 0 interval.
-            PATH.append(pth)
-            DOCUMENT_NAME.append(title)
+            DATETIME.append(created)
+            # TODO ? Updated
+
+            #  Attached documents
+            if os.path.isdir(os.path.join(pth, name + "_files")):
+                ATTACHMENT.append(name + "_files")
+            else:
+                ATTACHMENT.append(None)
+
+            # TODO
+            DESCRIPTION.append(None)
+
+            # TODO
             if category is not None:
                 CATEGORY.append(category)
             else:
                 CATEGORY.append(pth_base)
-            # if events is not None:
-            EVENT.append('')
-            # content = note[1] # text = content.text  # Text with formatters.
-            # updated: not needed (?)
 
-        df = pd.DataFrame(data={'TIME_FROM': TIME_FROM, 'TIME_TO': TIME_TO, 'PATH': PATH,
+            # TODO
+            if events is not None:
+                EVENT.append(events)
+            else:
+                EVENT.append(None)
+
+        df = pd.DataFrame(data={'DATETIME': DATETIME, 'PATH': PATH,
                                 'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE,
+                                'TITLE': TITLE, 'ATTACHMENT': ATTACHMENT,
                                 'DESCRIPTION': DESCRIPTION,
                                 'CATEGORY': CATEGORY, 'EVENT': EVENT})
 
-        return Data.DocumentTable(df)
+        return DocumentTable(df)
 
     @staticmethod
     def copy_html_to_static(evernotetable, static_basepath):

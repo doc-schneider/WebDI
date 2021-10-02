@@ -1,8 +1,9 @@
 import pandas as pd
 
-from DataOperations.Utilities import add_thumbnail_to_filename
-from Views.Utilities import list_column_to_str, encode_data
-from Views.Parent import Viewer
+#from DataOperations.Utilities import add_thumbnail_to_filename
+#from Views.Utilities import list_column_to_str
+from DataOperations.Photos import PhotoFactory
+from DataOperations.Files import encode_data
 
 
 class BoxViewer():
@@ -18,13 +19,6 @@ class BoxViewer():
                                    time_interval['TIME_TO'], closed='left')
         self.index_documents = documenttable.find_in_timeinterval(self.timeinterval)
         self.update(documenttable)
-        if self.use_thumbnail:
-            for i in range(self.boxShow.shape[0]):
-                if self.boxShow['LOCATION_DOCUMENT'].iloc[i]:
-                    self.boxShow.loc[i, 'LOCATION_DOCUMENT'] = add_thumbnail_to_filename(
-                        self.boxShow['LOCATION_DOCUMENT'].iloc[i],
-                        self.boxShow['DOCUMENT_TYPE'].iloc[i]
-                    )
 
     # General update method for BoxView
     def update(self, documenttable, shift_show=None):
@@ -45,10 +39,9 @@ class BoxViewer():
             self.boxShow = self.empty_box()
         self.n_subboxes = self.boxShow.shape[0]
         self.document_location()
-        # Convert lists to string or None
-        # TODO Multiple elemts of Description list
-        self.boxShow['DOCUMENT_TYPE'] = self.boxShow['DOCUMENT_TYPE'].apply(list_column_to_str)
-        self.boxShow['DESCRIPTION'] = self.boxShow['DESCRIPTION'].apply(list_column_to_str)
+        # # Convert lists to string or None
+        #self.boxShow['DOCUMENT_TYPE'] = self.boxShow['DOCUMENT_TYPE'].apply(list_column_to_str)
+        #self.boxShow['DESCRIPTION'] = self.boxShow['DESCRIPTION'].apply(list_column_to_str)
 
     # Which document to show in box.
     # - Initial Default: first.
@@ -85,8 +78,8 @@ class BoxViewer():
 
     # Empty box
     def empty_box(self):
-        return pd.DataFrame({'PATH': [''], 'DOCUMENT_NAME': [''], 'DOCUMENT_TYPE': [['']],
-                             'DESCRIPTION': [['']]})
+        return pd.DataFrame({'PATH': [''], 'DOCUMENT_NAME': [''], 'DOCUMENT_TYPE': [''],
+                             'DESCRIPTION': ['']})  # Lists ..
 
     ## Methods for website viewing
 
@@ -98,5 +91,15 @@ class BoxViewer():
         return self.boxShow['DOCUMENT_TYPE'].tolist()
 
     # Load data from file and return base64 for viewing in website
-    def encode_data(self):
-        return self.boxShow['LOCATION_DOCUMENT'].apply(encode_data, args=(self.View.encode_type,)).tolist()
+    def get_data(self):
+        # load and encode_data
+        if self.use_thumbnail:
+            return self.boxShow['LOCATION_DOCUMENT'].apply(
+                PhotoFactory.load_thumbnail,
+                args=(self.View.encode_type,)
+            ).tolist()
+        else:
+            return self.boxShow['LOCATION_DOCUMENT'].apply(
+                encode_data,
+                args=(self.View.encode_type,)
+            ).tolist()

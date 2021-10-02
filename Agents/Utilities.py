@@ -1,6 +1,6 @@
-from DataOperations.Data import DataTableFactory
-from DataOperations.Document import DocumentTable
-from DataOperations.Event import EventTable
+from DataStructures.Data import DataTableFactory
+from DataStructures.Document import DocumentTable
+from DataStructures.Event import EventTable
 
 # Get and compile correct path and name parts
 # Route to readers
