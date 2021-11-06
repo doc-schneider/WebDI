@@ -14,6 +14,8 @@ timeline = Blueprint('timeline', __name__)
 def show_timeline():
 
     def render_timeline():
+        dct = config.TimelineView.view()
+
         dct = {
             'n_subboxes': config.TimelineView.n_subboxes,
             'data': config.TimelineView.data,
@@ -26,18 +28,23 @@ def show_timeline():
         }
         return dct
 
-    def init_timelineview():
+    if request.method == 'GET':
         # Initialize at first call
         if not hasattr(config, 'TimelineView'):
-            start_interval = timegrid(config.start_interval[0], config.start_interval[1], 1)
-            config.View = Viewer(document_pathtype=config.document_pathtype, encode_type='base64')
-            config.TimelineView = TimelineViewer(config.View, n_boxes=6, photos=True,
-                                                 markers=True, marker_show=False, events=False)
-            config.TimelineView.init_photoTimeline(start_interval.iloc[0], use_thumbnail=True)
-            config.TimelineView.update_Timeline(config.documenttable, config.eventtable)
-
-    if request.method == 'GET':
-        init_timelineview()
+            View = Viewer(
+                "photo",
+                document_pathtype=config.document_pathtype,
+                encode_type='base64',
+                thumbnail=True
+            )
+            config.TimelineView = TimelineViewer(
+                View,
+                config.time_boxes,
+                flag_single=False,
+                documenttable=config.documenttable,
+                eventtable=config.eventtable,
+                markers=True,
+            )
 
     elif request.method == 'POST':
         if request.form['submit'] == 'earlier':       # Navigate buttons

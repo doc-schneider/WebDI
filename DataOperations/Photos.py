@@ -130,8 +130,9 @@ class PhotoFactory:
         return input.lower() in allowed_formats
 
 
-    # TODO Thumbnail in APP1 marker / exif (?).
-    #  However, base64 (and open?) seems to take most time, thumbnail seems fast
+    # TODO Thumbnail in APP1 marker / exif (?). However, base64 (and open?)
+    #  seems to take most time, thumbnail seems fast
+    # TODO Encoding to DataOperations / File
     @staticmethod
     def load_thumbnail(file, encode_type):
         if (file is not None) and path.isfile(file):

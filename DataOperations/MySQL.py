@@ -232,16 +232,24 @@ def insert_photo_array(db, cursor, table_name, values):
     insert_array(db, cursor, table_name, tuple(dct.keys()), values)
 
 
+def read_dataframe(db_connection, table_name):
+    return pd.read_sql(
+        "SELECT * FROM {0};".format(table_name),
+        con=db_connection
+    )
+
 def read_photo_dataframe(db_connection, table_name):
     df = pd.read_sql("SELECT * FROM {0};".format(table_name)
                      , con=db_connection
                      )
     dct = columns_phototable()
+    primary_key = dct["primary_key"]
     dct.pop("primary_key")
     df.rename(
         columns={key: value["alias"] for (key, value) in dct.items()},
         inplace=True
     )
+    df.drop(columns=[primary_key], inplace=True)
     # TODO Not here
     df["TIME_FROM"] = df["DATETIME"]
     df = DocumentTable(df)

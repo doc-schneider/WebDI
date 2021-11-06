@@ -7,7 +7,10 @@ from os import path
 from DataOperations.Azure import AzureFactory
 
 
-# TODO Improve spees with linspace or so instead of loop
+# TODO
+#  - ( DataFrame to complicated? )
+#  - Use Intervals?
+#  - Improve with linspace or so instead of loop
 def timegrid(t_start, t_end, n_t):
     t_delta = (t_end - t_start)
     dt = t_delta / n_t
