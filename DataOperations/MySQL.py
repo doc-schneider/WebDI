@@ -171,6 +171,19 @@ def update(db_connection, metadata, table_name, set_column, where_column, value)
     query = query.where(col == value[1])
     result = db_connection.execute(query)
 
+def update_column(db, mycursor, table_name, column_name, new_column, primary_key):
+    mycursor.execute("SELECT %s FROM " % (primary_key) + table_name)
+    id_column = mycursor.fetchall()
+    # TODO
+    #  Execute many
+    #  Other than str
+    for id in id_column:
+        query = "UPDATE %s SET %s = \" %s \" WHERE %s = %s;" % (
+            table_name, column_name, new_column[0], primary_key, id[0]
+        )
+        mycursor.execute(query)
+    db.commit()
+
 ## TODO Escaping value strings
 #def update(db, cursor, table_name, set_column, where_column, value):
 #    query = "UPDATE %s SET %s = %s WHERE %s = %s;" % (

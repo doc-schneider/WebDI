@@ -89,4 +89,7 @@ def add_thumbnail_to_pathname(pathname):
     pp[-1] = p.stem + '_thumbnail' + p.suffix
     return Path(('/').join(pp))
 
+# Alters a DataFrame str column
+def alter_column_str(table, column, str_old, str_new):
+    table[column] = table[column].map(lambda x: x.replace(str_old, str_new))
 
