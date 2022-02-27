@@ -1,4 +1,4 @@
-from Views.Parent import ParentViewer
+from Views.View import ParentViewer
 from DataOperations.Utilities import add_thumbnail_to_pathname, add_thumbnail_to_filename
 
 

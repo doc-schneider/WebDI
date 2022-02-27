@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from Views.Parent import ParentViewer
+from Views.View import ParentViewer
 from Views.Utilities import view_data
 
 

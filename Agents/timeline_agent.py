@@ -1,9 +1,13 @@
+import pandas as pd
 from flask import render_template, request, Blueprint
+from sqlalchemy import create_engine
 
 import config
-from Views.Parent import Viewer
+from Views.View import Viewer
 from Views.Timeline import TimelineViewer
-from Views.Utilities import timegrid
+from DataOperations.MySQL import (
+    read_photo_dataframe,
+)
 
 
 ## Blueprint
@@ -14,47 +18,68 @@ timeline = Blueprint('timeline', __name__)
 def show_timeline():
 
     def render_timeline():
-        dct = config.TimelineView.view()
+        return config.TimelineView.view()
 
-        dct = {
-            'n_subboxes': config.TimelineView.n_subboxes,
-            'data': config.TimelineView.data,
-            'data_type': config.TimelineView.data_type,
-            'description': config.TimelineView.descriptions,
-            'timegrid': config.TimelineView.timestr,
-            'markers': config.TimelineView.markers,
-            'event_markers': config.TimelineView.event_markers,
-            'event_labels': config.TimelineView.event_labels,
-        }
-        return dct
+    def init_TimelineView():
+        # TODO Generalize View from photo
+        View = Viewer(
+            "photo",
+            document_pathtype=config.document_pathtype,
+            encode_type='base64',
+            thumbnail=True
+        )
+        config.TimelineView = TimelineViewer(
+            View,
+            config.time_boxes,
+            flag_single=False,
+            documenttable=config.documenttable,
+            eventtable=config.eventtable,
+            markers=True,
+        )
 
     if request.method == 'GET':
+
         # Initialize at first call
         if not hasattr(config, 'TimelineView'):
-            View = Viewer(
-                "photo",
-                document_pathtype=config.document_pathtype,
-                encode_type='base64',
-                thumbnail=True
-            )
-            config.TimelineView = TimelineViewer(
-                View,
-                config.time_boxes,
-                flag_single=False,
-                documenttable=config.documenttable,
-                eventtable=config.eventtable,
-                markers=True,
-            )
+            init_TimelineView()
 
     elif request.method == 'POST':
-        if request.form['submit'] == 'earlier':       # Navigate buttons
-            config.TimelineView.earlier(config.documenttable, config.eventtable)
-        elif request.form['submit'] == 'later':
-            config.TimelineView.later(config.documenttable, config.eventtable)
-        elif request.form['submit'] == 'zoom in':
-            config.TimelineView.zoom_in(config.documenttable, config.eventtable)
-        elif request.form['submit'] == 'zoom out':
-            config.TimelineView.zoom_out(config.documenttable, config.eventtable)
+
+        # Coming from portal?
+        if "portal" in request.form:
+            row = int(request.form["portal"])
+            db = config.portaltable.loc[row, "DATABASE"]
+            table = config.portaltable.loc[row, "TABLE"]
+            # Open database / table
+            config.db_connection.dispose()  # TODO Close old database. Seems to have no effect
+            config.db_connection = create_engine(config.connection_str + db)
+            config.documenttable = read_photo_dataframe(
+                config.db_connection, table
+            )
+            # Set starting parameters
+            config.document_pathtype = 'PATH'
+            config.documenttable.timesort()
+            config.eventtable = None
+            config.time_boxes = (
+                pd.Interval(
+                    pd.Timestamp('2021-01-01 00:00:00'),
+                    pd.Timestamp('2022-01-01 00:00:00'),
+                    closed='left'
+                ),
+                "Y"
+            )
+            init_TimelineView()
+
+        # Navigation in timeline
+        elif "submit" in request.form:
+            if request.form['submit'] == 'earlier':       # Navigate buttons
+                config.TimelineView.earlier(config.documenttable, config.eventtable)
+            elif request.form['submit'] == 'later':
+                config.TimelineView.later(config.documenttable, config.eventtable)
+            elif request.form['submit'] == 'zoom in':
+                config.TimelineView.zoom_in(config.documenttable, config.eventtable)
+            elif request.form['submit'] == 'zoom out':
+                config.TimelineView.zoom_out(config.documenttable, config.eventtable)
 
     return render_template('/timeline/timeline.html', **render_timeline())
 
@@ -62,35 +87,32 @@ def show_timeline():
 def show_single():
 
     def render_single():
-        dct = {
-            'n_subboxes': config.SingleView.n_subboxes,
-            'data': config.SingleView.data,
-            'data_type': config.SingleView.data_type,
-            'description': config.SingleView.descriptions,
-            'timegrid': config.SingleView.timestr,
-            'markers': config.SingleView.markers,
-            'marker_show': config.SingleView.marker_show,
-            'event_markers': config.SingleView.event_markers,
-            'event_labels': config.SingleView.event_labels,
-        }
-        return dct
+        return config.SingleView.view()
 
     if request.method == 'POST':   # GET is only page refresh
         for key in request.form.keys():
+
             if key == 'submit':
+                # Flip within box
                 if request.form['submit'] == 'earlier':
                     config.SingleView.show_earlier(config.documenttable)
                 else:
                     config.SingleView.show_later(config.documenttable)
+
             else:
                 # First call of page.
-                i = int(key)   # Box clicked
-                timeinterval = config.TimelineView.BoxSeries[i].timeinterval
-                timeinterval = timegrid(timeinterval.left,
-                                        timeinterval.right, 1)
-                config.SingleView = TimelineViewer(config.View, n_boxes=1, photos=True,
-                                                   markers=True, marker_show=True, events=True)
-                config.SingleView.init_photoTimeline(timeinterval.iloc[0], use_thumbnail=False)
-                config.SingleView.update_Timeline(config.documenttable, config.eventtable)
+                i = int(key)
+                time_interval = config.TimelineView.BoxSeries[i].time_interval # Box clicked
+                View = Viewer(
+                    "photo",
+                    document_pathtype=config.document_pathtype,
+                )
+                config.SingleView = TimelineViewer(
+                    View,
+                    time_interval,
+                    flag_single=True,
+                    documenttable=config.documenttable,
+                    eventtable=config.eventtable,
+                )
 
     return render_template('/timeline/single.html', **render_single())

@@ -65,5 +65,5 @@ def show_table():
 
     df = read_dataframe(config.connection, config.table)
 
-    return render_template('/mysql/table.html', tables=[df.to_html(classes='data', header="true")])
+    return render_template('/mysql/table.html', table=df.to_html(classes='data', header="true"))
 

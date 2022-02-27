@@ -55,7 +55,7 @@ class BoxViewer:
                 n = len(self.index_documents)
                 which = self.index_documents.index(self.index_show)
             which += shift_show
-            which = max(0, min(which, n))
+            which = max(0, min(which, n-1))
         if self.index_groups is not None:
             if self.index_groups:
                 self.index_show = self.index_groups[which]
@@ -63,6 +63,7 @@ class BoxViewer:
             if self.index_documents:
                 self.index_show = self.index_documents[which]
 
+    # For Jinja
     def view(self):
         return {
             'n_subboxes': self.n_subboxes,

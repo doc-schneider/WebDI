@@ -29,7 +29,7 @@ def get_files_info(pfad):
         # st_ctime : creation time (of file on computer)
         # st_mtime : last content modification time (creation time of data, e,g time photo taken)
         TIME_CREATED.append(
-            dtm.datetime.fromtimestamp(f.stat().st_mtime)   # .strftime('%d.%m.%Y %H:%M:%S')
+            dtm.datetime.fromtimestamp(f.stat().st_mtime)
         )
     return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
                               'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})

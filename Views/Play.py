@@ -1,4 +1,4 @@
-from Views.Parent import ParentViewer
+from Views.View import ParentViewer
 
 
 class PlayViewer(ParentViewer):

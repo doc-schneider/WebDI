@@ -1,7 +1,7 @@
 from flask import render_template, request, Blueprint
 
 import config
-from Views.Parent import Viewer
+from Views.View import Viewer
 from Views.Box import BoxViewer
 from Views.Timeline import TimelineViewer
 from Views.Utilities import timegrid

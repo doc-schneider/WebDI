@@ -1,6 +1,6 @@
 import pandas as pd
 import datetime as dtm
-import sqlalchemy as db
+from sqlalchemy import MetaData, Table, Column, Text, DateTime, Integer
 
 from DataStructures.Document import DocumentTable
 
@@ -8,9 +8,15 @@ from DataStructures.Document import DocumentTable
 def create_database(cursor, db_name):
     query = "CREATE DATABASE " + db_name + ";"
     cursor.execute(query)
+    #TODO
+    # Cases: exist, overwrite, ..
+    # Close or commit?
 
 
 def create_table(db, cursor, table_name, columns, types, primary_key):
+    # TODO Make this optional
+    query = "DROP TABLE IF EXISTS {0} ;".format(table_name)
+    cursor.execute(query)
     query = "CREATE TABLE {0} (".format(table_name)
     for x in zip(columns, types):
         query += x[0] + " " + x[1] + ", "
@@ -18,8 +24,11 @@ def create_table(db, cursor, table_name, columns, types, primary_key):
     cursor.execute(query)
     db.commit()
 
-def create_generictable(db, cursor, table_name, columns):
-    dct = columns_diarytable()
+def create_specifictable(db, cursor, table_name, table_type):
+    if table_type == "portal":
+        dct = columns_portaltable()
+    else:
+        raise ValueError("Table type unknown")
     primary_key = dct["primary_key"]
     dct.pop("primary_key")
     create_table(
@@ -31,8 +40,26 @@ def create_generictable(db, cursor, table_name, columns):
         primary_key
     )
 
+def create_generictable(db, cursor, table_name, columns):
+    dct = columns_generictable()
+    primary_key = dct["primary_key"]
+    dct.pop("primary_key")
+    create_table(
+        db,
+        cursor,
+        table_name,
+        tuple(dct.keys()),
+        tuple([value["mysqltype"] for (key, value) in dct.items()]),
+        primary_key
+    )
+
+# Various DataFrame column names and their MySQL correspondence
 def columns_generictable():
     return {
+        "NAME": {
+            "mysqltype": "text",
+            "alias": "NAME"
+        },
         "DOCUMENT_NAME": {
             "mysqltype": "varchar(255)",
             "alias": "DOCUMENT_NAME"
@@ -60,43 +87,90 @@ def columns_generictable():
         "primary_key": "ID"
     }
 
-def create_phototable(db, cursor, table_name):
+def columns_portaltable():
+    return {
+        "NAME": {
+            "mysqltype": "text",
+            "alias": "NAME"
+        },
+        "SUB_PORTAL": {
+            "mysqltype": "text",
+            "alias": "SUB_PORTAL"
+        },
+        "DATABASE_NAME": {
+            "mysqltype": "text",
+            "alias": "DATABASE"
+        },
+        "TABLE_NAME": {
+            "mysqltype": "text",
+            "alias": "TABLE"
+        },
+        "DOCUMENT_CATEGORY": {
+            "mysqltype": "text",
+            "alias": "DOCUMENT_CATEGORY"
+        },
+        "VIEW_TYPE": {
+            "mysqltype": "text",
+            "alias": "VIEW_TYPE"
+        },
+        "primary_key": "PortalID"
+    }
+
+def create_phototable(db_connection, table_name):
+    metadata = MetaData()
     dct = columns_phototable()
     primary_key = dct["primary_key"]
     dct.pop("primary_key")
-    create_table(
-        db,
-        cursor,
+    table_sql = Table(
         table_name,
-        tuple(dct.keys()),
-        tuple([value["mysqltype"] for (key, value) in dct.items()]),
-        primary_key
+        metadata,
+        Column(primary_key, Integer, primary_key=True),
+        *[Column(key, value["sqlalchemytype"]) for (key, value) in dct.items()]
     )
+    metadata.create_all(db_connection)
+
+    #dct = columns_phototable()
+    #primary_key = dct["primary_key"]
+    #dct.pop("primary_key")
+    #create_table(
+    #    db,
+    #    cursor,
+    #    table_name,
+    #    tuple(dct.keys()),
+    #    tuple([value["mysqltype"] for (key, value) in dct.items()]),
+    #    primary_key
+    #)
 
 def columns_phototable():
     return {
         "PhotoName": {
-            "mysqltype": "varchar(255)",
+            "mysqltype": "text",
+            "sqlalchemytype": Text,
             "alias": "DOCUMENT_NAME"
         },
         "PhotoType": {
-            "mysqltype": "varchar(255)",
+            "mysqltype": "text",
+            "sqlalchemytype": Text,
             "alias": "DOCUMENT_TYPE"
         },
         "DateTime": {
             "mysqltype": "datetime",
+            "sqlalchemytype": DateTime,
             "alias": "DATETIME"
         },
         "Path": {
-            "mysqltype": "varchar(255)",
+            "mysqltype": "text",
+            "sqlalchemytype": Text,
             "alias": "PATH"
         },
         "Description": {
-            "mysqltype": "varchar(255)",
+            "mysqltype": "text",
+            "sqlalchemytype": Text,
             "alias": "DESCRIPTION"
         },
         "EVENT": {
-            "mysqltype": "varchar(255)",
+            "mysqltype": "text",
+            "sqlalchemytype": Text,
             "alias": "EVENT"
         },
         "primary_key": "PhotoID"
@@ -164,12 +238,12 @@ def add_column(db, cursor, table_name, column_name, column_type):
 
 
 ## TODO Many values
-def update(db_connection, metadata, table_name, set_column, where_column, value):
-    table = db.Table(table_name, metadata, autoload=True, autoload_with=db_connection)
-    query = db.update(table).values({set_column: value[0]})
-    col = db.sql.column(where_column)
-    query = query.where(col == value[1])
-    result = db_connection.execute(query)
+#def update(db_connection, metadata, table_name, set_column, where_column, value):
+#    table = db.Table(table_name, metadata, autoload=True, autoload_with=db_connection)
+#    query = db.update(table).values({set_column: value[0]})
+#    col = db.sql.column(where_column)
+#    query = query.where(col == value[1])
+#    result = db_connection.execute(query)
 
 def update_column(db, mycursor, table_name, column_name, new_column, primary_key):
     mycursor.execute("SELECT %s FROM " % (primary_key) + table_name)
@@ -192,6 +266,19 @@ def update_column(db, mycursor, table_name, column_name, new_column, primary_key
 #    cursor.execute(query)
 #    db.commit()
 
+
+# TODO How are types determined of table newly created?
+def insert_dataframe(db_connection, table_name, table_type, df, if_exists="append"):
+    if table_type == "portal":
+        dct = columns_portaltable()
+    else:
+        raise ValueError("Table type unknown")
+    dct.pop("primary_key")
+    df.rename(
+        columns={value["alias"]: key for (key, value) in dct.items()},
+        inplace=True
+    )
+    df.to_sql(table_name.lower(), db_connection, if_exists=if_exists, index=False)
 
 def insert_photo_dataframe(db_connection, table_name, df, if_exists="append"):
     dct = columns_phototable()
@@ -250,6 +337,23 @@ def read_dataframe(db_connection, table_name):
         "SELECT * FROM {0};".format(table_name),
         con=db_connection
     )
+
+def read_specific_dataframe(db_connection, table_name, table_type):
+    df = pd.read_sql("SELECT * FROM {0};".format(table_name)
+                     , con=db_connection
+                     )
+    if table_type == "portal":
+        dct = columns_portaltable()
+    else:
+        raise ValueError("Table type unknown")
+    primary_key = dct["primary_key"]
+    dct.pop("primary_key")
+    df.rename(
+        columns={key: value["alias"] for (key, value) in dct.items()},
+        inplace=True
+    )
+    df.drop(columns=[primary_key], inplace=True)
+    return df
 
 def read_photo_dataframe(db_connection, table_name):
     df = pd.read_sql("SELECT * FROM {0};".format(table_name)

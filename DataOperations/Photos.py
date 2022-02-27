@@ -7,38 +7,28 @@ from io import BytesIO
 
 from DataStructures.Document import DocumentTable
 from DataOperations.Files import get_files_info
-from DataOperations.Utilities import add_thumbnail_to_filename, \
-    add_mintimedelta, list_column
 
 
 class PhotoFactory:
-    # TODO: iPhone HEVC
+    # TODO: iPhone HEVC, MOV
 
     @staticmethod
     def table_from_folder(
             path_photo,
             pretable=None,
-            ignore_thumbnails=True,
-            mode='standard'
     ):
-        if mode == 'standard':
-            DATETIME = list()
-            DESCRIPTION = list()
-        elif mode == 'complex':
-            TIME_FROM = list()
-            TIME_TO = list()
-            PATH = list()
-            DOCUMENT_NAME = list()
-            DOCUMENT_TYPE = list()
-            DESCRIPTION = list()
-            PARENT_DESCRIPTION = list()
-            CATEGORY = []
-            PARENT_CATEGORY = []
-            EVENT = list()
-            TAG = list()
-            # STATE = list()
 
+        # Returns TIME_CREATED, PATH, DOCUMENT_NAME, DOCUMENT_TYPE
         files_info = get_files_info(path_photo)
+
+        # Minimal set of columns for photo table
+        DATETIME = list()
+        DESCRIPTION = list()
+
+        # Optional columns
+        if (pretable is not None):
+            columns_add = list(set(pretable.data.columns) - {"DESCRIPTION"} - set(files_info.columns))
+        table_add = {name: [] for name in columns_add}
 
         # Filter for photo formats.
         files_info = files_info.loc[
@@ -46,89 +36,53 @@ class PhotoFactory:
         ]
         files_info.reset_index(inplace=True, drop=True)
 
-        # Remove thumbnails
-        if ignore_thumbnails:
-            files_info = files_info.loc[
-                files_info['DOCUMENT_NAME'].apply(lambda x: 'thumbnail' not in x)
-            ]
+        for i in range(files_info.shape[0]):
 
-        if mode == 'standard':
-            for i in range(files_info.shape[0]):
-
-                # Datetime created
-                # TODO EXIF extractor only works for jpg (?)
-                # TODO Mov
-                if files_info.loc[i, 'DOCUMENT_TYPE'].lower() in ['jpg', 'jpeg']:
-                    image = Image.open(files_info.loc[i, 'PATH'] + files_info.loc[i, 'DOCUMENT_NAME'])
-                    exifdata = image.getexif()
-                    DATETIME.append(
-                        dtm.datetime.strptime(exifdata.get(36867), "%Y:%m:%d %H:%M:%S")
-                    )
-                else:
-                    DATETIME.append(
-                        files_info.loc[i, 'TIME_CREATED']
-                    )
-
-                if (pretable is not None) and \
-                        (pretable.data['DOCUMENT_NAME'] == files_info.loc[i, 'DOCUMENT_NAME']).any():
-                    DESCRIPTION.append(pretable.data.loc[
-                        pretable.data['DOCUMENT_NAME'] == files_info.loc[i, 'DOCUMENT_NAME'],
-                        'DESCRIPTION'
-                    ].values[0])
-                else:
-                    DESCRIPTION.append(None)
-
-            return DocumentTable(
-                pd.DataFrame(data={
-                    'DATETIME': DATETIME,
-                    'PATH': files_info['PATH'],
-                    'DOCUMENT_NAME': files_info['DOCUMENT_NAME'],
-                    'DOCUMENT_TYPE': files_info['DOCUMENT_TYPE'],
-                    'DESCRIPTION': DESCRIPTION
-                }
+            # Datetime created
+            # TODO EXIF extractor only works for jpg (?)
+            if files_info.loc[i, 'DOCUMENT_TYPE'].lower() in ['jpg', 'jpeg']:
+                image = Image.open(files_info.loc[i, 'PATH'] + files_info.loc[i, 'DOCUMENT_NAME'])
+                exifdata = image.getexif()
+                DATETIME.append(
+                    dtm.datetime.strptime(exifdata.get(36867), "%Y:%m:%d %H:%M:%S")
                 )
-            )
+            else:
+                DATETIME.append(
+                    files_info.loc[i, 'TIME_CREATED']
+                )
 
-        elif mode == 'complex':
-            # Turn into list items
-            files_info = list_column(files_info, 'DOCUMENT_TYPE')
-            for i in range(df.shape[0]):
-                TIME_FROM.append(df['TIME_CREATED'].iloc[i])
-                TIME_TO.append(add_mintimedelta([df['TIME_CREATED'].iloc[i]])[0])   # Artificial time to avoid 0 interval.
-                PATH.append(df['PATH'].iloc[i])
-                DOCUMENT_NAME.append(df['DOCUMENT_NAME'].iloc[i])
-                DOCUMENT_TYPE.append(df['DOCUMENT_TYPE'].iloc[i])
-                DESCRIPTION.append([''])
-                PARENT_DESCRIPTION.append([''])
-                CATEGORY.append(['photo'])
-                PARENT_CATEGORY.append([''])
-                EVENT.append(None)    # Folder name as a simple proxy?
-                TAG.append([''])
-                # DOCUMENT_NAME in pretable?
-                if pretable is not None:
-                    ix = pretable.data.loc[pretable.data['DOCUMENT_NAME'] == DOCUMENT_NAME[-1]].index.values
-                    if ix.size != 0:
-                        ix = ix[0]
-                        # TODO Pretable attributes beforehand
-                        DESCRIPTION[-1] = pretable.data['DESCRIPTION'].iloc[ix]
-                        PARENT_DESCRIPTION[-1] = pretable.data['PARENT_DESCRIPTION'].iloc[ix]
-                        PARENT_CATEGORY[-1] = pretable.data['PARENT_CATEGORY'].iloc[ix]
-                        EVENT[-1] = pretable.data['EVENT'].iloc[ix]
-                        #TAG[-1] = pretable.data['TAG'].iloc[ix]
-            return DocumentTable(
-                pd.DataFrame(data={'TIME_FROM': TIME_FROM, 'TIME_TO': TIME_TO, 'PATH': PATH,
-                                   'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE,
-                                   'DESCRIPTION': DESCRIPTION, 'PARENT_DESCRIPTION': PARENT_DESCRIPTION,
-                                   'CATEGORY': CATEGORY, 'PARENT_CATEGORY': PARENT_CATEGORY, 'EVENT': EVENT,
-                                   'TAG': TAG})
-            )
+            DESCRIPTION.append(None)
 
+            if (pretable is not None):
+                for col in columns_add:
+                    table_add[col].append(None)
+                ix = pretable.data['DOCUMENT_NAME'] == files_info.loc[i, 'DOCUMENT_NAME']
+                if ix.any():
+                    if "DESCRIPTION" in pretable.data.columns:
+                        DESCRIPTION[-1] = pretable.data.loc[
+                            ix,
+                            'DESCRIPTION'
+                        ].values[0]
+                    for col in columns_add:
+                        table_add[col][-1] = pretable.data.loc[
+                            ix,
+                            col
+                        ].values[0]
+
+        table = {
+            'DATETIME': DATETIME,
+            'PATH': files_info['PATH'].to_list(),
+            'DOCUMENT_NAME': files_info['DOCUMENT_NAME'].to_list(),
+            'DOCUMENT_TYPE': files_info['DOCUMENT_TYPE'].to_list(),
+            'DESCRIPTION': DESCRIPTION
+        }
+        table.update(table_add)
+        return DocumentTable(pd.DataFrame(data=table))
 
     @staticmethod
     def allowed_photo_formats(input: str) -> bool:
-        allowed_formats = ['jpg', 'jpeg', 'mov']
+        allowed_formats = ['jpg', 'jpeg']   # 'mov'
         return input.lower() in allowed_formats
-
 
     # TODO Thumbnail in APP1 marker / exif (?). However, base64 (and open?)
     #  seems to take most time, thumbnail seems fast

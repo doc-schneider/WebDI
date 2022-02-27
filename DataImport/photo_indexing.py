@@ -11,68 +11,69 @@ from DataOperations.MySQL import (
 )
 
 
-path_root = '//192.168.0.117/'
-#path_root = 'C:/Users/Stefan/Documents/Bilder/'
+make_phototable_fromfolder = True
+exist_pretable = True
+read_csv = False
+write_csv = True
+create_phototable_mysql = False
+insert_phototable_mysql = False
 
-path_photo = 'Fotos/2021/2021_09_05_Sonntags Eltern/'
+path_root = 'Y:/'
+path_photo = '2022/2022_02_15_Konstanze Geburtstag/'
+path_full = path_root + path_photo
+mysql_table = "20220215_Konstanze_Geburtstag"
 
 # Pre-description
-path_pre = path_root + path_photo + 'PreDokumentliste.csv'
-#pretable = DocumentTable(DataTableFactory.importFromCsv(path_pre, encoding='ANSI'))
-#pretable = DocumentTable(pd.read_csv(path_pre, sep=';', encoding='ANSI'))
+if exist_pretable:
+    path_pre = path_root + path_photo + 'PreDokumentliste.csv'
+    pretable = pd.read_csv(
+        path_pre,
+        encoding='ANSI',
+        sep=';',
+    )
+    pretable = pretable.where(pd.notnull(pretable), None)
+    pretable = DocumentTable(pretable)
 
 # Main table
-path_full = path_root + path_photo
-#phototable = PhotoFactory.table_from_folder(path_photo, pretable)
-#phototable = PhotoFactory.table_from_folder(
-#    path_full,
-#    pretable=pretable,
-#)
+if make_phototable_fromfolder:
+    phototable = PhotoFactory.table_from_folder(
+        path_full,
+        pretable=pretable,
+    )
 
 # Event extraction
 #eventtable = EventFactory.extract_event_from_table(phototable)
+# Tag extraction
+#
 
 # Write Tables
-#path_table = path_root + 'Stefan/DigitalImmortality/Document and Event Tables/'
-#filename = 'Dokumentliste_2021_07-08_Schwarzwald_photo.csv'
-#phototable.to_csv()
+if write_csv:
+    phototable.to_csv(path_full, "Dokumentliste")
 
 # Read csv table
-#phototable = DocumentTable(DataTableFactory.importFromCsv(path_table + filename, encoding='ANSI'))
-#phototable = pd.read_csv(
-#    path_table + filename,
-#    encoding='ANSI',
-#    sep=';',
-#    parse_dates=['DATETIME']
-#)
-#phototable = phototable.where(pd.notnull(phototable), None)
+if read_csv:
+    #phototable = DocumentTable(DataTableFactory.importFromCsv(path_table + filename, encoding='ANSI'))
+    phototable = pd.read_csv(
+        path_full + "Dokumentliste" + ".csv",
+        encoding='ANSI',
+        sep=';',
+        parse_dates=['DATETIME'],
+        dayfirst=True
+    )
+    phototable = phototable.where(pd.notnull(phototable), None)
+    phototable = DocumentTable(phototable)
 
 # MySQL
-mysql_table = "2021_09_05_Sonntags_Eltern"
+if create_phototable_mysql:
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/photos'
+    db_connection = create_engine(db_connection_str)
+    create_phototable(db_connection, mysql_table)
 
-# Create table
-#conn = mysql.connector.connect(
-#    host="localhost",
-#    user="Stefan",
-#    passwd="Moppel3",
-#    database="photos",
-#)
-#mycursor = conn.cursor()
-#create_phototable(conn, mycursor, "2021_09_05_Sonntags_Eltern")
-
-# Write a table into database
-#db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/photos'
-#db_connection = create_engine(db_connection_str)
-#insert_photo_dataframe(db_connection, mysql_table, phototable)
-#insert_photo_array(
-#    conn, mycursor, "2021_0708_Schwarzwald",
-#    phototable[['DOCUMENT_NAME', 'DOCUMENT_TYPE', 'DATETIME', 'PATH', 'DESCRIPTION']].values
-#)
+if insert_phototable_mysql:
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/photos'
+    db_connection = create_engine(db_connection_str)
+    insert_photo_dataframe(db_connection, mysql_table, phototable)
 
 #  Read table from database
-db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/photos'
-db_connection = create_engine(db_connection_str)
-phototable = read_photo_dataframe(db_connection, mysql_table)
-
-#phototable.to_csv(path_full, mysql_table)
+#phototable = read_photo_dataframe(db_connection, mysql_table)
 

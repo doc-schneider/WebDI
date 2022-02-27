@@ -7,18 +7,6 @@ from os import path
 from DataOperations.Azure import AzureFactory
 
 
-# TODO
-#  - ( DataFrame to complicated? )
-#  - Use Intervals?
-#  - Improve with linspace or so instead of loop
-def timegrid(t_start, t_end, n_t):
-    t_delta = (t_end - t_start)
-    dt = t_delta / n_t
-    df = pd.DataFrame(columns=['TIME_FROM', 'TIME_TO'])
-    for i in range(n_t):
-        df.loc[i] = [t_start + i * dt, t_start + (i + 1) * dt]
-    return df
-
 # TODO Remove
 # The indexes of all documents in timegrid.
 def find_documents(documenttable, tg):
@@ -30,16 +18,6 @@ def find_documents(documenttable, tg):
         index_documents.append(documenttable.find_in_timeinterval(timeinterval))
     return index_documents
 
-# TODO: Should be part of Parent class. REMOVE
-# Which document to show in each time cell. Default: first.
-def show_documents(index_documents, which=0):
-    index_show = list()
-    for i in range(len(index_documents)):
-        if not index_documents[i]:
-            index_show.append(None)
-        else:
-            index_show.append(index_documents[i][which])
-    return index_show
 
 # Convert list of strings elements to string only.
 # If empty string than convert to None
