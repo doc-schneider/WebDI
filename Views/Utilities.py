@@ -7,18 +7,6 @@ from os import path
 from DataOperations.Azure import AzureFactory
 
 
-# TODO Remove
-# The indexes of all documents in timegrid.
-def find_documents(documenttable, tg):
-    index_documents = list()
-    for i in range(len(tg)):
-        # All documents have non 0 timedelta TIME_TO - TIME_FROM. So rightmost open interval doesn't exclude any document
-        timeinterval = pd.Interval(tg['TIME_FROM'].iloc[i],
-                                   tg['TIME_TO'].iloc[i], closed='left')
-        index_documents.append(documenttable.find_in_timeinterval(timeinterval))
-    return index_documents
-
-
 # Convert list of strings elements to string only.
 # If empty string than convert to None
 # TODO Move to Data Operations list_to_str
@@ -38,6 +26,7 @@ def view_text(text_list):
         text = text + '  ' + c
     return text
 
+# TODO move
 def view_data(location_document, encode_type, document_pathtype, environment):
     if encode_type == 'html_path':
         # data = path to html source

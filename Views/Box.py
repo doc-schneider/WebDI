@@ -33,8 +33,8 @@ class BoxViewer:
                 self.boxShow = documenttable.data.loc[[self.index_show], ].copy()
         else:
             # empty box
-            self.boxShow = pd.DataFrame({'PATH': [''], 'DOCUMENT_NAME': [''],
-                                         'DOCUMENT_TYPE': [''], 'DESCRIPTION': ['']})  # Lists ..
+            # TODO : "" empty str?
+            self.boxShow = pd.DataFrame({x: [None] for x in documenttable.data.columns})
         # How many subboxes for a group?
         self.n_subboxes = self.boxShow.shape[0]
 
@@ -67,8 +67,9 @@ class BoxViewer:
     def view(self):
         return {
             'n_subboxes': self.n_subboxes,
-            'description': self.get_descriptions(),
-            'data_type': self.View.get_data_type(self.boxShow),
+            "category": self.View.document_category,
+            'description': self.get_descriptions(),  # TODO Tag
+            'data_type': self.View.get_data_type(self.boxShow),  # TODO Format instead of Type
             'data': self.View.get_data(self.boxShow),
         }
 

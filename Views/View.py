@@ -5,27 +5,34 @@ from DataOperations.Files import encode_data
 
 # TODO This should be like a parent class to all viewers ?
 class Viewer:
-    def __init__(self, document_category, document_pathtype, encode_type='base64', thumbnail=False):
+    def __init__(self, document_category, document_pathtype, database_connection=None, thumbnail=False):
         self.document_category = document_category
         self.document_pathtype = document_pathtype
-        self.encode_type = encode_type
-        self.thumbnail = thumbnail
+        self.database_connection = database_connection
+        if document_category == "photo":
+            self.encode_type = "base64"
+            self.thumbnail = thumbnail
 
     # Complete file location
     def document_location(self, table):
+        # TODO Produces nan instead of None for None + None
         # Absolute file path
         if self.document_pathtype == 'PATH':
             table['LOCATION_DOCUMENT'] = table['PATH'] + table['DOCUMENT_NAME']
             table.loc[table['PATH'] == '', 'LOCATION_DOCUMENT'] = None
 
     def get_data_type(self, table):
-        return table['DOCUMENT_TYPE'].tolist()
+        # TODO Format instead of Type
+        if 'DOCUMENT_TYPE' in set(table.columns):
+            return table['DOCUMENT_TYPE'].tolist()
+        else:
+            return list("")
 
     # Load data from file and return base64 for viewing in website
     def get_data(self, table):
-        self.document_location(table)
-        # load and encode_data
         if self.document_category == "photo":
+            self.document_location(table)
+            # load and encode_data
             if self.thumbnail:
                 return table['LOCATION_DOCUMENT'].apply(
                     PhotoFactory.load_thumbnail,
@@ -36,6 +43,9 @@ class Viewer:
                     encode_data,
                     args=(self.encode_type,)
                 ).tolist()
+        elif self.document_category == "browsing":
+            # TODO Parent
+            return table["LINK"].tolist()
 
     # TODO
     #  Separate boostrap form jinja2 properties
@@ -63,5 +73,5 @@ class Viewer:
             box_size = [2 for i in range(4)]
         elif granularity == "6H":
             box_size = [2 for i in range(6)]
-        image_names = None
+        image_names = None  # TODO
         return box_size, image_names

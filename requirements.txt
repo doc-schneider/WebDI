@@ -15,3 +15,4 @@ dash-core-components
 plotly
 mysql-connector-python
 sqlalchemy
+mod-wsgi

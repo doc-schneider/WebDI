@@ -3,55 +3,34 @@ import datetime as dtm
 from sqlalchemy import MetaData, Table, Column, Text, DateTime, Integer
 
 from DataStructures.Document import DocumentTable
+from DataStructures.TableTypes import column_types_table, find_optional_columns
 
 
-def create_database(cursor, db_name):
-    query = "CREATE DATABASE " + db_name + ";"
-    cursor.execute(query)
-    #TODO
-    # Cases: exist, overwrite, ..
-    # Close or commit?
+# TODO Move column definitions to DataStructures
+
+def create_database(db_connection, db_name):
+    query = "CREATE DATABASE " + db_name
+    # TODO engine.connect() method
+    db_connection.execute(query)
 
 
-def create_table(db, cursor, table_name, columns, types, primary_key):
-    # TODO Make this optional
-    query = "DROP TABLE IF EXISTS {0} ;".format(table_name)
-    cursor.execute(query)
-    query = "CREATE TABLE {0} (".format(table_name)
-    for x in zip(columns, types):
-        query += x[0] + " " + x[1] + ", "
-    query += primary_key + " int PRIMARY KEY AUTO_INCREMENT );"
-    cursor.execute(query)
-    db.commit()
+def drop_table(db_connection, table_name):
+    query = "DROP TABLE " + table_name
+    #query = "DROP TABLE IF EXISTS {0}".format(table_name)
+    db_connection.execute(query)
 
-def create_specifictable(db, cursor, table_name, table_type):
-    if table_type == "portal":
-        dct = columns_portaltable()
-    else:
-        raise ValueError("Table type unknown")
+def create_specific_table(db_connection, table_name, table_type, optional_columns=[]):
+    dct = column_types_table(table_type, optional_columns=optional_columns)
     primary_key = dct["primary_key"]
     dct.pop("primary_key")
-    create_table(
-        db,
-        cursor,
+    metadata = MetaData()
+    table_sql = Table(
         table_name,
-        tuple(dct.keys()),
-        tuple([value["mysqltype"] for (key, value) in dct.items()]),
-        primary_key
+        metadata,
+        Column(primary_key, Integer, primary_key=True),
+        *[Column(key, value["sqlalchemytype"]) for (key, value) in dct.items()]
     )
-
-def create_generictable(db, cursor, table_name, columns):
-    dct = columns_generictable()
-    primary_key = dct["primary_key"]
-    dct.pop("primary_key")
-    create_table(
-        db,
-        cursor,
-        table_name,
-        tuple(dct.keys()),
-        tuple([value["mysqltype"] for (key, value) in dct.items()]),
-        primary_key
-    )
+    metadata.create_all(db_connection)
 
 # Various DataFrame column names and their MySQL correspondence
 def columns_generictable():
@@ -116,79 +95,6 @@ def columns_portaltable():
         "primary_key": "PortalID"
     }
 
-def create_phototable(db_connection, table_name):
-    metadata = MetaData()
-    dct = columns_phototable()
-    primary_key = dct["primary_key"]
-    dct.pop("primary_key")
-    table_sql = Table(
-        table_name,
-        metadata,
-        Column(primary_key, Integer, primary_key=True),
-        *[Column(key, value["sqlalchemytype"]) for (key, value) in dct.items()]
-    )
-    metadata.create_all(db_connection)
-
-    #dct = columns_phototable()
-    #primary_key = dct["primary_key"]
-    #dct.pop("primary_key")
-    #create_table(
-    #    db,
-    #    cursor,
-    #    table_name,
-    #    tuple(dct.keys()),
-    #    tuple([value["mysqltype"] for (key, value) in dct.items()]),
-    #    primary_key
-    #)
-
-def columns_phototable():
-    return {
-        "PhotoName": {
-            "mysqltype": "text",
-            "sqlalchemytype": Text,
-            "alias": "DOCUMENT_NAME"
-        },
-        "PhotoType": {
-            "mysqltype": "text",
-            "sqlalchemytype": Text,
-            "alias": "DOCUMENT_TYPE"
-        },
-        "DateTime": {
-            "mysqltype": "datetime",
-            "sqlalchemytype": DateTime,
-            "alias": "DATETIME"
-        },
-        "Path": {
-            "mysqltype": "text",
-            "sqlalchemytype": Text,
-            "alias": "PATH"
-        },
-        "Description": {
-            "mysqltype": "text",
-            "sqlalchemytype": Text,
-            "alias": "DESCRIPTION"
-        },
-        "EVENT": {
-            "mysqltype": "text",
-            "sqlalchemytype": Text,
-            "alias": "EVENT"
-        },
-        "primary_key": "PhotoID"
-    }
-
-def create_diarytable(db, cursor, table_name):
-    dct = columns_diarytable()
-    primary_key = dct["primary_key"]
-    dct.pop("primary_key")
-    create_table(
-        db,
-        cursor,
-        table_name,
-        tuple(dct.keys()),
-        tuple([value["mysqltype"] for (key, value) in dct.items()]),
-        primary_key
-    )
-
 def columns_diarytable():
     return {
         "NoteName": {
@@ -237,14 +143,6 @@ def add_column(db, cursor, table_name, column_name, column_type):
     db.commit()
 
 
-## TODO Many values
-#def update(db_connection, metadata, table_name, set_column, where_column, value):
-#    table = db.Table(table_name, metadata, autoload=True, autoload_with=db_connection)
-#    query = db.update(table).values({set_column: value[0]})
-#    col = db.sql.column(where_column)
-#    query = query.where(col == value[1])
-#    result = db_connection.execute(query)
-
 def update_column(db, mycursor, table_name, column_name, new_column, primary_key):
     mycursor.execute("SELECT %s FROM " % (primary_key) + table_name)
     id_column = mycursor.fetchall()
@@ -258,21 +156,15 @@ def update_column(db, mycursor, table_name, column_name, new_column, primary_key
         mycursor.execute(query)
     db.commit()
 
-## TODO Escaping value strings
-#def update(db, cursor, table_name, set_column, where_column, value):
-#    query = "UPDATE %s SET %s = %s WHERE %s = %s;" % (
-#        table_name, set_column, value[0], where_column, value[1]
-#    )
-#    cursor.execute(query)
-#    db.commit()
 
-
-# TODO How are types determined of table newly created?
-def insert_dataframe(db_connection, table_name, table_type, df, if_exists="append"):
-    if table_type == "portal":
-        dct = columns_portaltable()
-    else:
-        raise ValueError("Table type unknown")
+def insert_specific_dataframe(db_connection,
+                              table_name,
+                              table_type,
+                              df,
+                              optional_columns=[],
+                              if_exists="append"
+                              ):
+    dct = column_types_table(table_type, optional_columns=optional_columns)
     dct.pop("primary_key")
     df.rename(
         columns={value["alias"]: key for (key, value) in dct.items()},
@@ -280,24 +172,7 @@ def insert_dataframe(db_connection, table_name, table_type, df, if_exists="appen
     )
     df.to_sql(table_name.lower(), db_connection, if_exists=if_exists, index=False)
 
-def insert_photo_dataframe(db_connection, table_name, df, if_exists="append"):
-    dct = columns_phototable()
-    dct.pop("primary_key")
-    df.data.rename(
-        columns={value["alias"]: key for (key, value) in dct.items()},
-        inplace=True
-    )
-    df.data.to_sql(table_name, db_connection, if_exists=if_exists, index=False)
-
-def insert_diary_dataframe(db_connection, table_name, df, if_exists="append"):
-    dct = columns_diarytable()
-    dct.pop("primary_key")
-    df.data.rename(
-        columns={value["alias"]: key for (key, value) in dct.items()},
-        inplace=True
-    )
-    df.data.to_sql(table_name, db_connection, if_exists=if_exists, index=False)
-
+'''
 def insert_record(db, cursor, table_name, columns: tuple, values: tuple):
     query = "INSERT INTO {0} (".format(table_name)
     for x in columns:
@@ -330,60 +205,27 @@ def insert_photo_array(db, cursor, table_name, values):
     # Convert timestamp to datetime
     values[:, 2] = list(map(lambda x: x.to_pydatetime(), values[:, 2]))
     insert_array(db, cursor, table_name, tuple(dct.keys()), values)
-
+'''
 
 def read_dataframe(db_connection, table_name):
-    return pd.read_sql(
-        "SELECT * FROM {0};".format(table_name),
-        con=db_connection
-    )
+    df = pd.read_sql(table_name, con=db_connection)
+    return df
 
 def read_specific_dataframe(db_connection, table_name, table_type):
-    df = pd.read_sql("SELECT * FROM {0};".format(table_name)
-                     , con=db_connection
-                     )
-    if table_type == "portal":
-        dct = columns_portaltable()
-    else:
-        raise ValueError("Table type unknown")
-    primary_key = dct["primary_key"]
-    dct.pop("primary_key")
-    df.rename(
-        columns={key: value["alias"] for (key, value) in dct.items()},
-        inplace=True
-    )
+    df = pd.read_sql(table_name, con=db_connection)
+    primary_key = column_types_table(table_type)["primary_key"]
     df.drop(columns=[primary_key], inplace=True)
-    return df
-
-def read_photo_dataframe(db_connection, table_name):
-    df = pd.read_sql("SELECT * FROM {0};".format(table_name)
-                     , con=db_connection
-                     )
-    dct = columns_phototable()
-    primary_key = dct["primary_key"]
-    dct.pop("primary_key")
+    # Any optional columns?
+    optional_columns = find_optional_columns(df, table_type, aliasnames=False)
+    dct = column_types_table(
+        table_type,
+        optional_columns=optional_columns,
+        remove_primarykey=True
+    )
     df.rename(
         columns={key: value["alias"] for (key, value) in dct.items()},
         inplace=True
     )
-    df.drop(columns=[primary_key], inplace=True)
-    # TODO Not here
-    df["TIME_FROM"] = df["DATETIME"]
-    df = DocumentTable(df)
-    df.add_timedelta(dtm.timedelta(seconds=1))
-    return df
-
-def read_diary_dataframe(db_connection, table_name):
-    df = pd.read_sql("SELECT * FROM {0};".format(table_name)
-                     , con=db_connection
-                     )
-    dct = columns_diarytable()
-    dct.pop("primary_key")
-    df.rename(
-        columns={key: value["alias"] for (key, value) in dct.items()},
-        inplace=True
-    )
-    df = DocumentTable(df)
     return df
 
 

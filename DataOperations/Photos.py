@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from PIL import Image
 from os import path
 import datetime as dtm
@@ -7,6 +8,7 @@ from io import BytesIO
 
 from DataStructures.Document import DocumentTable
 from DataOperations.Files import get_files_info
+from DataStructures.TableTypes import column_types_table
 
 
 class PhotoFactory:
@@ -15,20 +17,30 @@ class PhotoFactory:
     @staticmethod
     def table_from_folder(
             path_photo,
-            pretable=None,
+            folder_photo,
+            pretable=None
     ):
 
         # Returns TIME_CREATED, PATH, DOCUMENT_NAME, DOCUMENT_TYPE
-        files_info = get_files_info(path_photo)
+        files_info = get_files_info(path_photo + folder_photo + "/")
+        cols_fileinfo = list(files_info.columns)
 
-        # Minimal set of columns for photo table
-        DATETIME = list()
-        DESCRIPTION = list()
+        # standard columns for photo table
+        cols_standard = column_types_table(
+            "photo",
+            optional_columns=[],
+            remove_primarykey=True,
+            return_aliasnames=True
+        )
+        table = {name: [] for name in cols_standard}
 
-        # Optional columns
+        # Add columns from pretable. It is assumet that pretable deosn't contain invalid columns
+        columns_add = list()
         if (pretable is not None):
-            columns_add = list(set(pretable.data.columns) - {"DESCRIPTION"} - set(files_info.columns))
-        table_add = {name: [] for name in columns_add}
+            columns_pretable = list(pretable.data.columns)
+            columns_add = list(set(pretable.data.columns) - set(cols_standard))
+            table_add = {name: [] for name in columns_add}
+            table.update(table_add)
 
         # Filter for photo formats.
         files_info = files_info.loc[
@@ -43,41 +55,37 @@ class PhotoFactory:
             if files_info.loc[i, 'DOCUMENT_TYPE'].lower() in ['jpg', 'jpeg']:
                 image = Image.open(files_info.loc[i, 'PATH'] + files_info.loc[i, 'DOCUMENT_NAME'])
                 exifdata = image.getexif()
-                DATETIME.append(
+                table["DATETIME"].append(
                     dtm.datetime.strptime(exifdata.get(36867), "%Y:%m:%d %H:%M:%S")
                 )
             else:
-                DATETIME.append(
+                table["DATETIME"].append(
                     files_info.loc[i, 'TIME_CREATED']
                 )
 
-            DESCRIPTION.append(None)
+            for col in (set(cols_fileinfo) - set(["TIME_CREATED"])):
+                table[col].append(
+                    files_info.loc[i, col]
+                )
+
+            for col in set(cols_standard + columns_add) - set(cols_fileinfo) - set(["DATETIME"]):
+                table[col].append(None)
 
             if (pretable is not None):
-                for col in columns_add:
-                    table_add[col].append(None)
+                # Match by document name
                 ix = pretable.data['DOCUMENT_NAME'] == files_info.loc[i, 'DOCUMENT_NAME']
                 if ix.any():
-                    if "DESCRIPTION" in pretable.data.columns:
-                        DESCRIPTION[-1] = pretable.data.loc[
-                            ix,
-                            'DESCRIPTION'
-                        ].values[0]
-                    for col in columns_add:
-                        table_add[col][-1] = pretable.data.loc[
+                    for col in (set(columns_pretable) - set(["DOCUMENT_NAME", "DATETIME"])):
+                        table[col][-1] = pretable.data.loc[
                             ix,
                             col
                         ].values[0]
 
-        table = {
-            'DATETIME': DATETIME,
-            'PATH': files_info['PATH'].to_list(),
-            'DOCUMENT_NAME': files_info['DOCUMENT_NAME'].to_list(),
-            'DOCUMENT_TYPE': files_info['DOCUMENT_TYPE'].to_list(),
-            'DESCRIPTION': DESCRIPTION
-        }
-        table.update(table_add)
-        return DocumentTable(pd.DataFrame(data=table))
+        return DocumentTable(
+            pd.DataFrame(data=table),
+            document_category="photo",
+            table_name=folder_photo
+        )
 
     @staticmethod
     def allowed_photo_formats(input: str) -> bool:
@@ -89,7 +97,7 @@ class PhotoFactory:
     # TODO Encoding to DataOperations / File
     @staticmethod
     def load_thumbnail(file, encode_type):
-        if (file is not None) and path.isfile(file):
+        if (file is not None) and (file is not np.nan) and path.isfile(file):
             image = Image.open(file)
             image.thumbnail((512, 512))
             if encode_type == 'base64':
@@ -99,36 +107,3 @@ class PhotoFactory:
         else:
             data = None
         return data
-
-
-    '''
-    @staticmethod
-    def table_thumbnails(table):
-        # Make thumbnails form media documents references in table.
-        # TODO Some / all jpg photos seem to have iphone previews in the same folder?
-        # TODO Photos in the Parts / StickerCache section (PNG) are already small enough?
-        # TODO Some files are missing because the iphone path was too long for copying
-        # TODO Assume that list DOCUMENT_TYPE only contains a single element
-        type_series = pd.Series(t[0] for t in table.data['DOCUMENT_TYPE'])
-        # jpg, vcf, png, amr, mov, caf, gif, heic
-        types = type_series.unique()
-        # TODO jpg for the time being. PNG should only be for low size pictures (?)
-        ix = type_series.isin(['jpg', 'JPG', 'jpeg'])
-        pth = list(table.data['PATH'].loc[ix])
-        nms = list(table.data['DOCUMENT_NAME'].loc[ix])
-        tps = list(type_series.loc[ix])
-        for p,n,t in zip(pth,nms,tps):
-            if path.exists(p + '/' + n):   # File existing?
-                PhotoFactory.make_thumbnail(p,n,t)
-
-    @staticmethod
-    def make_thumbnail(pathname, filename, documenttype):
-        # TODO: Turning of "Hochkant"
-        thmb_name = add_thumbnail_to_filename(filename, documenttype)
-        thmb_filename = pathname + '/' + thmb_name
-        name = pathname + '/' + filename
-        im = Image.open(name)
-        im.thumbnail((512, 512))  # Keeps aspect ratio of original image. Max dimension 512.
-        im.save(thmb_filename, "JPEG")
-    '''
-

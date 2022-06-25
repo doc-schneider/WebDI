@@ -1,45 +1,52 @@
 import pandas as pd
-import mysql.connector
 from sqlalchemy import create_engine
 
-from DataStructures.Document import DocumentTable
+from DataStructures.TableTypes import find_optional_columns
+from DataStructures.Document import DocumentTableFactory
 from DataOperations.Photos import PhotoFactory
 from DataOperations.MySQL import (
-    create_phototable,
-    insert_photo_dataframe,
-    read_photo_dataframe,
+    create_specific_table,
+    insert_specific_dataframe,
+    read_specific_dataframe
 )
 
 
-make_phototable_fromfolder = True
-exist_pretable = True
-read_csv = False
-write_csv = True
+make_phototable_fromfolder = False
+exist_pretable = False
+write_csv = False
+read_csv = True
 create_phototable_mysql = False
 insert_phototable_mysql = False
+read_phototable_mysql = False
 
 path_root = 'Y:/'
-path_photo = '2022/2022_02_15_Konstanze Geburtstag/'
-path_full = path_root + path_photo
-mysql_table = "20220215_Konstanze_Geburtstag"
+path_photo = '2022/'
+folder_photo = "2022_06_10_Wuppertal Konferenz"
+path_full = path_root + path_photo + folder_photo + "/"
+mysql_table = "photo_20220610_wuppertal_konferenz" # Use this as default table name
+
+optional_columns = ["LOCATION"]
 
 # Pre-description
 if exist_pretable:
-    path_pre = path_root + path_photo + 'PreDokumentliste.csv'
-    pretable = pd.read_csv(
-        path_pre,
-        encoding='ANSI',
-        sep=';',
+    pretable = DocumentTableFactory.from_csv(
+        "photo",
+        path_full,
+        'PreDokumentliste'
     )
-    pretable = pretable.where(pd.notnull(pretable), None)
-    pretable = DocumentTable(pretable)
+    pretable.format_to_category(optional_columns)
+else:
+    pretable = None
 
 # Main table
 if make_phototable_fromfolder:
     phototable = PhotoFactory.table_from_folder(
-        path_full,
+        path_root + path_photo,
+        folder_photo,
         pretable=pretable,
     )
+    # Document Group
+    pass
 
 # Event extraction
 #eventtable = EventFactory.extract_event_from_table(phototable)
@@ -48,32 +55,42 @@ if make_phototable_fromfolder:
 
 # Write Tables
 if write_csv:
-    phototable.to_csv(path_full, "Dokumentliste")
+    phototable.to_csv(path_full, mysql_table)
 
 # Read csv table
 if read_csv:
-    #phototable = DocumentTable(DataTableFactory.importFromCsv(path_table + filename, encoding='ANSI'))
-    phototable = pd.read_csv(
-        path_full + "Dokumentliste" + ".csv",
-        encoding='ANSI',
-        sep=';',
-        parse_dates=['DATETIME'],
-        dayfirst=True
+    phototable = DocumentTableFactory.from_csv(
+        "photo",
+        path_full,
+        mysql_table,
+        parse_date=['DATETIME']
     )
-    phototable = phototable.where(pd.notnull(phototable), None)
-    phototable = DocumentTable(phototable)
 
 # MySQL
 if create_phototable_mysql:
-    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/photos'
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
     db_connection = create_engine(db_connection_str)
-    create_phototable(db_connection, mysql_table)
+    create_specific_table(
+        db_connection,
+        mysql_table,
+        "photo",
+        find_optional_columns(phototable.data, "photo")
+    )
 
 if insert_phototable_mysql:
-    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/photos'
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
     db_connection = create_engine(db_connection_str)
-    insert_photo_dataframe(db_connection, mysql_table, phototable)
+    insert_specific_dataframe(
+        db_connection,
+        mysql_table,
+        "photo",
+        phototable.data,
+        find_optional_columns(phototable.data, "photo")
+    )
 
 #  Read table from database
-#phototable = read_photo_dataframe(db_connection, mysql_table)
+if read_phototable_mysql:
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
+    db_connection = create_engine(db_connection_str)
+    phototable = read_specific_dataframe(db_connection, mysql_table, "photo")
 

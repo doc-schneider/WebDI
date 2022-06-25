@@ -8,6 +8,8 @@ import config
 from Agents.mysql_agent import mysql
 
 
+# TODO sqlalchemy
+
 print('Starting ..')
 
 ## Flask

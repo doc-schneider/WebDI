@@ -13,11 +13,12 @@ class TimelineViewer():
                  View,
                  time_boxes,
                  flag_single,
-                 documenttable,
+                 tablecollection,
                  eventtable=None,
                  markers=True
                  ):
         self.View = View
+        self.documenttable = None
         self.flag_single = flag_single    # TODO For the time bing
         self.display_markers = markers
         self.display_marker_show = markers  # TODO Should be convered by display_markers
@@ -43,29 +44,39 @@ class TimelineViewer():
                 time_boxes[1]
             )
 
-        self.update(documenttable, eventtable)
+        self.update(tablecollection, eventtable)
 
-    def update(self, documenttable, eventtable):
+    def update(self, tablecollection, eventtable):
+        # Assemble documenttables from meta-table
+        self.documenttable = tablecollection.compound_table_from_timeinterval(
+            pd.Interval(
+                self.time_grid.loc[0, "TIME_INTERVAL"].left,
+                self.time_grid.iloc[-1]["TIME_INTERVAL"].right,
+                closed='left'
+            ),
+            self.View.database_connection
+        )
         self.BoxSeries = pd.Series(data=[BoxViewer(self.View) for i in range(self.n_boxes)])
         # Find documents in each time box
         for i in range(self.n_boxes):
             self.BoxSeries[i].update_Timeline(
-                documenttable,
+                self.documenttable,
                 self.time_grid.loc[i, "TIME_INTERVAL"]
             )
-        # TODO For the time being single only
+        # TODO For timeline
         if self.display_markers and self.flag_single:
-            self.markers = TimelineFactory.markers(documenttable, self.time_grid.loc[0, "TIME_INTERVAL"])
+            self.markers = TimelineFactory.markers(self.documenttable, self.time_grid.loc[0, "TIME_INTERVAL"])
             self.update_marker_show()
 
     def update_marker_show(self):
         self.marker_show = TimelineFactory.markers(
-            DocumentTable(self.BoxSeries[0].boxShow),
+            DocumentTable(self.BoxSeries[0].boxShow, self.View.document_category),
             self.time_grid.loc[0, "TIME_INTERVAL"]
         )
 
     def view(self):
         # List of dcts
+        # TODO Date Time Interval information
         dct_lst = [Box.view() for Box in self.BoxSeries]
         # Bootstrap box size
         box_size, _ = self.View.boostrap_properties(self.granularity, self.time_grid)
@@ -113,7 +124,7 @@ class TimelineViewer():
 
 
     # Time buttons
-    def earlier(self, documenttable, eventtable=None):
+    def earlier(self, tablecollection, eventtable=None):
         # Shift one block
         _, self.time_grid, _ = TimelineFactory.time_boxes(
             None,
@@ -121,9 +132,9 @@ class TimelineViewer():
             change="earlier",
             time_grid=self.time_grid
         )
-        self.update(documenttable, eventtable)
+        self.update(tablecollection, eventtable)
 
-    def later(self, documenttable, eventtable=None):
+    def later(self, tablecollection, eventtable=None):
         # Shift one block
         _, self.time_grid, _ = TimelineFactory.time_boxes(
             None,
@@ -131,33 +142,33 @@ class TimelineViewer():
             change="later",
             time_grid=self.time_grid
         )
-        self.update(documenttable, eventtable)
+        self.update(tablecollection, eventtable)
 
-    def zoom_in(self, documenttable, eventtable=None):
+    def zoom_in(self, tablecollection, eventtable=None):
         self.granularity, self.time_grid, self.n_boxes = TimelineFactory.time_boxes(
             None,
             self.granularity,
             change="zoomin",
             time_grid=self.time_grid
         )
-        self.update(documenttable, eventtable)
+        self.update(tablecollection, eventtable)
 
-    def zoom_out(self, documenttable, eventtable=None):
+    def zoom_out(self, tablecollection, eventtable=None):
         self.granularity, self.time_grid, self.n_boxes = TimelineFactory.time_boxes(
             None,
             self.granularity,
             change="zoomout",
             time_grid=self.time_grid
         )
-        self.update(documenttable, eventtable)
+        self.update(tablecollection, eventtable)
 
     # Shift within Box
-    def show_earlier(self, documenttable):
-        self.BoxSeries[0].update(documenttable, shift_show=-1)
+    def show_earlier(self):
+        self.BoxSeries[0].update(self.documenttable, shift_show=-1)
         self.update_marker_show()
 
-    def show_later(self, documenttable):
-        self.BoxSeries[0].update(documenttable, shift_show=1)
+    def show_later(self):
+        self.BoxSeries[0].update(self.documenttable, shift_show=1)
         self.update_marker_show()
 
 
@@ -185,7 +196,7 @@ class TimelineFactory:
             elif granularity == "Q":
                 granularity_new = "Y"
             elif granularity == "M":
-                granularity_new = "S"
+                granularity_new = "Q"
             elif granularity == "W":
                 granularity_new = "M"
             elif granularity == "D":
@@ -196,6 +207,7 @@ class TimelineFactory:
             granularity_new = granularity
 
         # n_boxes, ..
+        # Main problem is with granularity_new == "M": How many weeks / boxes? Starting where?
         if granularity_new == "10Y":
             n_boxes = 10
             relative_delta = relativedelta(years=1)
@@ -233,6 +245,9 @@ class TimelineFactory:
         if change is None:
             # TODO Find nearest defined time interval
             time_l = time_interval.left
+            if granularity_new == "M":
+                time_l = time_interval.left + relativedelta(weekday=MO(-1))
+                time_r = time_interval.right + relativedelta(weekday=SU(+1))
         elif change == "earlier":
             time_l = time_grid.loc[0, "TIME_INTERVAL"].left - relative_delta
         elif change == "later":
@@ -242,9 +257,6 @@ class TimelineFactory:
                 # Overlapping complete weeks of first grid slot
                 time_l = time_grid.loc[0, "TIME_INTERVAL"].left + relativedelta(weekday=MO(-1))
                 time_r = time_grid.loc[0, "TIME_INTERVAL"].right + relativedelta(weekday=SU(+1))
-                n_boxes = round(
-                    ((time_r + relativedelta(days=1)) - time_l) / pd.Timedelta("7 days")
-                )
             else:
                 # Expand first grid slot
                 time_l = time_grid.loc[0, "TIME_INTERVAL"].left
@@ -255,21 +267,23 @@ class TimelineFactory:
                 time_l = pd.Timestamp(year=time_l_pre.year - (time_l_pre.year % 10), month=1, day=1)
             elif granularity_new == "Y":
                 time_l = pd.Timestamp(year=time_l_pre.year, month=1, day=1)
-            elif granularity_new == "S":
+            elif granularity_new == "Q":
                 time_l = pd.Timestamp(year=time_l_pre.year, month=(time_l_pre.quarter - 1) * 3 + 1, day=1)
             elif granularity_new == "M":
                 #TODO Better find nearest month
                 time_l = pd.Timestamp(year=time_l_pre.year, month=time_l_pre.month, day=1) + relativedelta(weekday=MO(-1))
                 time_r = pd.Timestamp(year=time_l_pre.year, month=time_l_pre.month, day=1) + relativedelta(months=+1, days=-1) + relativedelta(weekday=SU(+1))
-                n_boxes = round(
-                    ((time_r + relativedelta(days=1)) - time_l) / pd.Timedelta("7 days")
-                )
             elif granularity_new == "W":
                 # Start with Monday
                 time_l = time_l_pre + relativedelta(weekday=MO(-1), hour=0)
             elif granularity_new == "D":
                 # Start with 00:00 time
                 time_l = time_l_pre + relativedelta(hour=0)
+        if granularity_new == "M" and change not in ("earlier", "later"):
+            # How many weeks / boxes?
+            n_boxes = round(
+                ((time_r + relativedelta(days=1)) - time_l) / pd.Timedelta("7 days")
+            )
 
         # Construct new time grid
         # TODO Common time grid function?

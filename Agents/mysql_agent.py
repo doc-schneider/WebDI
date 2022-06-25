@@ -20,7 +20,7 @@ def show_databases():
         return dct
 
     query = "show databases"
-    config.cursor.execute(query)
+    config.cursor.execute(query)   # TODO sqlalchemy
     databases = list()
     for database in config.cursor:
         databases.append(database[0])
@@ -40,7 +40,7 @@ def show_databasetables():
     if request.method == 'POST' and (request.referrer.find("databases") != -1):
         config.database = request.form['database']
         query = "use " + config.database
-        config.cursor.execute(query)
+        config.cursor.execute(query)    # TODO sqlalchemy
 
     query = "show tables"
     config.cursor.execute(query)

@@ -6,47 +6,77 @@ import datetime as dtm
 
 from DataOperations.Utilities import str_to_list, list_to_str, strio_to_list
 from DataOperations.Azure import AzureFactory
+from DataStructures.TableTypes import column_types_table
 
 
 class DataTable:
 
-    def __init__(self, table):
+    def __init__(self, table, document_category=None, table_name=None):
         self.data = table
         self.length = len(table)
+        self.document_category = document_category
+        self.table_name = table_name
+        # Keep individual name?
+        if table_name is not None:
+            self.data["TABLE_NAME"] = table_name
 
     def append(self, mastertable):
         self.data = mastertable.data.append(self.data, ignore_index=True)
+
+    # Remove columns not defined
+    def format_to_category(self, optional_columns):
+        cols = set(self.data.columns)
+        cols_standard = column_types_table(
+            self.document_category,
+            optional_columns,
+            remove_primarykey=True,
+            return_aliasnames=True
+        )
+        self.data.drop(columns=list(cols - set(cols_standard)), inplace=True)
 
     def timesort(self):
         self.data.sort_values(by=['TIME_FROM'], inplace=True)
         self.data.reset_index(drop=True, inplace=True)
 
-    def add_time_to(self):
-        # If no end time (but only start time) add current time (for graphics depiction).
-        for i in range(self.length):
-            if not np.isnat(self.data['TIME_FROM'].iloc[i].to_datetime64()) and \
-                    np.isnat(self.data['TIME_TO'].iloc[i].to_datetime64()):
-                self.data.at[i, 'TIME_TO'] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    def datetimesort(self):
+        self.data.sort_values(by=['DATETIME'], inplace=True)
+        self.data.reset_index(drop=True, inplace=True)
+
+    #def add_time_to(self):
+    #    # If no end time (but only start time) add current time (for graphics depiction).
+    #    for i in range(self.length):
+    #        if not np.isnat(self.data['TIME_FROM'].iloc[i].to_datetime64()) and \
+    #                np.isnat(self.data['TIME_TO'].iloc[i].to_datetime64()):
+    #            self.data.at[i, 'TIME_TO'] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    # TODO Remove ?
+    #def replace_NaT(self):
+    #    # Default: Replace by now
+    #    ix = self.data['TIME_TO'].apply(lambda x: not isinstance(x, pd.Timestamp))
+    #    self.data.loc[ix, 'TIME_TO'] = pd.Timestamp.now()
+
+    def add_timefromto(self, timedelta):
+        self.data["TIME_FROM"] = self.data["DATETIME"]
+        self.add_timedelta(timedelta)
 
     def add_timedelta(self, timedelta):
         self.data["TIME_TO"] = self.data["TIME_FROM"].apply(lambda x: x + timedelta)
 
-    def replace_NaT(self):
-        # Default: Replace by now
-        ix = self.data['TIME_TO'].apply(lambda x: not isinstance(x, pd.Timestamp))
-        self.data.loc[ix, 'TIME_TO'] = pd.Timestamp.now()
-
-    def add_timeinterval(self):
-        dummy = []
-        for i in range(self.length):
-            dummy.append(pd.Interval(self.data['TIME_FROM'].iloc[i],
-                                     self.data['TIME_TO'].iloc[i], closed='both'))
-        self.data['TIME_INTERVAL'] = dummy
+    # TODO Remove ?
+    #def add_timeinterval(self):
+    #    dummy = []
+    #    for i in range(self.length):
+    #        dummy.append(pd.Interval(self.data['TIME_FROM'].iloc[i],
+    #                                 self.data['TIME_TO'].iloc[i], closed='both'))
+    #    self.data['TIME_INTERVAL'] = dummy
 
     def find_in_timeinterval(self, timeinterval):
-        # Returns the index of all documents whose time_interval overlaps a requested time interval
-        iix = pd.IntervalIndex.from_arrays(self.data['TIME_FROM'], self.data['TIME_TO'], closed='both')
-        return self.data.index[iix.overlaps(timeinterval)].to_list()
+        if "TIME_FROM" in self.data.columns:
+            # Returns the index of all documents whose time_interval overlaps a requested time interval
+            iix = pd.IntervalIndex.from_arrays(self.data['TIME_FROM'], self.data['TIME_TO'], closed='both')
+            return self.data.index[iix.overlaps(timeinterval)].to_list()
+        elif "DATETIME" in self.data.columns:
+            iix = (self.data["DATETIME"] >= timeinterval.left) & (self.data["DATETIME"] <= timeinterval.right)
+            return self.data.index[iix].to_list()
 
     def document_groups(self):
         # TODO Takes very long
@@ -60,7 +90,7 @@ class DataTable:
 
     def to_csv(self, pathname, tablename):
         self.data.to_csv(
-            pathname +tablename + '.csv',
+            pathname + tablename + '.csv',
             index=False,
             sep=';',
             date_format='%d.%m.%Y %H:%M:%S',
@@ -81,6 +111,18 @@ class DataTable:
 class DataTableFactory:
 
     # Importing data
+    @staticmethod
+    def from_csv(file, parse_date=[]):
+        table = pd.read_csv(
+            file,
+            encoding='ANSI',
+            sep=';',
+            parse_dates=parse_date,
+            dayfirst=True
+        )
+        table = table.where(pd.notnull(table), None)
+        return table
+
     @staticmethod
     def importFromAzure(container_name, blob_name, environment):
         downloaded_blob = AzureFactory.download_blob_single(container_name, blob_name, environment)
