@@ -136,25 +136,32 @@ def columns_diarytable():
         "primary_key": "NoteID"
     }
 
+def alter_record(db_connection, table_name, document_category, set_tuple, where_tuple):
+    dct = column_types_table(document_category, optional_columns=[], remove_primarykey=True)
+    query = "UPDATE " + table_name + " SET " + \
+            [key for (key, value) in dct.items() if value["alias"] == set_tuple[0]][0] + \
+            " = '" + set_tuple[1] + "' " + " WHERE " + \
+            [key for (key, value) in dct.items() if value["alias"] == where_tuple[0]][0] + \
+            " = '" + where_tuple[1] + "' "
+    db_connection.execute(query)
 
-def add_column(db, cursor, table_name, column_name, column_type):
-    query = "ALTER TABLE %s ADD %s %s;" % (table_name, column_name, column_type)
-    cursor.execute(query)
-    db.commit()
+#def add_column(db, cursor, table_name, column_name, column_type):
+#    query = "ALTER TABLE %s ADD %s %s;" % (table_name, column_name, column_type)
+#    cursor.execute(query)
+#    db.commit()
 
-
-def update_column(db, mycursor, table_name, column_name, new_column, primary_key):
-    mycursor.execute("SELECT %s FROM " % (primary_key) + table_name)
-    id_column = mycursor.fetchall()
-    # TODO
-    #  Execute many
-    #  Other than str
-    for id in id_column:
-        query = "UPDATE %s SET %s = \" %s \" WHERE %s = %s;" % (
-            table_name, column_name, new_column[0], primary_key, id[0]
-        )
-        mycursor.execute(query)
-    db.commit()
+#def update_column(db, mycursor, table_name, column_name, new_column, primary_key):
+#    mycursor.execute("SELECT %s FROM " % (primary_key) + table_name)
+#    id_column = mycursor.fetchall()
+#    # TODO
+#    #  Execute many
+#    #  Other than str
+#    for id in id_column:
+#        query = "UPDATE %s SET %s = \" %s \" WHERE %s = %s;" % (
+#            table_name, column_name, new_column[0], primary_key, id[0]
+#        )
+#        mycursor.execute(query)
+#    db.commit()
 
 
 def insert_specific_dataframe(db_connection,
@@ -171,41 +178,6 @@ def insert_specific_dataframe(db_connection,
         inplace=True
     )
     df.to_sql(table_name.lower(), db_connection, if_exists=if_exists, index=False)
-
-'''
-def insert_record(db, cursor, table_name, columns: tuple, values: tuple):
-    query = "INSERT INTO {0} (".format(table_name)
-    for x in columns:
-        query += x + ", "
-    query = query[:-2]
-    query += ") VALUES ("
-    for i in range(len(values)):
-        query += "%s, "
-    query = query[:-2]
-    query += ");"
-    cursor.execute(query, values)
-    db.commit()
-
-def insert_array(db, cursor, table_name, columns: tuple, values):
-    query = "INSERT INTO {0} (".format(table_name)
-    for x in columns:
-        query += x + ", "
-    query = query[:-2]
-    query += ") VALUES ("
-    for i in range(values.shape[1]):
-        query += "%s, "
-    query = query[:-2]
-    query += ");"
-    cursor.executemany(query, tuple(map(tuple, values)))
-    db.commit()
-
-def insert_photo_array(db, cursor, table_name, values):
-    dct = columns_phototable()
-    dct.pop("primary_key")
-    # Convert timestamp to datetime
-    values[:, 2] = list(map(lambda x: x.to_pydatetime(), values[:, 2]))
-    insert_array(db, cursor, table_name, tuple(dct.keys()), values)
-'''
 
 def read_dataframe(db_connection, table_name):
     df = pd.read_sql(table_name, con=db_connection)

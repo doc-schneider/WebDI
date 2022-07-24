@@ -44,30 +44,10 @@ def show_timeline():
 
     elif request.method == 'POST':
 
-        # Coming from portal?
-        if "portal" in request.form:
-            row = int(request.form["portal"])
-            db = config.portaltable.loc[row, "DATABASE"]
-            table = config.portaltable.loc[row, "TABLE"]
-            # Open database / table
-            config.db_connection.dispose()  # TODO Close old database. Seems to have no effect
-            config.db_connection = create_engine(config.connection_str + db)
-            config.documenttable = read_photo_dataframe(
-                config.db_connection, table
-            )
-            # Set starting parameters
-            config.document_pathtype = 'PATH'
-            config.documenttable.timesort()
-            config.eventtable = None
-            config.time_boxes = (
-                pd.Interval(
-                    pd.Timestamp('2021-01-01 00:00:00'),
-                    pd.Timestamp('2022-01-01 00:00:00'),
-                    closed='left'
-                ),
-                "Y"
-            )
-            init_TimelineView()
+        # Coming back from SingleView
+        if "back" in request.form:
+            # Reload from database
+            config.TimelineView.update(config.tablecollection, config.eventtable)
 
         # Navigation in timeline
         elif "submit" in request.form:
@@ -98,8 +78,18 @@ def show_single():
                 else:
                     config.SingleView.show_later()
 
+            elif key == 'back':
+                # Back from Edit
+                # Update SingleView from database
+                index_show = config.SingleView.BoxSeries[0].index_show  # Re-instate old index_show
+                config.SingleView.update(config.tablecollection, config.eventtable)
+                config.SingleView.BoxSeries[0].update(
+                    config.SingleView.documenttable,
+                    shift_show=index_show
+                )
+
             else:
-                # First call of page.
+                # First call of page from Timeline.
                 i = int(key)
                 time_interval = config.TimelineView.BoxSeries[i].time_interval # Box clicked
                 View = Viewer(
