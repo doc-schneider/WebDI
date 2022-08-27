@@ -28,9 +28,6 @@ def view_text(text_list):
 
 # TODO move
 def view_data(location_document, encode_type, document_pathtype, environment):
-    if encode_type == 'html_path':
-        # data = path to html source
-        data = location_document + '.html'
     elif encode_type == 'base64':
         if document_pathtype == 'AZURE':
             downloaded_blob = AzureFactory.download_blob_single(location_document[0],

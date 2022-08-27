@@ -1,5 +1,6 @@
 
 from DataOperations.Photos import PhotoFactory
+from DataOperations.Evernote import EvernoteFactory
 from DataOperations.Files import encode_data
 
 
@@ -12,14 +13,18 @@ class Viewer:
         if document_category == "photo":
             self.encode_type = "base64"
             self.thumbnail = thumbnail
+        elif document_category == "note":
+            self.encode_type = "html_path"  # TODO Not alwas correct, only for Evernote
+            self.static_basepath = "C:/Users/Stefan/PycharmProjects/WebDI/static/"  # TODO hand over
 
     # Complete file location
     def document_location(self, table):
-        # TODO Produces nan instead of None for None + None
         # Absolute file path
         if self.document_pathtype == 'PATH':
             table['LOCATION_DOCUMENT'] = table['PATH'] + table['DOCUMENT_NAME']
             table.loc[table['PATH'] == '', 'LOCATION_DOCUMENT'] = None
+            # For nan = None + None
+            table.loc[table['PATH'].isnull(), 'LOCATION_DOCUMENT'] = None
 
     def get_data_type(self, table):
         # TODO Format instead of Type
@@ -43,6 +48,10 @@ class Viewer:
                     encode_data,
                     args=(self.encode_type,)
                 ).tolist()
+        elif self.encode_type == "html_path":
+            EvernoteFactory.copy_html_to_static(table, self.static_basepath)
+            # data = path to html source
+            return table['STATIC_LOCATION'].tolist()
         elif self.document_category == "browsing":
             # TODO Parent
             return table["LINK"].tolist()

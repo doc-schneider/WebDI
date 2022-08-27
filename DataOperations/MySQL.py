@@ -1,12 +1,11 @@
 import pandas as pd
-import datetime as dtm
 from sqlalchemy import MetaData, Table, Column, Text, DateTime, Integer
 
-from DataStructures.Document import DocumentTable
 from DataStructures.TableTypes import column_types_table, find_optional_columns
 
 
 # TODO Move column definitions to DataStructures
+#  Add / remove columns
 
 def create_database(db_connection, db_name):
     query = "CREATE DATABASE " + db_name
@@ -19,7 +18,10 @@ def drop_table(db_connection, table_name):
     #query = "DROP TABLE IF EXISTS {0}".format(table_name)
     db_connection.execute(query)
 
-def create_specific_table(db_connection, table_name, table_type, optional_columns=[]):
+def create_specific_table(db_connection, table_name, table_type, optional_columns=[], if_exist="drop"):
+    # TODO Need query for existance of table
+    if if_exist == "drop":
+        drop_table(db_connection, table_name)
     dct = column_types_table(table_type, optional_columns=optional_columns)
     primary_key = dct["primary_key"]
     dct.pop("primary_key")
@@ -93,47 +95,6 @@ def columns_portaltable():
             "alias": "VIEW_TYPE"
         },
         "primary_key": "PortalID"
-    }
-
-def columns_diarytable():
-    return {
-        "NoteName": {
-            "mysqltype": "varchar(255)",
-            "alias": "DOCUMENT_NAME"
-        },
-        "NoteType": {
-            "mysqltype": "varchar(255)",
-            "alias": "DOCUMENT_TYPE"
-        },
-        "NoteTitle": {
-            "mysqltype": "varchar(255)",
-            "alias": "TITLE"
-        },
-        "NoteCategory": {
-            "mysqltype": "varchar(255)",
-            "alias": "CATEGORY"
-        },
-        "DateTime": {
-            "mysqltype": "datetime",
-            "alias": "DATETIME"
-        },
-        "Path": {
-            "mysqltype": "varchar(255)",
-            "alias": "PATH"
-        },
-        "Description": {
-            "mysqltype": "varchar(255)",
-            "alias": "DESCRIPTION"
-        },
-        "Attachment": {
-            "mysqltype": "varchar(255)",
-            "alias": "ATTACHMENT"
-        },
-        "Event": {
-            "mysqltype": "varchar(255)",
-            "alias": "EVENT"
-        },
-        "primary_key": "NoteID"
     }
 
 def alter_record(db_connection, table_name, document_category, set_tuple, where_tuple):

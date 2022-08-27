@@ -18,8 +18,9 @@ columns_common = {
         "mysqltype": "text",
         "sqlalchemytype": Text,
         "alias": "TABLE_NAME"
-    }
+    }  # Self table name
 }
+# TODO TableName mandatory good?
 
 columns_optional = {
     "DocumentGroup": {
@@ -34,7 +35,81 @@ columns_optional = {
     }
 }
 
-# Meta table for photos table
+# Meta table for collections of book-like documents and collections of collections. Ontology
+columns_metatable = {
+    "Table": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "TABLE"
+    },
+    "Category": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "CATEGORY"
+    },
+    "primary_key": "MetaID"
+}
+
+# table for note tables
+columns_notestable = {
+    "NoteTable": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "NOTE_TABLE"
+    },
+    "TimeFrom": {
+        "mysqltype": "datetime",
+        "sqlalchemytype": DateTime,
+        "alias": "TIME_FROM"
+    },
+    "TimeTo": {
+        "mysqltype": "datetime",
+        "sqlalchemytype": DateTime,
+        "alias": "TIME_TO"
+    },
+    "Category": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "CATEGORY"
+    },
+    "primary_key": "NotesID"
+}
+
+columns_notetable = {
+    "DateTime": {
+        "mysqltype": "datetime",
+        "sqlalchemytype": DateTime,
+        "alias": "DATETIME"
+    },
+    "DocumentName": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "DOCUMENT_NAME"
+    },
+    "DocumentFormat": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "DOCUMENT_TYPE"
+    },
+    "Path": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "PATH"
+    },
+    "DocumentTitle": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "DOCUMENT_TITLE"
+    },
+    "Attachment": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "ATTACHMENT"
+    },
+    "primary_key": "NoteID"
+}
+
+# table for photo tables
 columns_photostable = {
     "PhotoTable": {
         "mysqltype": "text",
@@ -138,7 +213,7 @@ columns_eventsstable = {
     "primary_key": "EventID"
 }
 
-# Meta table for books
+# table of  books
 # Links to Pages table
 # DateCreated: Time created
 columns_bookstable = {
@@ -208,6 +283,10 @@ def column_types_table(
 ):
     if table_type == "browsing":
         dct = columns_browsingtable.copy()
+    elif table_type == "note":
+        dct = columns_notetable.copy()
+    elif table_type == "notes":
+        dct = columns_notestable.copy()
     elif table_type == "book":
         dct = columns_booktable.copy()
     elif table_type == "books":

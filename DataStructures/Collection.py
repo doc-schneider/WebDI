@@ -2,6 +2,7 @@ import pandas as pd
 
 from DataStructures.Document import DocumentTable
 from DataOperations.MySQL import read_specific_dataframe
+from DataStructures.TableTypes import column_types_table
 
 
 class TableCollection:
@@ -17,9 +18,14 @@ class TableCollection:
             timeinterval
         )
         # TODO
-        #  - Make general
         #  - Document Group
-        table_name = self.metatable.data.loc[table_list[0], "PHOTO_TABLE"]
+        columns = column_types_table(
+            self.metatable.document_category,
+            [],
+            remove_primarykey=True,
+            return_aliasnames=True
+        )
+        table_name = self.metatable.data.loc[table_list[0], columns[0]]  # Assume first entry
         table = read_specific_dataframe(
             database_connection,
             table_name,
@@ -32,7 +38,7 @@ class TableCollection:
         )
         compound_table = compound_table.data
         for t in table_list[1: ]:
-            table_name = self.metatable.data.loc[t, "PHOTO_TABLE"]
+            table_name = self.metatable.data.loc[t, columns[0]]
             table_new = read_specific_dataframe(
                 database_connection,
                 table_name,

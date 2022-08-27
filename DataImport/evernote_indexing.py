@@ -1,45 +1,46 @@
-import mysql.connector
 from sqlalchemy import create_engine
 
+from DataStructures.TableTypes import find_optional_columns
 from DataOperations.Evernote import EvernoteFactory
 from DataOperations.MySQL import (
-    create_diarytable,
-    insert_diary_dataframe,
-    read_diary_dataframe
+    create_specific_table,
+    insert_specific_dataframe,
 )
 
+
+make_notetable_fromfolder = True
+exist_pretable = False
+create_table_mysql = True
+insert_table_mysql = True
+
+mysql_table = "note_biography_papa"
+
 # One path = one notebook.
-category = "personal diary"
-descriptions = None
-events = None
-#path_root = 'C:/Users/Stefan/Documents/Writings & Web/Evernote/2020-01'
-path_root = "//192.168.0.117/Stefan/Biographie/Stefan/Logs&Blogs/Evernote/"
-#path_note = 'Familie/Mamas Sachen'
-path_note = "Tagebuch & wissenschaftliche Ideen/Diary"
+path_root = "Z:/Biographie/Stefan/Logs&Blogs/Evernote/"
+path_note = "Biography/Papa"
 
-# Make table
-#evernotetable = EvernoteFactory.table_from_path(path_root, path_note, category, events)
+# Main table
+if make_notetable_fromfolder:
+    notetable = EvernoteFactory.table_from_path(path_root, path_note)
 
-# Create table
-#conn = mysql.connector.connect(
-#    host="localhost",
-#    user="Stefan",
-#    passwd="Moppel3",
-#    database="diaries",
-#)
-#mycursor = conn.cursor()
-#create_diarytable(conn, mycursor, "Diary")
+# MySQL
+if create_table_mysql:
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
+    db_connection = create_engine(db_connection_str)
+    create_specific_table(
+        db_connection,
+        mysql_table,
+        "note",
+        find_optional_columns(notetable.data, "note")
+    )
 
-# Write a table into database
-#db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/diaries'
-#db_connection = create_engine(db_connection_str)
-#insert_diary_dataframe(db_connection, "Diary", evernotetable)
-
-# Write Table
-#filename = 'Dokumentliste_Diary'
-#evernotetable.to_csv(path_root + "/" + path_note, filename)
-
-#  Read table from database
-db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/diaries'
-db_connection = create_engine(db_connection_str)
-evernotetable = read_diary_dataframe(db_connection, "Diary")
+if insert_table_mysql:
+    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
+    db_connection = create_engine(db_connection_str)
+    insert_specific_dataframe(
+        db_connection,
+        mysql_table,
+        "note",
+        notetable.data,
+        find_optional_columns(notetable.data, "note")
+    )

@@ -34,6 +34,9 @@
 									{% if boxes[i]["category"] == "browsing" %}										
 										<a href="{{ boxes[i][key][j] }}" class="link-primary">{{ boxes[i][key][j] }}</a>
 										
+									{% elif boxes[i]["category"] == "note" %}										
+										<iframe src="{{ url_for('static', filename=boxes[i][key][j]) }}"></iframe>
+										
 									{% elif boxes[i]["category"] == "photo" %}																								
 										{% if boxes[i]["data_type"][j] == "png" %}					
 											<img src="data:image/png;base64,{{ boxes[i][key][j] }}" class="img-fluid"/>  

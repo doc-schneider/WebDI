@@ -55,6 +55,7 @@ class PhotoFactory:
             if files_info.loc[i, 'DOCUMENT_TYPE'].lower() in ['jpg', 'jpeg']:
                 image = Image.open(files_info.loc[i, 'PATH'] + files_info.loc[i, 'DOCUMENT_NAME'])
                 exifdata = image.getexif()
+                # TODO Not precise enough due to lack of seconds. Order of photos can be distorted
                 table["DATETIME"].append(
                     dtm.datetime.strptime(exifdata.get(36867), "%Y:%m:%d %H:%M:%S")
                 )

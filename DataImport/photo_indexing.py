@@ -11,23 +11,24 @@ from DataOperations.MySQL import (
 )
 
 
-make_phototable_fromfolder = False
-exist_pretable = False
-write_csv = False
-read_csv = True
-create_phototable_mysql = False
-insert_phototable_mysql = False
+make_phototable_fromfolder = True
+exist_pretable = True
+write_csv = True
+read_csv = False
+create_phototable_mysql = True
+insert_phototable_mysql = True
 read_phototable_mysql = False
 
 path_root = 'Y:/'
 path_photo = '2022/'
-folder_photo = "2022_06_10_Wuppertal Konferenz"
+folder_photo = "2022_07_Lofoten/Auswahl/0_Flug"
 path_full = path_root + path_photo + folder_photo + "/"
-mysql_table = "photo_20220610_wuppertal_konferenz" # Use this as default table name
+mysql_table = "photo_20220702_flug_tromso"  # Use this as default table name
 
-optional_columns = ["LOCATION"]
+optional_columns = ["LOCATION", "DOCUMENT_GROUP"]
 
 # Pre-description
+# TODO Document_Group is read as float (only if None present)
 if exist_pretable:
     pretable = DocumentTableFactory.from_csv(
         "photo",
@@ -45,13 +46,6 @@ if make_phototable_fromfolder:
         folder_photo,
         pretable=pretable,
     )
-    # Document Group
-    pass
-
-# Event extraction
-#eventtable = EventFactory.extract_event_from_table(phototable)
-# Tag extraction
-#
 
 # Write Tables
 if write_csv:

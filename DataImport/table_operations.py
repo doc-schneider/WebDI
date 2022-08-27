@@ -11,14 +11,18 @@ from DataOperations.MySQL import (
     export_table
 )
 
+# TODO:
+#  DocumentGroup: Extend attributes to all group members
+#  Tag extraction
 
 add_rows = False
 delete_table = False
+interpolate_events = False
 add_eventid = False
 make_metatable = False
-update_metatable = False
-exists_metatable = True
-export_table_csv = True
+update_metatable = True
+exists_metatable = False
+export_table_csv = False
 
 if add_rows:
     table_type = "events"
@@ -32,14 +36,17 @@ if export_table_csv:
     mysql_table = "photos"  # = csv_table
     pathname = "Z:/Biographie/Stefan/Tables/"
 
+if interpolate_events:
+    pass
+
 if add_eventid:
     EventId = 31
     mysql_table = "photo_20220318_Geburtstag"
     PhotoId = range(2, 21+1)
 
 if make_metatable or update_metatable:
-    category = "photo"
-    meta_category = "photos"
+    category = "note"
+    meta_category = "notes"
 
 db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
 db_connection = create_engine(db_connection_str)
@@ -92,6 +99,8 @@ if add_eventid:
 if make_metatable:
     create_specific_table(db_connection, meta_category, meta_category)
 
+# TODO
+#  Time sort
 if update_metatable:
     if exists_metatable:
         metatable = read_specific_dataframe(db_connection, meta_category, meta_category)
@@ -102,19 +111,22 @@ if update_metatable:
     dct = column_types_table(meta_category)
     dct.pop("primary_key")
     meta_table_add = {value["alias"]: [] for (key, value) in dct.items()}
+    columns = list(meta_table_add.keys())
 
     # Find table of category
     table_names = db_connection.table_names()
     table_names = [tn for tn in table_names if category + "_" in tn]
     for tn in list(set(table_names) - tables_existing):
         # TODO - Transfer tags and events
-        #  - General set-up
-        meta_table_add["PHOTO_TABLE"].append(tn)
+        # Assume first column is table name
+        meta_table_add[columns[0]].append(tn)  # TODO bad style
         table = read_specific_dataframe(db_connection, tn, category)
-        meta_table_add["TIME_FROM"].append(table["DATETIME"].min())
-        meta_table_add["TIME_TO"].append(table["DATETIME"].max())
-        meta_table_add["DESCRIPTION"].append(None)
-        meta_table_add["TAG"].append(None)
+        if "TIME_FROM" in columns:
+            meta_table_add["TIME_FROM"].append(table["DATETIME"].min())
+            meta_table_add["TIME_TO"].append(table["DATETIME"].max())
+        for item in set(columns[1:]) - set(["TIME_FROM", "TIME_TO", 'TABLE_NAME']):
+            meta_table_add[item].append(None)
+        meta_table_add['TABLE_NAME'].append(meta_category)  # TODO Useful?
 
     insert_specific_dataframe(
         db_connection,

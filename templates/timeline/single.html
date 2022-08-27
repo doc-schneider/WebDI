@@ -44,12 +44,19 @@
 					{% set key = "data" %}
 					{% if boxes[0][key][j] != None %}
 						<div class="row justify-content-center border">
-							<div class="col">		
-								{% if boxes[0]["data_type"][j] == "png" %}					
-									<img src="data:image/png;base64,{{ boxes[0][key][j] }}" class="img-fluid"/>  
-								{% else %}
-									<img src="data:image/jpeg;base64,{{ boxes[0][key][j] }}" class="img-fluid"/> 
-								{% endif %}
+							<div class="col">	
+							
+								{% if boxes[0]["category"] == "note" %}										
+									<iframe src="{{ url_for('static', filename=boxes[0][key][j]) }}"></iframe>
+										
+								{% elif boxes[0]["category"] == "photo" %}
+									{% if boxes[0]["data_type"][j] == "png" %}					
+										<img src="data:image/png;base64,{{ boxes[0][key][j] }}" class="img-fluid"/>  
+									{% else %}
+										<img src="data:image/jpeg;base64,{{ boxes[0][key][j] }}" class="img-fluid"/> 
+									{% endif %}
+									
+								{% endif %}		
 							</div>
 						</div>
 					{% endif %}			

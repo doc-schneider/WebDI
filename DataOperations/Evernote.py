@@ -8,119 +8,103 @@ from distutils.dir_util import copy_tree
 import xml.etree.ElementTree as ET
 
 from DataStructures.Document import DocumentTable
+from DataStructures.TableTypes import column_types_table
 
 
 class EvernoteFactory:
 
     @staticmethod
     # TODO PreTable, DESCRIPTION
-    def table_from_path(path_root, path_note, category=None, events=None):
-        # The enex file (xml) gives the meta-information, title of note.
-        # Content is in the same folder as title_html and potentially title_files.
-        # Default category is the Notebook name. Parent category is Notebook stack, if it exists.
+    def table_from_path(path_root, path_note, pretable=None):
+        # Creates a notetable from Evernote data
+        # - The enex file (xml) gives the meta-information, title of note.
+        # - Content is in the same folder as title_html and potentially title_files.
+        # # Default category is the Notebook name. Parent category is Notebook stack, if it exists.
 
-        DATETIME = list()
-        PATH = list()
-        DOCUMENT_NAME = list()
-        DOCUMENT_TYPE = list()
-        TITLE = list()
-        DESCRIPTION = list()
-        CATEGORY = list()
-        ATTACHMENT = list()
-        EVENT = list()
+        # standard columns for note table
+        cols_standard = column_types_table(
+            "note",
+            optional_columns=[],
+            remove_primarykey=True,
+            return_aliasnames=True
+        )
+        table = {name: [] for name in cols_standard}
 
         pth = os.path.normpath(os.path.join(path_root, path_note))
         pth_base = os.path.basename(pth)
         file_enex = pth_base + '.enex'
         path_enex = os.path.normpath(os.path.join(pth, file_enex))
-
         tree = ET.parse(path_enex)
         root = tree.getroot()
         for note in root:  # note is one diary unit. Oldest comes first.
-            DOCUMENT_TYPE.append('html')  # Extra export from Evernote
+
+            table["DOCUMENT_TYPE"].append('html')  # Extra export from Evernote
+
+            table["TAG"].append(None)
+            table["TABLE_NAME"].append(None)
 
             title = note[0].text
-            TITLE.append(title)
+            table["DOCUMENT_TITLE"].append(title)
+            # TODO For the time being so that the title is easy to see on the web page
+            table["DESCRIPTION"].append(title)
+
+            table["PATH"].append((path_root + path_note).replace("\\", "/") + "/")
+
+            created = dtm.datetime.strptime(note[2].text, '%Y%m%dT%H%M%S%z')  # date time in UTC
+            created = created.astimezone(timezone('Europe/Berlin')).replace(tzinfo=None)
+            table["DATETIME"].append(created)
+            # TODO ? Updated
 
             # html files get counter when occurring multiple times.
             # TODO max 45 correct for additional counting?
             name = title[:45]  # max 45 characters
             count = 1
-            while (name + '.html') in DOCUMENT_NAME:
+            while (name + '.html') in table["DOCUMENT_NAME"]:
                 count += 1
                 name = title + ' [' + str(count) + ']'
-            DOCUMENT_NAME.append(name + '.html')
-
-            PATH.append((path_root + path_note).replace("\\","/"))
-
-            created = dtm.datetime.strptime(note[2].text, '%Y%m%dT%H%M%S%z')  # date time in UTC
-            created = created.astimezone(timezone('Europe/Berlin')).replace(tzinfo=None)
-            DATETIME.append(created)
-            # TODO ? Updated
+            table["DOCUMENT_NAME"].append(name + '.html')
 
             #  Attached documents
             if os.path.isdir(os.path.join(pth, name + "_files")):
-                ATTACHMENT.append(name + "_files")
+                table["ATTACHMENT"].append(name + "_files")
             else:
-                ATTACHMENT.append(None)
+                table["ATTACHMENT"].append(None)
 
-            # TODO
-            DESCRIPTION.append(None)
-
-            # TODO
-            if category is not None:
-                CATEGORY.append(category)
-            else:
-                CATEGORY.append(pth_base)
-
-            # TODO
-            if events is not None:
-                EVENT.append(events)
-            else:
-                EVENT.append(None)
-
-        df = pd.DataFrame(data={'DATETIME': DATETIME, 'PATH': PATH,
-                                'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE,
-                                'TITLE': TITLE, 'ATTACHMENT': ATTACHMENT,
-                                'DESCRIPTION': DESCRIPTION,
-                                'CATEGORY': CATEGORY, 'EVENT': EVENT})
-
-        return DocumentTable(df)
+        return DocumentTable(
+            pd.DataFrame(data=table),
+            document_category="note",
+            table_name=path_note
+        )
 
     @staticmethod
     def copy_html_to_static(evernotetable, static_basepath):
+        # TODO Only works for single row table
         # html & _files
         # Target location: sub static base path
-        ix = static_basepath.parts.index('static')
-        substatic_basepath = []
-        [substatic_basepath.append('/' + static_basepath.parts[i]) for i in range(ix + 1, len(static_basepath.parts))]
-        substatic_basepath = ''.join(substatic_basepath)
-        evernotetable.data['STATIC_PATH'] = ''    # Static paths for the documents.
-        for i in range(evernotetable.length):
-            row = evernotetable.data.loc[i]
-            # Original location.
-            p = Path(row.PATH)
-            # TODO:  -2 path parts
-            # Pure Evernote path = Notbook structure
-            evernote_path = p.parts[-2] + '/' + p.parts[-1]
-            # Target location: sub static path
-            evernotetable.data.loc[i,'STATIC_PATH'] = str(Path(substatic_basepath + '/' + evernote_path))
+        evernotetable['STATIC_LOCATION'] = None  # Static paths for the documents.
+        # Original location.
+        p = evernotetable["PATH"].values[0]
+        if p is not None:
+            # Pure Evernote path = Notebook structure
             # Copy location in static path.
-            static_path = static_basepath.joinpath(evernote_path)
+            static_path = p[p.find("Evernote"):]
+            d = evernotetable["DOCUMENT_NAME"].values[0]
+            # Need to remove file name invalid symbols from title
+            for invalid in [":", "?"]:
+                d = d.replace(invalid, "")
+            evernotetable['STATIC_LOCATION'] = static_path + d
             # Create directory
-            try:
-                os.makedirs(static_path)
-            except OSError:
-                pass
-            nm = row.DOCUMENT_NAME
-            html_orig = p.joinpath(nm + '.html')
-            html_target = static_path.joinpath(nm + '.html')
+            os.makedirs(static_path, exist_ok=True)
             # Overwrites existing
-            copyfile(str(html_orig), str(html_target))
-            dir_orig = p.joinpath(nm + '_files')
-            dir_target = static_path.joinpath(nm + '_files')
-            copy_tree(str(dir_orig),str(dir_target))
+            copyfile(
+                p + d,
+                static_basepath + static_path + d
+            )
+            if evernotetable["ATTACHMENT"].values[0] is not None:
+                copy_tree(
+                    p + evernotetable["ATTACHMENT"].values[0],
+                    static_basepath + static_path + evernotetable["ATTACHMENT"].values[0]
+                )
 
-        return evernotetable
 
 

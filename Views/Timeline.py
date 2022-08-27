@@ -309,6 +309,7 @@ class TimelineFactory:
         return granularity_new, time_grid, n_boxes
 
     # Marker for marking existing documents / time intervals on a grid.
+    # TODO There is an issue for SingleView. Markers do no lie on real times
     @staticmethod
     def markers(documenttable, time_interval):
         rect_width_min = 0.5  # Percentage
