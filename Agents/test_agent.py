@@ -1,10 +1,10 @@
 from flask import render_template, request, Blueprint
 
 import config
-from Views.View import Viewer
-from Views.Box import BoxViewer
-from Views.Timeline import TimelineViewer
-from Views.Utilities import timegrid
+#from Views.View import Viewer
+#from Views.Box import BoxViewer
+#from Views.Timeline import TimelineViewer
+#from Views.Utilities import timegrid
 
 
 ## Blueprint
@@ -120,3 +120,8 @@ def show_box():
         init_boxview()
 
     return render_template('/test/box.html', **render_box())
+
+@test.route('/iframe', methods=["GET","POST"])
+def show_iframe():
+
+    return render_template('/test/iframe.html')

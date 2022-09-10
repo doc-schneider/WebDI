@@ -11,8 +11,10 @@ from DataOperations.MySQL import (
 )
 
 
+# TODO update meta-table
+
 make_phototable_fromfolder = True
-exist_pretable = True
+exist_pretable = False
 write_csv = True
 read_csv = False
 create_phototable_mysql = True
@@ -21,11 +23,12 @@ read_phototable_mysql = False
 
 path_root = 'Y:/'
 path_photo = '2022/'
-folder_photo = "2022_07_Lofoten/Auswahl/0_Flug"
+folder_photo = "2022_09_03_Burgeressen Katrin Altstadt"
 path_full = path_root + path_photo + folder_photo + "/"
-mysql_table = "photo_20220702_flug_tromso"  # Use this as default table name
+mysql_table = "photo_" + folder_photo.replace(" ", "_")
+# mysql_table = "photo_2022_08_28_sonntagsradeln_botanischer_garten"  # Use this as default table name
 
-optional_columns = ["LOCATION", "DOCUMENT_GROUP"]
+optional_columns = []  # ["LOCATION"]   # "DOCUMENT_GROUP"
 
 # Pre-description
 # TODO Document_Group is read as float (only if None present)
@@ -45,6 +48,8 @@ if make_phototable_fromfolder:
         path_root + path_photo,
         folder_photo,
         pretable=pretable,
+        transfer_events=False,
+        event="Burgeressen mit Katrin und Raphael"
     )
 
 # Write Tables
@@ -79,7 +84,7 @@ if insert_phototable_mysql:
         mysql_table,
         "photo",
         phototable.data,
-        find_optional_columns(phototable.data, "photo")
+        find_optional_columns(phototable.data, "photo"),
     )
 
 #  Read table from database

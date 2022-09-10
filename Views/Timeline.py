@@ -25,8 +25,8 @@ class TimelineViewer():
         self.markers = None
         self.marker_show = None
         self.display_events = eventtable is not None
-        #self.event_markers = None
-        #self.event_labels = None
+        self.event_markers = None
+        self.event_labels = None
 
         if flag_single:
             self.n_boxes = 1
@@ -65,14 +65,65 @@ class TimelineViewer():
             )
         # TODO For timeline
         if self.display_markers and self.flag_single:
-            self.markers = TimelineFactory.markers(self.documenttable, self.time_grid.loc[0, "TIME_INTERVAL"])
+            self.markers = TimelineFactory.markers(
+                self.documenttable, self.time_grid.loc[0, "TIME_INTERVAL"]
+            )
             self.update_marker_show()
+        # Show events?
+        if self.display_events:
+            self.make_events(eventtable)
 
+    # Marker indicating current document looked at
     def update_marker_show(self):
         self.marker_show = TimelineFactory.markers(
             DocumentTable(self.BoxSeries[0].boxShow, self.View.document_category),
             self.time_grid.loc[0, "TIME_INTERVAL"]
         )
+
+    def make_events(self, eventtable):
+        self.event_markers = list()
+        self.event_labels = list()
+        events = eventtable.get_events(self.documenttable)
+        # Every box gets a (partial) event line
+        flag_label = False
+        for i in range(self.n_boxes):
+            # TODO Only first event for the time being
+            position, width = TimelineFactory.position_width(
+                events.loc[0, ["TIME_FROM", "TIME_TO"]],
+                self.time_grid.loc[i, "TIME_INTERVAL"]
+            )
+            self.event_markers.append((position, width))
+            if (position is not None) and (not flag_label):
+                self.event_labels.append(
+                    (position, events.loc[0, "EVENT_NAME"])
+                )
+                flag_label = True
+            else:
+                self.event_labels.append((None, None))
+
+        # min_width = 1.0    # Percentage
+        # # Full time interval on screen = 100%
+        # time_interval = pd.Interval(
+        #     self.time_grid['TIME_INTERVAL'].iloc[0].left,
+        #     self.time_grid['TIME_INTERVAL'].iloc[-1].right,
+        #     closed='left'
+        # )
+        # # TODO Only level 0 elements for the time being
+        # ix = list(
+        #     set(eventtable.find_in_timeinterval(time_interval)) &
+        #     set(eventtable.find_eventlevel(0))
+        # )
+        # self.event_markers = TimelineFactory.grid_markers(
+        #     EventTable(eventtable.data.loc[ix,:]), time_interval
+        # )
+        # position, width = TimelineFactory.position_width(
+        #     eventtable.data.loc[ix,:], time_interval
+        # )
+        # for i in range(len(ix)):
+        #     # TODO Very short events: Tooltip?
+        #     if width[i] > min_width:
+        #         self.event_labels.append((position[i],
+        #                                   eventtable.data['EVENT_NAME'].iloc[ix[i]]))
 
     def view(self):
         # List of dcts
@@ -91,37 +142,10 @@ class TimelineViewer():
             'timegrid': time_grid_str,
             'markers': self.markers,
             'marker_show': self.marker_show,
-            'event_markers': None,
-            'event_labels': None,
+            'event_markers': self.event_markers,
+            'event_labels': self.event_labels,
         }
         return dct
-
-
-    def make_events(self, eventtable):
-        min_width = 1.0    # Percentage
-
-        self.event_markers = list()
-        self.event_labels = list()
-        time_interval = pd.Interval(self.timegrid['TIME_FROM'].iloc[0],
-                                    self.timegrid['TIME_TO'].iloc[-1],
-                                    closed='left')
-        # TODO Only level 0 elements for the time being
-        ix = list(
-            set(eventtable.find_in_timeinterval(time_interval)) &
-            set(eventtable.find_eventlevel(0))
-        )
-        self.event_markers = TimelineFactory.grid_markers(
-            EventTable(eventtable.data.loc[ix,:]), time_interval
-        )
-        position, width = TimelineFactory.position_width(
-            eventtable.data.loc[ix,:], time_interval
-        )
-        for i in range(len(ix)):
-            # TODO Very short events: Tooltip?
-            if width[i] > min_width:
-                self.event_labels.append((position[i],
-                                          eventtable.data['EVENT_NAME'].iloc[ix[i]]))
-
 
     # Time buttons
     def earlier(self, tablecollection, eventtable=None):
@@ -309,12 +333,15 @@ class TimelineFactory:
         return granularity_new, time_grid, n_boxes
 
     # Marker for marking existing documents / time intervals on a grid.
+    # Full displayed timeinterval = 100% is partitioned into a grid and every grid bin overlapping a document is marked
     # TODO There is an issue for SingleView. Markers do no lie on real times
     @staticmethod
     def markers(documenttable, time_interval):
         rect_width_min = 0.5  # Percentage
         markers = list()
-        marker_grid = TimelineFactory.timegrid(time_interval.left, time_interval.right, int(100 / rect_width_min))
+        marker_grid = TimelineFactory.time_bins(
+            time_interval.left, time_interval.right, int(100 / rect_width_min)
+        )
         for i in range(int(100 / rect_width_min)):
             if documenttable.find_in_timeinterval(pd.Interval(
                     marker_grid['TIME_FROM'].iloc[i],
@@ -325,8 +352,9 @@ class TimelineFactory:
     # TODO
     #  - Use Intervals?
     #  - Improve with linspace or so instead of loop
+    # Partition full displayed timeinterval = 100% into a given number of bins
     @staticmethod
-    def timegrid(t_start, t_end, n_t):
+    def time_bins(t_start, t_end, n_t):
         t_delta = (t_end - t_start)
         dt = t_delta / n_t
         df = pd.DataFrame(columns=['TIME_FROM', 'TIME_TO'])
@@ -334,14 +362,26 @@ class TimelineFactory:
             df.loc[i] = [t_start + i * dt, t_start + (i + 1) * dt]
         return df
 
-
     # Position and width of an event / time intervals
     # - As percentage
+    # - If event extends beyond interval restrict
     @staticmethod
-    def position_width(table, time_interval):
-        left = 100.0 * (table['TIME_FROM'] - time_interval.left) / time_interval.length
-        width = 100.0 * (table['TIME_TO'] - table['TIME_FROM']) / time_interval.length
-        
-        return left.tolist(), width.tolist()
+    def position_width(time_from_to, time_interval):
+        if time_interval.overlaps(
+                pd.Interval(time_from_to['TIME_FROM'], time_from_to['TIME_TO'])
+        ):
+            left = 100.0 * max(
+                0.0,
+                (time_from_to['TIME_FROM'] - time_interval.left) / time_interval.length
+            )  # In case time_from is before left boundary
+            right = 100.0 * min(
+                1.0,
+                (time_from_to['TIME_TO'] - time_interval.left) / time_interval.length
+            )  # In case time_to is after right boundary
+            width = right - left
+            return (left, width)
+        else:
+            return (None, None)
+
 
 

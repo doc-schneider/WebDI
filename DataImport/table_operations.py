@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, inspect
 from DataStructures.Document import DocumentTableFactory
 from DataStructures.TableTypes import column_types_table
 from DataOperations.MySQL import (
+    drop_column,
     create_specific_table,
     read_specific_dataframe,
     insert_specific_dataframe,
@@ -16,18 +17,24 @@ from DataOperations.MySQL import (
 #  Tag extraction
 
 add_rows = False
+delete_column = False
 delete_table = False
 interpolate_events = False
 add_eventid = False
 make_metatable = False
 update_metatable = True
-exists_metatable = False
+exists_metatable = True
 export_table_csv = False
 
 if add_rows:
     table_type = "events"
     mysql_table = "events"
     file = "Z:/Biographie/Stefan/Timeline/EventListe.csv"
+
+if delete_column:
+    table_type = "photo"
+    mysql_table = "photo_20220318_Geburtstag"
+    column = "EventID"
 
 if delete_table:
     mysql_table = "photos"
@@ -45,8 +52,8 @@ if add_eventid:
     PhotoId = range(2, 21+1)
 
 if make_metatable or update_metatable:
-    category = "note"
-    meta_category = "notes"
+    category = "photo"
+    meta_category = "photos"
 
 db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
 db_connection = create_engine(db_connection_str)
@@ -67,6 +74,9 @@ if add_rows:
         )
     ]
     insert_specific_dataframe(db_connection, mysql_table, table_type, add_table)
+
+if delete_column:
+    drop_column(db_connection, mysql_table, table_type, column)
 
 if delete_table:
     drop_table(db_connection, mysql_table)
@@ -126,7 +136,8 @@ if update_metatable:
             meta_table_add["TIME_TO"].append(table["DATETIME"].max())
         for item in set(columns[1:]) - set(["TIME_FROM", "TIME_TO", 'TABLE_NAME']):
             meta_table_add[item].append(None)
-        meta_table_add['TABLE_NAME'].append(meta_category)  # TODO Useful?
+        #meta_table_add['TABLE_NAME'].append(meta_category)  # TODO Useful?
+        meta_table_add.pop('TABLE_NAME')
 
     insert_specific_dataframe(
         db_connection,

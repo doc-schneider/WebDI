@@ -67,10 +67,10 @@ class Viewer:
         elif granularity == "10Y":
             box_size = [1 for i in range(10)]
         elif granularity == "Y":
-            box_size = [2, 2, 2, 2]
+            box_size = [3, 3, 3, 3]  # [2, 2, 2, 2]
             icon_names = ["", "", "", ""]
         elif granularity == "Q":
-            box_size = [2, 2, 2]
+            box_size = [3, 3, 3]  # [2, 2, 2]
         elif granularity == "M":
             box_size = [2 for i in range(time_grid.shape[0])]
         elif granularity == "W":
@@ -79,7 +79,7 @@ class Viewer:
                 lambda x: 1 if x.left.weekday() in [5, 6] else 2
             ).tolist()
         elif granularity == "D":
-            box_size = [2 for i in range(4)]
+            box_size = [3 for i in range(4)]  # [2 for i in range(4)]
         elif granularity == "6H":
             box_size = [2 for i in range(6)]
         image_names = None  # TODO

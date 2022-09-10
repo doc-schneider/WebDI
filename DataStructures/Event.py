@@ -1,13 +1,21 @@
-import pandas as pd
-import numpy as np
-
 from DataStructures.Data import DataTable
 
 
+# TODO
+#  Distnguish event and events
 class EventTable(DataTable):
 
     def __init__(self, table):
-        super().__init__(table)
+        super().__init__(
+            table,
+            document_category="events",
+            table_name="events"
+        )
+
+    def get_events(self, documenttable):
+        # Events in EventTable belonging to events in DocumentTable
+        events = list(documenttable.data["EVENT"].unique())
+        return self.data[self.data["EVENT_NAME"].isin(events)].reset_index(drop=True)
 
     def find_eventlevel(self, eventlevel):
         return self.data.index[self.data['EVENT_LEVEL'] == eventlevel].to_list()
@@ -43,25 +51,3 @@ class EventTable(DataTable):
         # Temporary helper to converting EVENT_TIME (list) to TIME_FROM ..
         self.data['TIME_FROM'] = [t[0] for t in self.data['EVENT_TIME_FROM']]
         self.data['TIME_TO'] = [t[0] for t in self.data['EVENT_TIME_TO']]
-
-
-class EventFactory:
-
-    @staticmethod
-    def extract_event_from_table(table):
-        # Extracts event name and time span from a DocumentTable (eg, while DocumentTable is
-        # constructed by means of a pre-table)
-        event_name = np.unique(table.data['EVENT'].values)[0]  # Assume single event for all for the time being
-        table.timesort()   # Earliest Time_From
-        time_from = table.data['TIME_FROM'].iloc[0]
-        table.data.sort_values(by=['TIME_TO'], inplace=True)
-        table.data.reset_index(drop=True, inplace=True)
-        time_to = table.data['TIME_TO'].iloc[-1]
-        # TODO : EventLevel?
-        df = pd.DataFrame({'TIME_FROM': [time_from], 'TIME_TO': [time_to], 'EVENT_NAME': [event_name],
-                           'PARENT_EVENT': [None]})  # One line EventTable
-        return EventTable(df)
-
-    @staticmethod
-    def append_to_eventtable(column_name):    # String items can appear in lists in these columns.
-        return column_name in ['DESCRIPTION', 'PARENT_DESCRIPTION', 'CATEGORY', 'PARENT_CATEGORY']

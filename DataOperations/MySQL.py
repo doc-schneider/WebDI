@@ -14,8 +14,7 @@ def create_database(db_connection, db_name):
 
 
 def drop_table(db_connection, table_name):
-    query = "DROP TABLE " + table_name
-    #query = "DROP TABLE IF EXISTS {0}".format(table_name)
+    query = "DROP TABLE IF EXISTS {0}".format(table_name)
     db_connection.execute(query)
 
 def create_specific_table(db_connection, table_name, table_type, optional_columns=[], if_exist="drop"):
@@ -104,6 +103,10 @@ def alter_record(db_connection, table_name, document_category, set_tuple, where_
             " = '" + set_tuple[1] + "' " + " WHERE " + \
             [key for (key, value) in dct.items() if value["alias"] == where_tuple[0]][0] + \
             " = '" + where_tuple[1] + "' "
+    db_connection.execute(query)
+
+def drop_column(db_connection, table_name, document_category, column_name):
+    query = "ALTER TABLE %s DROP COLUMN %s;" % (table_name, column_name)
     db_connection.execute(query)
 
 #def add_column(db, cursor, table_name, column_name, column_type):

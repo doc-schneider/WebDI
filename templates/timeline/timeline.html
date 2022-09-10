@@ -67,7 +67,6 @@
 			{% endfor %}
 		</div>	
 
-		
 		<!-- Document markers -->
 		<!--  
 		{% if markers != None %}
@@ -84,27 +83,23 @@
 		-->
 		
 		<!-- Event timelines -->
-		<!--  
-		{% if event_markers is not none %}	
-			<div class="row"> 
-				<div class="col pt-2 px-0">	
-					<svg width="100%" height="5">
-						{% for i in range(event_markers|length) %}
-							<rect x="{{event_markers[i][0]}}%" width="{{event_markers[i][1]}}%" height="2" style="fill:DarkGray;" />	
-						{% endfor %}
-					</svg>
+		<div class="row justify-content-center"> 	
+			{% for i in range(boxes|length) %} 	
+				{% set boxsize = box_size[i] %}
+				<div class="col-{{ boxsize }} px-0 pt-5">	
+					{% if event_markers[i][0] != None %}		
+						<svg width="100%" height="5">
+							<rect x="{{event_markers[i][0]}}%" width="{{event_markers[i][1]}}%" height="3" style="fill:DarkGray;" />	
+						</svg>
+						{% if event_markers[i][1] != None %}
+							<div>	
+								<span style="position: relative; left: {{event_labels[i][0]}}%; width: 10%; background: LightGray; border:1px solid DodgerBlue;">{{event_labels[i][1]}}</span>
+							</div>	
+						{% endif %}
+					{% endif %}
 				</div>
-			</div>	
-			<div class="row">	
-				<div class="col px-0">
-					{% for i in range(event_labels|length) %}					
-						<span style="position: absolute; left: {{event_labels[i][0]}}%; width: 10%; background: LightGray; border:1px solid DodgerBlue;">
-						{{event_labels[i][1]}}</span>
-					{% endfor %}
-				</div>
-			</div>
-		{% endif %} 
-		-->
+			{% endfor %}
+		</div>
 	
 		<!-- Time axis -->
 		<div class="row justify-content-center"> 	

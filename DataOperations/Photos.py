@@ -18,7 +18,9 @@ class PhotoFactory:
     def table_from_folder(
             path_photo,
             folder_photo,
-            pretable=None
+            pretable=None,
+            transfer_events=False,
+            event=None
     ):
 
         # Returns TIME_CREATED, PATH, DOCUMENT_NAME, DOCUMENT_TYPE
@@ -81,6 +83,13 @@ class PhotoFactory:
                             ix,
                             col
                         ].values[0]
+
+        if transfer_events:
+            # TODO Interpoalte events?
+            event = (set(table["EVENT"]) - set([None])).pop()  # Assume single event
+            table["EVENT"] = [e if e is not None else event for e in table["EVENT"]]
+        elif event is not None:
+            table["EVENT"] = event
 
         return DocumentTable(
             pd.DataFrame(data=table),
