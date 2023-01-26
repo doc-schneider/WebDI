@@ -1,32 +1,30 @@
 import pandas as pd
+import numpy as np
 from dateutil.relativedelta import relativedelta, MO, SU
 
+from Views.View import Viewer
 from Views.Box import BoxViewer
-from DataStructures.Event import EventTable
 from DataStructures.Document import DocumentTable
 
 
-# TODO:
-#  - Get tables as reference
 class TimelineViewer():
     def __init__(self,
-                 View,
+                 MetaView,
                  time_boxes,
                  flag_single,
                  tablecollection,
-                 eventtable=None,
-                 markers=True
+                 eventtable=None
                  ):
-        self.View = View
-        self.documenttable = None
+        self.MetaView = MetaView
+        self.n_timelines = len(tablecollection)
+        self.documenttable = list()
         self.flag_single = flag_single    # TODO For the time bing
-        self.display_markers = markers
-        self.display_marker_show = markers  # TODO Should be convered by display_markers
-        self.markers = None
-        self.marker_show = None
+        self.markers = list()
+        self.marker_show = list()
         self.display_events = eventtable is not None
         self.event_markers = None
         self.event_labels = None
+        self.event_descriptions = None
 
         if flag_single:
             self.n_boxes = 1
@@ -48,87 +46,109 @@ class TimelineViewer():
 
     def update(self, tablecollection, eventtable):
         # Assemble documenttables from meta-table
-        self.documenttable = tablecollection.compound_table_from_timeinterval(
-            pd.Interval(
-                self.time_grid.loc[0, "TIME_INTERVAL"].left,
-                self.time_grid.iloc[-1]["TIME_INTERVAL"].right,
-                closed='left'
-            ),
-            self.View.database_connection
-        )
-        self.BoxSeries = pd.Series(data=[BoxViewer(self.View) for i in range(self.n_boxes)])
+        for tc in tablecollection:
+            self.documenttable.append(
+                tc.compound_table_from_timeinterval(
+                    pd.Interval(
+                        self.time_grid.loc[0, "TIME_INTERVAL"].left,
+                        self.time_grid.iloc[-1]["TIME_INTERVAL"].right,
+                        closed='left'
+                    ),
+                    self.MetaView.database_connection
+                )
+            )
+        self.BoxSeries = list()
+        for i in range(self.n_timelines):
+            self.BoxSeries.append(
+                pd.Series(
+                    data=[BoxViewer(Viewer(self.MetaView, i)) for j in range(self.n_boxes)]
+                )
+            )
         # Find documents in each time box
-        for i in range(self.n_boxes):
-            self.BoxSeries[i].update_Timeline(
-                self.documenttable,
-                self.time_grid.loc[i, "TIME_INTERVAL"]
-            )
-        # TODO For timeline
-        if self.display_markers and self.flag_single:
-            self.markers = TimelineFactory.markers(
-                self.documenttable, self.time_grid.loc[0, "TIME_INTERVAL"]
-            )
-            self.update_marker_show()
+        for j in range(self.n_timelines):
+            for i in range(self.n_boxes):
+                self.BoxSeries[j][i].update_Timeline(
+                    self.documenttable[j],
+                    self.time_grid.loc[i, "TIME_INTERVAL"]
+                )
+        # Markers
+        self.make_marker()
         # Show events?
         if self.display_events:
             self.make_events(eventtable)
 
-    # Marker indicating current document looked at
-    def update_marker_show(self):
-        self.marker_show = TimelineFactory.markers(
-            DocumentTable(self.BoxSeries[0].boxShow, self.View.document_category),
-            self.time_grid.loc[0, "TIME_INTERVAL"]
-        )
+    # Marker grid and indicator current document looked at
+    def make_marker(self):
+        for j in range(self.n_timelines):
+            lst_m = list()
+            lst_s = list()
+            for i in range(self.n_boxes):
+                lst_m.append(
+                    TimelineFactory.markers(
+                        self.documenttable[j], self.time_grid.loc[i, "TIME_INTERVAL"]
+                    )
+                )
+                lst_s.append(
+                    TimelineFactory.markers(
+                        DocumentTable(
+                            self.BoxSeries[j][i].boxShow,
+                            self.BoxSeries[j][i].View.document_category
+                        ),
+                        self.time_grid.loc[i, "TIME_INTERVAL"]
+                    )
+                )
+            self.markers.append(lst_m)
+            self.marker_show.append(lst_s)
 
     def make_events(self, eventtable):
+        # TODO
+        #  Disjunct events for the time being
+        #  Event container containing all items
         self.event_markers = list()
         self.event_labels = list()
-        events = eventtable.get_events(self.documenttable)
+        self.event_descriptions = list()
+        # All events from all timelines
+        # TODO Make this function in Event
+        events = [
+            eventtable.get_events(d) for d in self.documenttable
+        ]
+        events = pd.concat(events, ignore_index=True)
+        events = events.sort_values(by="TIME_FROM").reset_index(drop=True)
         # Every box gets a (partial) event line
-        flag_label = False
+        flag_label = np.full(events.shape[0], False)  # Only one label per event over all boxes
         for i in range(self.n_boxes):
-            # TODO Only first event for the time being
-            position, width = TimelineFactory.position_width(
-                events.loc[0, ["TIME_FROM", "TIME_TO"]],
-                self.time_grid.loc[i, "TIME_INTERVAL"]
-            )
-            self.event_markers.append((position, width))
-            if (position is not None) and (not flag_label):
-                self.event_labels.append(
-                    (position, events.loc[0, "EVENT_NAME"])
+            event_markers = list()
+            event_labels = list()
+            event_descriptions = list()
+            for j in range(events.shape[0]):
+                position, width = TimelineFactory.position_width(
+                    events.loc[j, ["TIME_FROM", "TIME_TO"]],
+                    self.time_grid.loc[i, "TIME_INTERVAL"]
                 )
-                flag_label = True
-            else:
-                self.event_labels.append((None, None))
-
-        # min_width = 1.0    # Percentage
-        # # Full time interval on screen = 100%
-        # time_interval = pd.Interval(
-        #     self.time_grid['TIME_INTERVAL'].iloc[0].left,
-        #     self.time_grid['TIME_INTERVAL'].iloc[-1].right,
-        #     closed='left'
-        # )
-        # # TODO Only level 0 elements for the time being
-        # ix = list(
-        #     set(eventtable.find_in_timeinterval(time_interval)) &
-        #     set(eventtable.find_eventlevel(0))
-        # )
-        # self.event_markers = TimelineFactory.grid_markers(
-        #     EventTable(eventtable.data.loc[ix,:]), time_interval
-        # )
-        # position, width = TimelineFactory.position_width(
-        #     eventtable.data.loc[ix,:], time_interval
-        # )
-        # for i in range(len(ix)):
-        #     # TODO Very short events: Tooltip?
-        #     if width[i] > min_width:
-        #         self.event_labels.append((position[i],
-        #                                   eventtable.data['EVENT_NAME'].iloc[ix[i]]))
+                event_markers.append((position, width))
+                if (position is not None) and (not flag_label[j]):
+                    event_labels.append(
+                        (position, events.loc[j, "EVENT_NAME"])
+                    )
+                    flag_label[j] = True
+                    # Description only for Event in Box shown
+                    for k in range(self.n_timelines):
+                        if self.BoxSeries[k][i].boxShow["EVENT"].values[0] == events.loc[j, "EVENT_NAME"]:
+                            event_descriptions.append(events.loc[j, "DESCRIPTION"])
+                else:
+                    event_labels.append((None, None))
+            if len(event_descriptions) < len(event_labels):
+                event_descriptions.append(None)
+            self.event_markers.append(event_markers)
+            self.event_labels.append(event_labels)
+            self.event_descriptions.append(event_descriptions)
 
     def view(self):
         # List of dcts
-        # TODO Date Time Interval information
-        dct_lst = [Box.view() for Box in self.BoxSeries]
+        # TODO Make dicts with speaking names instead of tuples and lists
+        # TODO All Event items put into one object
+        # [Box.view() for Box in self.BoxSeries]
+        dct_lst = [[BV.view() for BV in BS] for BS in self.BoxSeries]
         # Bootstrap box size
         box_size, _ = self.View.boostrap_properties(self.granularity, self.time_grid)
         # Time line
@@ -142,8 +162,10 @@ class TimelineViewer():
             'timegrid': time_grid_str,
             'markers': self.markers,
             'marker_show': self.marker_show,
+            'display_events': self.display_events,
             'event_markers': self.event_markers,
             'event_labels': self.event_labels,
+            'event_descriptions': self.event_descriptions
         }
         return dct
 
@@ -186,14 +208,14 @@ class TimelineViewer():
         )
         self.update(tablecollection, eventtable)
 
-    # Shift within Box
+    # Shift within Single Box
     def show_earlier(self):
         self.BoxSeries[0].update(self.documenttable, shift_show=-1)
-        self.update_marker_show()
+        self.make_marker()
 
     def show_later(self):
         self.BoxSeries[0].update(self.documenttable, shift_show=1)
-        self.update_marker_show()
+        self.make_marker()
 
 
 # Timeline utilities
@@ -334,10 +356,10 @@ class TimelineFactory:
 
     # Marker for marking existing documents / time intervals on a grid.
     # Full displayed timeinterval = 100% is partitioned into a grid and every grid bin overlapping a document is marked
-    # TODO There is an issue for SingleView. Markers do no lie on real times
+    # TODO There is an issue for SingleView? Markers do no lie on real times?
     @staticmethod
     def markers(documenttable, time_interval):
-        rect_width_min = 0.5  # Percentage
+        rect_width_min = 1.0  # Percentage
         markers = list()
         marker_grid = TimelineFactory.time_bins(
             time_interval.left, time_interval.right, int(100 / rect_width_min)

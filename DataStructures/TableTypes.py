@@ -2,7 +2,8 @@ from sqlalchemy import Text, DateTime, Date, Integer
 
 
 # TODO What makes sense?
-# Common to all table types
+#  - Common to all table types
+#  - Category, ..
 columns_common = {
     "Description": {
         "mysqltype": "text",
@@ -32,6 +33,16 @@ columns_optional = {
         "mysqltype": "text",
         "sqlalchemytype": Text,
         "alias": "LOCATION"
+    },
+    "Category": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "CATEGORY"
+    },
+    "Event": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "EVENT"
     }
 }
 
@@ -109,6 +120,61 @@ columns_notetable = {
     "primary_key": "NoteID"
 }
 
+# table for CD tables
+columns_musicstable = {
+    "MusicTable": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "MUSIC_TABLE"
+    },
+    "Category": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "CATEGORY"
+    },
+    "primary_key": "MusicsID"
+}
+
+# Music lists like CDs
+columns_musictable = {
+    "DocumentName": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "DOCUMENT_NAME"
+    },
+    "DocumentCategory": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "DOCUMENT_CATEGORY"
+    },
+    "DocumentType": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "DOCUMENT_TYPE"
+    },
+    "Path": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "PATH"
+    },
+    "Title": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "TITLE"
+    },
+    "Composer": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "COMPOSER"
+    },
+    "Perfomer": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "PERFORMER"
+    },
+    "primary_key": "TrackID"
+}
+
 # table for photo tables
 columns_photostable = {
     "PhotoTable": {
@@ -152,7 +218,7 @@ columns_phototable = {
         "sqlalchemytype": Text,
         "alias": "PATH"
     },
-    "Event": {                    # TODO Should not be part of the core photo table. Optional?
+    "Event": {                    # TODO Should not be part of the core photo table.
         "mysqltype": "text",
         "sqlalchemytype": Text,
         "alias": "EVENT"
@@ -184,6 +250,8 @@ columns_browsingtable = {
     "primary_key": "BrowsingID"
 }
 
+# TODO
+#  participants, path, ..
 columns_eventsstable = {
     "EventName": {
         "mysqltype": "text",
@@ -209,6 +277,11 @@ columns_eventsstable = {
         "mysqltype": "integer",
         "sqlalchemytype": Integer,
         "alias": "PARENT_EVENT_ID"
+    },
+    "Path": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "PATH"
     },
     "primary_key": "EventID"
 }
@@ -291,6 +364,10 @@ def column_types_table(
         dct = columns_booktable.copy()
     elif table_type == "books":
         dct = columns_bookstable.copy()
+    elif table_type == "music":
+        dct = columns_musictable.copy()
+    elif table_type == "musics":
+        dct = columns_musicstable.copy()
     elif table_type == "photo":
         dct = columns_phototable.copy()
     elif table_type == "photos":
@@ -302,6 +379,9 @@ def column_types_table(
 
     # Add default columns
     dct.update(columns_common)
+    # Drop TableName for meta tables
+    if table_type in ["events", "photos", "musics", "notes", "books"]:
+        dct.pop("TableName")
 
     # Optional columns
     # Can be either alias of key
@@ -323,3 +403,68 @@ def column_types_table(
 
     return dct
 
+
+'''
+# Various DataFrame column names and their MySQL correspondence
+def columns_generictable():
+    return {
+        "NAME": {
+            "mysqltype": "text",
+            "alias": "NAME"
+        },
+        "DOCUMENT_NAME": {
+            "mysqltype": "varchar(255)",
+            "alias": "DOCUMENT_NAME"
+        },
+        "DOCUMENT_TYPE": {
+            "mysqltype": "varchar(255)",
+            "alias": "DOCUMENT_TYPE"
+        },
+        "DATETIME": {
+            "mysqltype": "datetime",
+            "alias": "DATETIME"
+        },
+        "PATH": {
+            "mysqltype": "varchar(255)",
+            "alias": "PATH"
+        },
+        "DESCRIPTION": {
+            "mysqltype": "varchar(255)",
+            "alias": "DESCRIPTION"
+        },
+        "EVENT": {
+            "mysqltype": "varchar(255)",
+            "alias": "EVENT"
+        },
+        "primary_key": "ID"
+    }
+
+def columns_portaltable():
+    return {
+        "NAME": {
+            "mysqltype": "text",
+            "alias": "NAME"
+        },
+        "SUB_PORTAL": {
+            "mysqltype": "text",
+            "alias": "SUB_PORTAL"
+        },
+        "DATABASE_NAME": {
+            "mysqltype": "text",
+            "alias": "DATABASE"
+        },
+        "TABLE_NAME": {
+            "mysqltype": "text",
+            "alias": "TABLE"
+        },
+        "DOCUMENT_CATEGORY": {
+            "mysqltype": "text",
+            "alias": "DOCUMENT_CATEGORY"
+        },
+        "VIEW_TYPE": {
+            "mysqltype": "text",
+            "alias": "VIEW_TYPE"
+        },
+        "primary_key": "PortalID"
+    }
+'''

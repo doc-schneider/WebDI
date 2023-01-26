@@ -70,6 +70,26 @@
 						</div>	
 					{% endif %}
 					
+					<!-- Table Name -->
+					{% if boxes[0]["table_name"][j] != None %}
+						<div class="row justify-content-center border text-dark bg-success">
+							<div class="col text-dark">					
+								{{ boxes[0]["table_name"][j] }}
+							</div>
+						</div>	
+					{% endif %}
+					
+					{% if display_events %}
+						<!-- Event -->
+						{% if boxes[0]["event"][j] != None %}
+							<div class="row justify-content-center border text-dark bg-info">
+								<div class="col overflow-scroll text-dark">					
+									{{ boxes[0]["event"][j] }}
+								</div>
+							</div>	
+						{% endif %}
+					{% endif %}
+					
 				{% endfor %}		
 			</div>	
 		</div>	
@@ -78,13 +98,46 @@
 		<div class="row"> 
 			<div class="col pt-3 px-0">	
 				<svg width="100%" height="5">
-					{% for i in range(markers|length) %}
-						<rect x="{{markers[i][0]}}%" width="{{markers[i][1]}}%" height="5" style="fill:black;" />	
+					{% for i in range(markers[0]|length) %}
+						<rect x="{{markers[0][i][0]}}%" width="{{markers[0][i][1]}}%" height="5" style="fill:black;" />	
 					{% endfor %}
-					<rect x="{{marker_show[0][0]}}%" width="{{marker_show[0][1]}}%" height="5" style="fill:red;" />
+					{%  if marker_show[0] | length > 0 %} 
+						<rect x="{{marker_show[0][0][0]}}%" width="{{marker_show[0][0][1]}}%" height="5" style="fill:red;" />
+					{% endif %} 
 				</svg>
 			</div>
 		</div>	
+		
+		{% if display_events %}
+			<!-- Event timelines -->
+			<div class="row justify-content-center pt-3 px-0"> 	
+				<div class="col px-0 border bg-info">					
+					<!-- Event Marker and Description -->
+					<svg width="100%" height="5">			
+						{% for j in range(event_markers[0]|length) %} 				
+							{% if event_markers[0][j] != None %}	
+								<rect x="{{event_markers[0][j][0]}}%" width="{{event_markers[0][j][1]}}%" height="3" style="fill:black;" />	
+							{% endif %}
+						{% endfor %}
+					</svg>		
+					{% for j in range(event_markers[0]|length) %} 
+						{% if event_labels[0][j][1] != None %}
+							<div>	
+								<span style="position: relative; left: {{event_labels[0][j][0]}}%; width: 10%; background: WhiteSmoke; border:1px solid DodgerBlue;">{{event_labels[0][j][1]}}</span>
+							</div>	
+						{% endif %}
+					{% endfor %}
+				</div>	
+			</div>		
+			<!-- Event Description -->
+			<div class="row justify-content-center"> 	 	
+				<div class="col border overflow-scroll">					
+					{% if event_descriptions[0][0] != None %}			
+						{{ event_descriptions[0][0] }}
+					{% endif %}			
+				</div>
+			</div>
+		{% endif %}	
 		
 		<!-- Time axis -->
 		<div class="row"> 			

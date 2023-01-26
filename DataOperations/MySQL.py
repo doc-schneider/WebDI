@@ -33,99 +33,32 @@ def create_specific_table(db_connection, table_name, table_type, optional_column
     )
     metadata.create_all(db_connection)
 
-# Various DataFrame column names and their MySQL correspondence
-def columns_generictable():
-    return {
-        "NAME": {
-            "mysqltype": "text",
-            "alias": "NAME"
-        },
-        "DOCUMENT_NAME": {
-            "mysqltype": "varchar(255)",
-            "alias": "DOCUMENT_NAME"
-        },
-        "DOCUMENT_TYPE": {
-            "mysqltype": "varchar(255)",
-            "alias": "DOCUMENT_TYPE"
-        },
-        "DATETIME": {
-            "mysqltype": "datetime",
-            "alias": "DATETIME"
-        },
-        "PATH": {
-            "mysqltype": "varchar(255)",
-            "alias": "PATH"
-        },
-        "DESCRIPTION": {
-            "mysqltype": "varchar(255)",
-            "alias": "DESCRIPTION"
-        },
-        "EVENT": {
-            "mysqltype": "varchar(255)",
-            "alias": "EVENT"
-        },
-        "primary_key": "ID"
-    }
-
-def columns_portaltable():
-    return {
-        "NAME": {
-            "mysqltype": "text",
-            "alias": "NAME"
-        },
-        "SUB_PORTAL": {
-            "mysqltype": "text",
-            "alias": "SUB_PORTAL"
-        },
-        "DATABASE_NAME": {
-            "mysqltype": "text",
-            "alias": "DATABASE"
-        },
-        "TABLE_NAME": {
-            "mysqltype": "text",
-            "alias": "TABLE"
-        },
-        "DOCUMENT_CATEGORY": {
-            "mysqltype": "text",
-            "alias": "DOCUMENT_CATEGORY"
-        },
-        "VIEW_TYPE": {
-            "mysqltype": "text",
-            "alias": "VIEW_TYPE"
-        },
-        "primary_key": "PortalID"
-    }
-
+# TODO Simplfy code with table type functions
 def alter_record(db_connection, table_name, document_category, set_tuple, where_tuple):
     dct = column_types_table(document_category, optional_columns=[], remove_primarykey=True)
+    where_clause = ""  #  Update all rows
+    if where_tuple is not None:
+        where_clause = " WHERE " + \
+                       [key for (key, value) in dct.items() if value["alias"] == where_tuple[0]][0] + \
+                       " = '" + where_tuple[1] + "' "
+    if isinstance(set_tuple[1], pd.Timestamp):
+        set_value = set_tuple[1].strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        set_value = set_tuple[1]
     query = "UPDATE " + table_name + " SET " + \
             [key for (key, value) in dct.items() if value["alias"] == set_tuple[0]][0] + \
-            " = '" + set_tuple[1] + "' " + " WHERE " + \
-            [key for (key, value) in dct.items() if value["alias"] == where_tuple[0]][0] + \
-            " = '" + where_tuple[1] + "' "
+            " = '" + set_value + "' " + where_clause
     db_connection.execute(query)
 
 def drop_column(db_connection, table_name, document_category, column_name):
+    # TODO document_category
     query = "ALTER TABLE %s DROP COLUMN %s;" % (table_name, column_name)
     db_connection.execute(query)
 
-#def add_column(db, cursor, table_name, column_name, column_type):
-#    query = "ALTER TABLE %s ADD %s %s;" % (table_name, column_name, column_type)
-#    cursor.execute(query)
-#    db.commit()
-
-#def update_column(db, mycursor, table_name, column_name, new_column, primary_key):
-#    mycursor.execute("SELECT %s FROM " % (primary_key) + table_name)
-#    id_column = mycursor.fetchall()
-#    # TODO
-#    #  Execute many
-#    #  Other than str
-#    for id in id_column:
-#        query = "UPDATE %s SET %s = \" %s \" WHERE %s = %s;" % (
-#            table_name, column_name, new_column[0], primary_key, id[0]
-#        )
-#        mycursor.execute(query)
-#    db.commit()
+def drop_row(db_connection, table_name, which="all"):
+    # TODO document_category
+    query = "DELETE FROM %s;" % (table_name,)
+    db_connection.execute(query)
 
 
 def insert_specific_dataframe(db_connection,
@@ -142,6 +75,7 @@ def insert_specific_dataframe(db_connection,
         inplace=True
     )
     df.to_sql(table_name.lower(), db_connection, if_exists=if_exists, index=False)
+
 
 def read_dataframe(db_connection, table_name):
     df = pd.read_sql(table_name, con=db_connection)

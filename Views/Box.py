@@ -65,13 +65,20 @@ class BoxViewer:
 
     # For Jinja
     def view(self):
-        return {
+        # TODO Look up components in Table Type
+        dct = {
             'n_subboxes': self.n_subboxes,
             "category": self.View.document_category,
-            'description': self.get_descriptions(),  # TODO Tag
+            'description': self.get_descriptions(),
+            "table_name": self.boxShow["TABLE_NAME"].tolist(),
             'data_type': self.View.get_data_type(self.boxShow),  # TODO Format instead of Type
-            'data': self.View.get_data(self.boxShow),
+            'data': self.View.get_data(self.boxShow)
         }
+        if "EVENT" in self.boxShow.columns:
+            dct["event"] = self.boxShow["EVENT"].tolist()
+        else:
+            dct["event"] = None
+        return dct
 
     # Return list of descriptions
     def get_descriptions(self):

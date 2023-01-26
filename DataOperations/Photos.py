@@ -20,7 +20,7 @@ class PhotoFactory:
             folder_photo,
             pretable=None,
             transfer_events=False,
-            event=None
+            additional=None
     ):
 
         # Returns TIME_CREATED, PATH, DOCUMENT_NAME, DOCUMENT_TYPE
@@ -88,8 +88,10 @@ class PhotoFactory:
             # TODO Interpoalte events?
             event = (set(table["EVENT"]) - set([None])).pop()  # Assume single event
             table["EVENT"] = [e if e is not None else event for e in table["EVENT"]]
-        elif event is not None:
-            table["EVENT"] = event
+
+        if additional is not None:
+            for k in additional.keys():
+                table[k] = additional[k]
 
         return DocumentTable(
             pd.DataFrame(data=table),

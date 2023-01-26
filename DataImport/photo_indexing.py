@@ -9,26 +9,39 @@ from DataOperations.MySQL import (
     insert_specific_dataframe,
     read_specific_dataframe
 )
+from DataOperations.TableOperations import update_metatable
 
 
-# TODO update meta-table
-
-make_phototable_fromfolder = True
-exist_pretable = False
-write_csv = True
+make_phototable_fromfolder = False
+exist_pretable = True
+write_csv = False
 read_csv = False
-create_phototable_mysql = True
-insert_phototable_mysql = True
+create_phototable_mysql = False
+insert_phototable_mysql = False
 read_phototable_mysql = False
 
 path_root = 'Y:/'
-path_photo = '2022/'
-folder_photo = "2022_09_03_Burgeressen Katrin Altstadt"
+path_photo = '2023/'
+folder_photo = "2023_01_07_Samstags"
 path_full = path_root + path_photo + folder_photo + "/"
-mysql_table = "photo_" + folder_photo.replace(" ", "_")
+mysql_table = "photo_" + folder_photo.replace(
+    " ", "_"
+).replace(
+    "/", "_"
+).replace(
+    "-", "_"
+)
 # mysql_table = "photo_2022_08_28_sonntagsradeln_botanischer_garten"  # Use this as default table name
 
-optional_columns = []  # ["LOCATION"]   # "DOCUMENT_GROUP"
+optional_columns = ["DOCUMENT_GROUP", "LOCATION"]
+additional = {
+    "EVENT": "Samstagseinkauf 07.01.2023"
+}
+
+update_meta_table = True
+
+db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
+db_connection = create_engine(db_connection_str)
 
 # Pre-description
 # TODO Document_Group is read as float (only if None present)
@@ -49,7 +62,7 @@ if make_phototable_fromfolder:
         folder_photo,
         pretable=pretable,
         transfer_events=False,
-        event="Burgeressen mit Katrin und Raphael"
+        additional=additional
     )
 
 # Write Tables
@@ -67,8 +80,6 @@ if read_csv:
 
 # MySQL
 if create_phototable_mysql:
-    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
-    db_connection = create_engine(db_connection_str)
     create_specific_table(
         db_connection,
         mysql_table,
@@ -77,8 +88,6 @@ if create_phototable_mysql:
     )
 
 if insert_phototable_mysql:
-    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
-    db_connection = create_engine(db_connection_str)
     insert_specific_dataframe(
         db_connection,
         mysql_table,
@@ -89,7 +98,7 @@ if insert_phototable_mysql:
 
 #  Read table from database
 if read_phototable_mysql:
-    db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
-    db_connection = create_engine(db_connection_str)
     phototable = read_specific_dataframe(db_connection, mysql_table, "photo")
 
+if update_meta_table:
+    update_metatable(db_connection, "photos", "photo")

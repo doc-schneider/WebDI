@@ -1,75 +1,86 @@
 import pandas as pd
 import os
 
-from DataStructures.Data import DocumentTable
+from DataStructures.Document import DocumentTable
+from DataOperations.Files import get_files_info
+from DataStructures.TableTypes import column_types_table
+from DataOperations.Photos import PhotoFactory
 
 
-class CD(DocumentTable):
-    def __init__(self, table, cover=None):
-        super().__init__(table)
-        self.cover = cover   # Filename of cover.
+# class CD(DocumentTable):
+#     def __init__(self, table, cover=None):
+#         super().__init__(table)
+#         self.cover = cover   # Filename of cover.
 
 
 class MusicFactory:
 
     @staticmethod
-    def cd_from_path(path_root, pretable=None, leaveout_list=None):
-        TIME_FROM = list()
-        TIME_TO = list()
-        PATH = list()
-        DOCUMENT_NAME = list()
-        DOCUMENT_TYPE = list()
-        DESCRIPTION = list()
-        PARENT_DESCRIPTION = list()
-        CATEGORY = list()
-        PARENT_CATEGORY = list()
-        EVENT = list()
-        STATE = list()
+    def cd_from_path(
+            path_cd,
+            folder_cd,
+            pretable=None,
+            leaveout_list=None
+    ):
 
-        # Pre-table needs to have the same order of items as the files in the directory
-        # TODO Make flexible matching
-        pretbl = pretable.data
-        npretbl = pretbl.shape[0]
+        # Returns TIME_CREATED, PATH, DOCUMENT_NAME, DOCUMENT_TYPE
+        files_info = get_files_info(path_cd + folder_cd + "/")
+        cols_fileinfo = list(files_info.columns)
 
-        files = os.listdir(path_root)
+        # standard columns for photo table
+        cols_standard = column_types_table(
+            "music",
+            optional_columns=[],
+            remove_primarykey=True,
+            return_aliasnames=True
+        )
+        table = {name: [] for name in cols_standard}
 
-        for f in leaveout_list:
-            if f in files:
-                files.remove(f)
+        # Add columns from pretable. It is assumed that pretable deosn't contain invalid columns
+        columns_add = list()
+        if (pretable is not None):
+            columns_pretable = list(pretable.data.columns)
+            columns_add = list(set(pretable.data.columns) - set(cols_standard))
+            table_add = {name: [] for name in columns_add}
+            table.update(table_add)
 
-        nfiles = len(files)
-        for i in range(nfiles):
-            # TODO: Need the original creation time in pre-table
-            #(mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = \
-            #    os.stat(path_root + files[i])
-            #time.ctime(mtime)  # last modified
-            #time.ctime(ctime)   # created
-            TIME_FROM.append(None)       # NaT?
-            TIME_TO.append(None)
-            PATH.append(path_root)
-            fname, ftype = os.path.splitext(files[i])
-            DOCUMENT_NAME.append(fname + ftype)
-            DOCUMENT_TYPE.append(ftype[1:])   # Remove .
-            DESCRIPTION.append(None)
-            PARENT_DESCRIPTION.append(None)
-            CATEGORY.append(None)
-            PARENT_CATEGORY.append(None)
-            EVENT.append(None)
+        # Filter for allowed formats.
+        # - Photos also allowed for cover
+        files_info = files_info.loc[
+            files_info['DOCUMENT_TYPE'].apply(
+                lambda x: MusicFactory.allowed_music_formats(x) or PhotoFactory.allowed_photo_formats(x)
+            )
+        ]
+        files_info.reset_index(inplace=True, drop=True)
 
-            # Supplement or overwrite with pre-table
-            if i<npretbl:
-                DESCRIPTION[-1] = pretbl['DESCRIPTION'].iloc[i]
-                PARENT_DESCRIPTION[-1] = pretbl['PARENT_DESCRIPTION'].iloc[i]
-                CATEGORY[-1] = pretbl['CATEGORY'].iloc[i]
-                PARENT_CATEGORY[-1] = pretbl['PARENT_CATEGORY'].iloc[i]
+        for i in range(files_info.shape[0]):
 
-        df = pd.DataFrame(data={'TIME_FROM': TIME_FROM, 'TIME_TO': TIME_TO, 'PATH': PATH,
-                                'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE,
-                                'DESCRIPTION': DESCRIPTION, 'PARENT_DESCRIPTION': PARENT_DESCRIPTION,
-                                'CATEGORY': CATEGORY, 'PARENT_CATEGORY': PARENT_CATEGORY,
-                                'EVENT': EVENT})
+            # Basic file information
+            for col in (set(cols_fileinfo) - set(["TIME_CREATED"])):
+                table[col].append(
+                    files_info.loc[i, col]
+                )
 
-        ix = DESCRIPTION.index(['Cover'])
-        cover = path_root + DOCUMENT_NAME[ix] + '.' + DOCUMENT_TYPE[ix]
+            for col in set(cols_standard + columns_add) - set(cols_fileinfo):
+                table[col].append(None)
 
-        return CD(df, cover)
+            if (pretable is not None):
+                # Match by document name
+                ix = pretable.data['DOCUMENT_NAME'] == files_info.loc[i, 'DOCUMENT_NAME']
+                if ix.any():
+                    for col in (set(columns_pretable) - set(["DOCUMENT_NAME"])):
+                        table[col][-1] = pretable.data.loc[
+                            ix,
+                            col
+                        ].values[0]
+
+        return DocumentTable(
+            pd.DataFrame(data=table),
+            document_category="music",
+            table_name=folder_cd
+        )
+
+    @staticmethod
+    def allowed_music_formats(input: str) -> bool:
+        allowed_formats = ['m4a']
+        return input.lower() in allowed_formats

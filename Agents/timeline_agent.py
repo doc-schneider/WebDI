@@ -1,7 +1,7 @@
 from flask import render_template, request, Blueprint
 
 import config
-from Views.View import Viewer
+from Views.View import MetaViewer
 from Views.Timeline import TimelineViewer
 
 
@@ -16,19 +16,18 @@ def show_timeline():
 
     def init_TimelineView():
         # TODO Generalize View from photo
-        View = Viewer(
+        MetaView = MetaViewer(
             config.document_category,
             document_pathtype=config.document_pathtype,
             database_connection=config.db_connection,
             thumbnail=True
         )
         config.TimelineView = TimelineViewer(
-            View,
+            MetaView,
             config.time_boxes,
             flag_single=False,
             tablecollection=config.tablecollection,
             eventtable=config.eventtable,
-            markers=True,
         )
 
     if request.method == 'GET':
@@ -98,7 +97,6 @@ def show_single():
                     flag_single=True,
                     tablecollection=config.tablecollection,
                     eventtable=config.eventtable,
-                    markers=True,
                 )
 
     return render_template('/timeline/single.html', **render_single())

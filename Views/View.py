@@ -4,18 +4,40 @@ from DataOperations.Evernote import EvernoteFactory
 from DataOperations.Files import encode_data
 
 
-# TODO This should be like a parent class to all viewers ?
-class Viewer:
-    def __init__(self, document_category, document_pathtype, database_connection=None, thumbnail=False):
+# TODO List of Views better?
+class MetaViewer:
+    def __init__(self,
+                 document_category,
+                 document_pathtype,
+                 database_connection=None,
+                 thumbnail=False
+                 ):
         self.document_category = document_category
         self.document_pathtype = document_pathtype
         self.database_connection = database_connection
-        if document_category == "photo":
-            self.encode_type = "base64"
-            self.thumbnail = thumbnail
-        elif document_category == "note":
-            self.encode_type = "html_path"  # TODO Not alwas correct, only for Evernote
-            self.static_basepath = "C:/Users/Stefan/PycharmProjects/WebDI/static/"  # TODO hand over
+        self.encode_type = list()
+        self.thumbnail = list()
+        self.static_basepath = list()
+        for d in document_category:
+            if d == "photo":
+                self.encode_type.append("base64")
+                self.thumbnail.append(thumbnail)
+                self.static_basepath.append(None)
+            elif d == "note":
+                self.encode_type.append("html_path")  # TODO Not alwas correct, only for Evernote
+                self.thumbnail.append(None)
+                self.static_basepath.append(
+                    "C:/Users/Stefan/PycharmProjects/WebDI/static/"
+                )  # TODO hand over
+
+class Viewer:
+    def __init__(self, meta_view, select):
+        self.document_category = meta_view.document_category[select]
+        self.document_pathtype = meta_view.document_pathtype
+        self.database_connection = meta_view.database_connection
+        self.encode_type = meta_view.encode_type[select]
+        self.thumbnail = meta_view.thumbnail[select]
+        self.static_basepath = meta_view.static_basepath[select]
 
     # Complete file location
     def document_location(self, table):

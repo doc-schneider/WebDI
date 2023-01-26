@@ -22,14 +22,41 @@ class EventFactory:
 
         # Remove non-defined columns
         cols = set(table.columns)
-        dct = column_types_table("events")
-        dct.pop("primary_key")
-        cols_all = set([value["alias"] for (key, value) in dct.items()])
+        cols_all = set(
+            column_types_table(
+                "events",
+                optional_columns=[],
+                remove_primarykey=True,
+                return_aliasnames=True
+            )
+        )
         table.drop(columns=list(cols - cols_all), inplace=True)
         for c in list(cols_all - cols):
             table[c] = None
 
         return EventTable(table)
+
+    @staticmethod
+    def update_eventtable(events_table_old, events_table):
+        # Compares the stored Table with the freshly read table
+
+        # Find new rows based on Event Name
+        new_set = set(events_table.data["EVENT_NAME"]) - set(events_table_old["EVENT_NAME"])
+        events_new = events_table.data[events_table.data["EVENT_NAME"].isin(new_set)]
+
+        # Old events deleted?
+        removed_set = set(events_table_old["EVENT_NAME"]) - (
+                set(events_table.data["EVENT_NAME"]) - new_set
+        )
+        # TODO
+        if len(removed_set) > 0:
+            pass
+
+        # Existing Events altered?
+        # TODO
+
+        return EventTable(events_new.reset_index(drop=True))
+
 
 '''
     @staticmethod

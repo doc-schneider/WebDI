@@ -9,32 +9,47 @@ class EventTable(DataTable):
         super().__init__(
             table,
             document_category="events",
-            table_name="events"
-        )
+        )  # table_name="events"
 
     def get_events(self, documenttable):
         # Events in EventTable belonging to events in DocumentTable
-        events = list(documenttable.data["EVENT"].unique())
+        if "EVENT" in documenttable.data.columns:
+            events = list(documenttable.data["EVENT"].unique())
+        else:
+            events = []
         return self.data[self.data["EVENT_NAME"].isin(events)].reset_index(drop=True)
 
     def find_eventlevel(self, eventlevel):
         return self.data.index[self.data['EVENT_LEVEL'] == eventlevel].to_list()
 
     def add_eventlevel(self):
-        # Enhance Event list by an Event level.
-        # - Events without Parent Event are level 0
-        self.data['EVENT_LEVEL'] = [None] * self.length
-        #  No Parent Events
-        self.data.loc[self.data['PARENT_EVENT'] == '', 'EVENT_LEVEL'] = 0
-        # Repeatedly go through all
-        while any(elem is None for elem in self.data['EVENT_LEVEL']):
-            for i in range(self.length):
-                if self.data['EVENT_LEVEL'].iloc[i] is None:
-                    parentEvent = self.data['PARENT_EVENT'].iloc[i]
-                    j = self.data.loc[self.data['EVENT_NAME'] == parentEvent].reset_index(
-                        drop=True).loc[0, 'EVENT_LEVEL']
-                    if j is not None:
-                        self.data.loc[i, 'EVENT_LEVEL'] = j + 1
+        # TODO Complete event level logic
+        # Events which have no sub-events are level 0.
+        # Parent events to level 0 events are level 1 etc
+        self.data['EVENT_LEVEL'] = None
+        # All events that are higher level
+        parent_events = self.data['PARENT_EVENT'][
+            ~self.data['PARENT_EVENT'].isnull()
+        ].unique().tolist()
+        self.data['EVENT_LEVEL'][
+            ~self.data['EVENT_NAME'].isin(parent_events)
+        ] = 0
+
+        # OLD
+        # # Enhance Event list by an Event level.
+        # # - Events without Parent Event are level 0
+        # self.data['EVENT_LEVEL'] = [None] * self.length
+        # #  No Parent Events
+        # self.data.loc[self.data['PARENT_EVENT'] == '', 'EVENT_LEVEL'] = 0
+        # # Repeatedly go through all
+        # while any(elem is None for elem in self.data['EVENT_LEVEL']):
+        #     for i in range(self.length):
+        #         if self.data['EVENT_LEVEL'].iloc[i] is None:
+        #             parentEvent = self.data['PARENT_EVENT'].iloc[i]
+        #             j = self.data.loc[self.data['EVENT_NAME'] == parentEvent].reset_index(
+        #                 drop=True).loc[0, 'EVENT_LEVEL']
+        #             if j is not None:
+        #                 self.data.loc[i, 'EVENT_LEVEL'] = j + 1
 
     # Get parent events for event series
     def get_ParentEvent(self, eventNames):

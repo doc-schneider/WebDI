@@ -9,8 +9,10 @@ from DataOperations.MySQL import (
     read_specific_dataframe,
     insert_specific_dataframe,
     drop_table,
-    export_table
+    export_table,
+    alter_record
 )
+
 
 # TODO:
 #  DocumentGroup: Extend attributes to all group members
@@ -18,13 +20,12 @@ from DataOperations.MySQL import (
 
 add_rows = False
 delete_column = False
-delete_table = False
+add_column = False
+delete_table = True
 interpolate_events = False
 add_eventid = False
-make_metatable = False
-update_metatable = True
-exists_metatable = True
 export_table_csv = False
+alter_entry = False
 
 if add_rows:
     table_type = "events"
@@ -32,15 +33,15 @@ if add_rows:
     file = "Z:/Biographie/Stefan/Timeline/EventListe.csv"
 
 if delete_column:
-    table_type = "photo"
-    mysql_table = "photo_20220318_Geburtstag"
-    column = "EventID"
+    table_type = "notes"
+    mysql_table = "notes"
+    column = "TableName"
 
 if delete_table:
-    mysql_table = "photos"
+    mysql_table = "note_diary_ideasscience_diary"
 
 if export_table_csv:
-    mysql_table = "photos"  # = csv_table
+    mysql_table = "notes"  # = csv_table
     pathname = "Z:/Biographie/Stefan/Tables/"
 
 if interpolate_events:
@@ -51,12 +52,15 @@ if add_eventid:
     mysql_table = "photo_20220318_Geburtstag"
     PhotoId = range(2, 21+1)
 
-if make_metatable or update_metatable:
-    category = "photo"
-    meta_category = "photos"
+if alter_entry:
+    mysql_table = "note_energy_finance_energy_modelling"
+    table_type = "note"
+    where_tuple = None  # ("NOTE_TABLE", "note_energy_finance_energy_modelling")
+    set_tuple = ("TAG", "Energy Modelling")
 
 db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
 db_connection = create_engine(db_connection_str)
+
 
 if add_rows:
     # MySql table
@@ -105,47 +109,5 @@ if add_eventid:
                 "UPDATE photo_20220318_Geburtstag SET EventID=" + str(EventId) + " WHERE PhotoID=" + str(id) + " ;"
             )
 
-# TODO Specifc to each catoegory module
-if make_metatable:
-    create_specific_table(db_connection, meta_category, meta_category)
-
-# TODO
-#  Time sort
-if update_metatable:
-    if exists_metatable:
-        metatable = read_specific_dataframe(db_connection, meta_category, meta_category)
-        tables_existing = set(metatable["PHOTO_TABLE"])
-    else:
-        tables_existing = set()
-
-    dct = column_types_table(meta_category)
-    dct.pop("primary_key")
-    meta_table_add = {value["alias"]: [] for (key, value) in dct.items()}
-    columns = list(meta_table_add.keys())
-
-    # Find table of category
-    table_names = db_connection.table_names()
-    table_names = [tn for tn in table_names if category + "_" in tn]
-    for tn in list(set(table_names) - tables_existing):
-        # TODO - Transfer tags and events
-        # Assume first column is table name
-        meta_table_add[columns[0]].append(tn)  # TODO bad style
-        table = read_specific_dataframe(db_connection, tn, category)
-        if "TIME_FROM" in columns:
-            meta_table_add["TIME_FROM"].append(table["DATETIME"].min())
-            meta_table_add["TIME_TO"].append(table["DATETIME"].max())
-        for item in set(columns[1:]) - set(["TIME_FROM", "TIME_TO", 'TABLE_NAME']):
-            meta_table_add[item].append(None)
-        #meta_table_add['TABLE_NAME'].append(meta_category)  # TODO Useful?
-        meta_table_add.pop('TABLE_NAME')
-
-    insert_specific_dataframe(
-        db_connection,
-        meta_category,
-        meta_category,
-        pd.DataFrame(meta_table_add)
-    )
-
-
-
-
+if alter_entry:
+    alter_record(db_connection, mysql_table, table_type, set_tuple, where_tuple)

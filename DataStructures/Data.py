@@ -61,14 +61,6 @@ class DataTable:
     def add_timedelta(self, timedelta):
         self.data["TIME_TO"] = self.data["TIME_FROM"].apply(lambda x: x + timedelta)
 
-    # TODO Remove ?
-    #def add_timeinterval(self):
-    #    dummy = []
-    #    for i in range(self.length):
-    #        dummy.append(pd.Interval(self.data['TIME_FROM'].iloc[i],
-    #                                 self.data['TIME_TO'].iloc[i], closed='both'))
-    #    self.data['TIME_INTERVAL'] = dummy
-
     def find_in_timeinterval(self, timeinterval):
         if "TIME_FROM" in self.data.columns:
             # Returns the index of all documents whose time_interval overlaps a requested time interval
@@ -96,17 +88,7 @@ class DataTable:
             date_format='%d.%m.%Y %H:%M:%S',
             encoding='ANSI'
         )
-        '''
-        table = self.data.copy()
-        # TODO Inefficent
-        for i in range(table.shape[0]):
-            for h in list(table.columns.values):
-                # Convert list to str?
-                if DataTableFactory.list_key(h):
-                    table.at[i,h] = list_to_str(table[h].iloc[i])
-                    #table.at[i, h] = textlist_to_JSON(table[h].iloc[i])
-        table.to_csv(pathname, index=False, sep=';', date_format='%d.%m.%Y %H:%M:%S')
-        '''
+
 
 class DataTableFactory:
 
@@ -129,11 +111,11 @@ class DataTableFactory:
         buf = StringIO(downloaded_blob.content_as_text())
         return DataTableFactory.importHelper(buf)
 
-    @staticmethod
-    def importFromCsv(filename, encoding='utf8'):
-        # TODO: newline=None instead of '' removes last character. Why?
-        with open(filename, 'r', newline='', encoding=encoding) as csvfile:
-            return DataTableFactory.importHelper(csvfile)
+    # @staticmethod
+    # def importFromCsv(filename, encoding='utf8'):
+    #     # TODO: newline=None instead of '' removes last character. Why?
+    #     with open(filename, 'r', newline='', encoding=encoding) as csvfile:
+    #         return DataTableFactory.importHelper(csvfile)
 
     @staticmethod
     def importHelper(text):

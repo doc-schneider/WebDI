@@ -18,6 +18,6 @@ class DocumentTableFactory:
             table,
             document_category,
             filename
-        )
+        )  # TODO Why filename here?
 
 
