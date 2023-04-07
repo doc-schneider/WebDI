@@ -68,9 +68,9 @@ def show_single():
             if key == 'submit':
                 # Flip within box
                 if request.form['submit'] == 'earlier':
-                    config.SingleView.show_earlier()
+                    config.SingleView.show_earlier(config.eventtable)
                 else:
-                    config.SingleView.show_later()
+                    config.SingleView.show_later(config.eventtable)
 
             elif key == 'back':
                 # Back from Edit
@@ -84,19 +84,22 @@ def show_single():
 
             else:
                 # First call of page from Timeline.
-                i = int(key)
-                time_interval = config.TimelineView.BoxSeries[i].time_interval # Box clicked
-                View = Viewer(
-                    config.document_category,
+                k = int(key.split(",")[0])
+                i = int(key.split(",")[1])
+                time_interval = config.TimelineView.BoxSeries[k][i].time_interval  # Box clicked
+                MetaView = MetaViewer(
+                    [config.document_category[k]],
                     document_pathtype=config.document_pathtype,
-                    database_connection=config.db_connection
+                    database_connection=config.db_connection,
+                    thumbnail=False
                 )
+                # flag_single indexes the timeline viewed
                 config.SingleView = TimelineViewer(
-                    View,
+                    MetaView,
                     time_interval,
                     flag_single=True,
-                    tablecollection=config.tablecollection,
-                    eventtable=config.eventtable,
+                    tablecollection=[config.tablecollection[k]],
+                    eventtable=config.eventtable
                 )
 
     return render_template('/timeline/single.html', **render_single())

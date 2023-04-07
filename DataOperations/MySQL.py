@@ -33,6 +33,7 @@ def create_specific_table(db_connection, table_name, table_type, optional_column
     )
     metadata.create_all(db_connection)
 
+
 # TODO Simplfy code with table type functions
 def alter_record(db_connection, table_name, document_category, set_tuple, where_tuple):
     dct = column_types_table(document_category, optional_columns=[], remove_primarykey=True)
@@ -68,8 +69,11 @@ def insert_specific_dataframe(db_connection,
                               optional_columns=[],
                               if_exists="append"
                               ):
-    dct = column_types_table(table_type, optional_columns=optional_columns)
-    dct.pop("primary_key")
+    dct = column_types_table(
+        table_type,
+        optional_columns=optional_columns,
+        remove_primarykey=True
+    )
     df.rename(
         columns={value["alias"]: key for (key, value) in dct.items()},
         inplace=True
@@ -85,7 +89,6 @@ def read_specific_dataframe(db_connection, table_name, table_type):
     df = pd.read_sql(table_name, con=db_connection)
     primary_key = column_types_table(table_type)["primary_key"]
     df.drop(columns=[primary_key], inplace=True)
-    # Any optional columns?
     optional_columns = find_optional_columns(df, table_type, aliasnames=False)
     dct = column_types_table(
         table_type,

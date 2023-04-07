@@ -34,16 +34,36 @@ columns_optional = {
         "sqlalchemytype": Text,
         "alias": "LOCATION"
     },
+    "Person": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "PERSON"
+    },
     "Category": {
         "mysqltype": "text",
         "sqlalchemytype": Text,
         "alias": "CATEGORY"
+    },
+    "SubCategory": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "SUB_CATEGORY"
     },
     "Event": {
         "mysqltype": "text",
         "sqlalchemytype": Text,
         "alias": "EVENT"
     }
+}
+
+# Top-level list of categories
+columns_categories = {
+    "Category": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text,
+        "alias": "CATEGORY"
+    },
+    "primary_key": "CategoryID"
 }
 
 # Meta table for collections of book-like documents and collections of collections. Ontology
@@ -354,7 +374,9 @@ def column_types_table(
         remove_primarykey=False,
         return_aliasnames=False
 ):
-    if table_type == "browsing":
+    if table_type == "categories":
+        dct = columns_categories.copy()
+    elif table_type == "browsing":
         dct = columns_browsingtable.copy()
     elif table_type == "note":
         dct = columns_notetable.copy()
@@ -378,7 +400,8 @@ def column_types_table(
         raise ValueError("Table type unknown")
 
     # Add default columns
-    dct.update(columns_common)
+    if table_type not in ["categories"]:
+        dct.update(columns_common)
     # Drop TableName for meta tables
     if table_type in ["events", "photos", "musics", "notes", "books"]:
         dct.pop("TableName")

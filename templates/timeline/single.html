@@ -37,23 +37,22 @@
 		</div>
 	
 		<div class="row pt-3 justify-content-center">	
-			<div class="col-6 border">		
-				{%  for j in range(boxes[0]["n_subboxes"]) %}	
+			<div class="col-6 justify-content-center border">		
+				{%  for j in range(boxes[0][0]["n_subboxes"]) %}	
 				
-					<!-- Photos -->
 					{% set key = "data" %}
-					{% if boxes[0][key][j] != None %}
+					{% if boxes[0][0][key][j] != None %}
 						<div class="row justify-content-center border">
 							<div class="col">	
 							
-								{% if boxes[0]["category"] == "note" %}										
-									<iframe src="{{ url_for('static', filename=boxes[0][key][j]) }}"></iframe>
+								{% if boxes[0][0]["category"] == "note" %}										
+									<iframe src="{{ url_for('static', filename=boxes[0][0][key][j]) }}"></iframe>
 										
-								{% elif boxes[0]["category"] == "photo" %}
-									{% if boxes[0]["data_type"][j] == "png" %}					
-										<img src="data:image/png;base64,{{ boxes[0][key][j] }}" class="img-fluid"/>  
+								{% elif boxes[0][0]["category"] == "photo" %}
+									{% if boxes[0][0]["data_type"][j] == "png" %}					
+										<img src="data:image/png;base64,{{ boxes[0][0][key][j] }}" class="img-fluid"/>  
 									{% else %}
-										<img src="data:image/jpeg;base64,{{ boxes[0][key][j] }}" class="img-fluid"/> 
+										<img src="data:image/jpeg;base64,{{ boxes[0][0][key][j] }}" class="img-fluid"/> 
 									{% endif %}
 									
 								{% endif %}		
@@ -62,29 +61,29 @@
 					{% endif %}			
 					
 					<!-- Description -->
-					{% if boxes[0]["description"][j] != None %}
+					{% if boxes[0][0]["description"][j] != None %}
 						<div class="row justify-content-center border text-dark">
 							<div class="col text-dark">					
-								{{ boxes[0]["description"][j] }}
+								{{ boxes[0][0]["description"][j] }}
 							</div>
 						</div>	
 					{% endif %}
 					
 					<!-- Table Name -->
-					{% if boxes[0]["table_name"][j] != None %}
+					{% if boxes[0][0]["table_name"][j] != None %}
 						<div class="row justify-content-center border text-dark bg-success">
 							<div class="col text-dark">					
-								{{ boxes[0]["table_name"][j] }}
+								{{ boxes[0][0]["table_name"][j] }}
 							</div>
 						</div>	
 					{% endif %}
 					
 					{% if display_events %}
 						<!-- Event -->
-						{% if boxes[0]["event"][j] != None %}
+						{% if boxes[0][0]["event"][j] != None %}
 							<div class="row justify-content-center border text-dark bg-info">
 								<div class="col overflow-scroll text-dark">					
-									{{ boxes[0]["event"][j] }}
+									{{ boxes[0][0]["event"][j] }}
 								</div>
 							</div>	
 						{% endif %}
@@ -95,14 +94,16 @@
 		</div>	
 		
 		<!-- Document markers --> 
-		<div class="row"> 
-			<div class="col pt-3 px-0">	
+		<div class="row justify-content-center px-0 pt-3"> 
+			<div class="col px-0 border">	
 				<svg width="100%" height="5">
-					{% for i in range(markers[0]|length) %}
-						<rect x="{{markers[0][i][0]}}%" width="{{markers[0][i][1]}}%" height="5" style="fill:black;" />	
+					{% set key = "markers" %}
+					{% for j in range(marker[key][0][0]|length) %}
+						<rect x="{{marker[key][0][0][j][0]}}%" width="{{marker[key][0][0][j][1]}}%" height="5" style="fill:black;" />	
 					{% endfor %}
-					{%  if marker_show[0] | length > 0 %} 
-						<rect x="{{marker_show[0][0][0]}}%" width="{{marker_show[0][0][1]}}%" height="5" style="fill:red;" />
+					{% set key = "marker_show" %}
+					{%  if marker[key][0][0] | length > 0 %} 
+						<rect x="{{marker[key][0][0][0][0]}}%" width="{{marker[key][0][0][0][1]}}%" height="5" style="fill:red;" />
 					{% endif %} 
 				</svg>
 			</div>
@@ -113,17 +114,19 @@
 			<div class="row justify-content-center pt-3 px-0"> 	
 				<div class="col px-0 border bg-info">					
 					<!-- Event Marker and Description -->
-					<svg width="100%" height="5">			
-						{% for j in range(event_markers[0]|length) %} 				
-							{% if event_markers[0][j] != None %}	
-								<rect x="{{event_markers[0][j][0]}}%" width="{{event_markers[0][j][1]}}%" height="3" style="fill:black;" />	
+					<svg width="100%" height="5">	
+						{% set key = "event_markers" %}
+						{% for j in range(event[key][0]|length) %} 				
+							{% if event[key][0][j] != None %}	
+								<rect x="{{event[key][0][j][0]}}%" width="{{event[key][0][j][1]}}%" height="3" style="fill:black;" />	
 							{% endif %}
 						{% endfor %}
 					</svg>		
-					{% for j in range(event_markers[0]|length) %} 
-						{% if event_labels[0][j][1] != None %}
+					{% set key = "event_labels" %}
+					{% for j in range(event["event_markers"][0]|length) %} 
+						{% if event[key][0][j][1] != None %}
 							<div>	
-								<span style="position: relative; left: {{event_labels[0][j][0]}}%; width: 10%; background: WhiteSmoke; border:1px solid DodgerBlue;">{{event_labels[0][j][1]}}</span>
+								<span style="position: relative; left: {{event[key][0][j][0]}}%; width: 10%; background: WhiteSmoke; border:1px solid DodgerBlue;">{{event[key][0][j][1]}}</span>
 							</div>	
 						{% endif %}
 					{% endfor %}
@@ -131,25 +134,25 @@
 			</div>		
 			<!-- Event Description -->
 			<div class="row justify-content-center"> 	 	
-				<div class="col border overflow-scroll">					
-					{% if event_descriptions[0][0] != None %}			
-						{{ event_descriptions[0][0] }}
-					{% endif %}			
+				<div class="col border overflow-scroll">	
+					{% if event["event_descriptions"][0][0] != None %}			
+						{{ event["event_descriptions"][0][0] }}
+					{% endif %}				
 				</div>
 			</div>
 		{% endif %}	
 		
 		<!-- Time axis -->
-		<div class="row"> 			
-			<div class="col pt-3 px-0">	
+		<div class="row justify-content-center"> 			
+			<div class="col px-0 pt-3">	
 				<svg width="100%" height="11">
 					<rect width="100%" height="2" style="fill:black;" />
 					<rect width="2" height="100%" style="fill:black;" />
 				</svg>
 			</div>
 		</div>
-		<div class="row"> 			
-			<div class="col-2 px-0">	
+		<div class="row justify-content-center"> 			
+			<div class="col px-0">	
 				{{ timegrid[0] }}
 			</div>
 		</div>

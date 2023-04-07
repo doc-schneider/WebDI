@@ -91,6 +91,7 @@ class EvernoteFactory:
 
             # html files get counter when occurring multiple times.
             # TODO max 45 correct for additional counting?
+            title = title.replace(":", "")  # Special signs do not count as file names
             name = title[:45]  # max 45 characters
             count = 1
             while (name + '.html') in table["DOCUMENT_NAME"]:

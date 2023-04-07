@@ -78,10 +78,13 @@ class Viewer:
             # TODO Parent
             return table["LINK"].tolist()
 
+class ViewerFactory:
     # TODO
     #  Separate boostrap form jinja2 properties
     #  Subdivision for timelines, lists, etc
-    def boostrap_properties(self, granularity, time_grid):
+
+    @staticmethod
+    def bootstrap_properties(granularity, time_grid):
         # Boxsizes in the 12 slot schema of bootstrap
         if granularity is None:
             # Single mode. Box size in set in template

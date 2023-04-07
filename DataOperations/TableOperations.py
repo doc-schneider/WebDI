@@ -36,13 +36,12 @@ def update_metatable(db_connection, meta_category, category):
         if tn in list(set(table_names) - tables_existing):  # New entry?
             # Assume first column is table name
             metatable_new[columns[0]].append(tn)  # TODO bad style
-            # Update times to latest entries
-            # if "TIME_FROM" in columns:
             metatable_new["TIME_FROM"].append(t_min)
             metatable_new["TIME_TO"].append(t_max)
             for item in set(columns[1:]) - set(["TIME_FROM", "TIME_TO", columns[0]]):
                 metatable_new[item].append(None)
         else:
+            # Update times to latest entries
             alter_record(
                 db_connection,
                 meta_category,

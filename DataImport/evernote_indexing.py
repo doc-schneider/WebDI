@@ -12,16 +12,16 @@ from DataOperations.TableOperations import update_metatable
 
 # TODO Additive mode for new notes. Not overwritign exisintg tables
 
-make_notetable_fromfolder = False
+make_notetable_fromfolder = True
 pretable = None
 optional_columns = ["Event"]
 read_date_from_title = True
-write_csv = False
+write_csv = True
 read_csv = False
-create_table_mysql = False
+create_table_mysql = True
 exists_table_mysql = False
-insert_table_mysql = False
-update_meta_table = True
+insert_table_mysql = True
+update_meta_table = False
 
 mysql_table = "note_diary_ideasscience_diary"
 

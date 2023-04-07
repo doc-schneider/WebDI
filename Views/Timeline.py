@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from dateutil.relativedelta import relativedelta, MO, SU
 
-from Views.View import Viewer
+from Views.View import Viewer, ViewerFactory
 from Views.Box import BoxViewer
 from DataStructures.Document import DocumentTable
 
@@ -19,13 +19,16 @@ class TimelineViewer():
         self.n_timelines = len(tablecollection)
         self.documenttable = list()
         self.flag_single = flag_single    # TODO For the time bing
-        self.markers = list()
-        self.marker_show = list()
+        self.marker = {
+            "markers": None,
+            "marker_show": None
+        }
         self.display_events = eventtable is not None
-        self.event_markers = None
-        self.event_labels = None
-        self.event_descriptions = None
-
+        self.event = {
+            "event_markers": None,
+            "event_labels": None,
+            "event_descriptions": None
+        }
         if flag_single:
             self.n_boxes = 1
             self.granularity = None
@@ -79,6 +82,8 @@ class TimelineViewer():
 
     # Marker grid and indicator current document looked at
     def make_marker(self):
+        self.marker["markers"] = list()
+        self.marker["marker_show"] = list()
         for j in range(self.n_timelines):
             lst_m = list()
             lst_s = list()
@@ -97,22 +102,24 @@ class TimelineViewer():
                         self.time_grid.loc[i, "TIME_INTERVAL"]
                     )
                 )
-            self.markers.append(lst_m)
-            self.marker_show.append(lst_s)
+            self.marker["markers"].append(lst_m)
+            self.marker["marker_show"].append(lst_s)
 
     def make_events(self, eventtable):
         # TODO
         #  Disjunct events for the time being
-        #  Event container containing all items
-        self.event_markers = list()
-        self.event_labels = list()
-        self.event_descriptions = list()
+        self.event["event_markers"] = list()
+        self.event["event_labels"] = list()
+        self.event["event_descriptions"] = list()
         # All events from all timelines
         # TODO Make this function in Event
         events = [
             eventtable.get_events(d) for d in self.documenttable
         ]
         events = pd.concat(events, ignore_index=True)
+        events.drop_duplicates(
+            subset=["EVENT_NAME"], inplace=True
+        )
         events = events.sort_values(by="TIME_FROM").reset_index(drop=True)
         # Every box gets a (partial) event line
         flag_label = np.full(events.shape[0], False)  # Only one label per event over all boxes
@@ -139,18 +146,17 @@ class TimelineViewer():
                     event_labels.append((None, None))
             if len(event_descriptions) < len(event_labels):
                 event_descriptions.append(None)
-            self.event_markers.append(event_markers)
-            self.event_labels.append(event_labels)
-            self.event_descriptions.append(event_descriptions)
+            self.event["event_markers"].append(event_markers)
+            self.event["event_labels"].append(event_labels)
+            self.event["event_descriptions"].append(event_descriptions)
 
     def view(self):
         # List of dcts
         # TODO Make dicts with speaking names instead of tuples and lists
-        # TODO All Event items put into one object
         # [Box.view() for Box in self.BoxSeries]
         dct_lst = [[BV.view() for BV in BS] for BS in self.BoxSeries]
         # Bootstrap box size
-        box_size, _ = self.View.boostrap_properties(self.granularity, self.time_grid)
+        box_size, _ = ViewerFactory.bootstrap_properties(self.granularity, self.time_grid)
         # Time line
         time_grid_str = [
             self.time_grid['TIME_INTERVAL'].loc[i].left.strftime('%Y-%m-%d %H:%M')
@@ -160,12 +166,9 @@ class TimelineViewer():
             'boxes': dct_lst,
             "box_size": box_size,
             'timegrid': time_grid_str,
-            'markers': self.markers,
-            'marker_show': self.marker_show,
+            'marker': self.marker,
             'display_events': self.display_events,
-            'event_markers': self.event_markers,
-            'event_labels': self.event_labels,
-            'event_descriptions': self.event_descriptions
+            'event': self.event,
         }
         return dct
 
@@ -209,13 +212,17 @@ class TimelineViewer():
         self.update(tablecollection, eventtable)
 
     # Shift within Single Box
-    def show_earlier(self):
-        self.BoxSeries[0].update(self.documenttable, shift_show=-1)
+    def show_earlier(self, eventtable=None):
+        self.BoxSeries[0][0].update(self.documenttable[0], shift_show=-1)
         self.make_marker()
+        if self.display_events:
+            self.make_events(eventtable)
 
-    def show_later(self):
-        self.BoxSeries[0].update(self.documenttable, shift_show=1)
+    def show_later(self, eventtable=None):
+        self.BoxSeries[0][0].update(self.documenttable[0], shift_show=1)
         self.make_marker()
+        if self.display_events:
+            self.make_events(eventtable)
 
 
 # Timeline utilities

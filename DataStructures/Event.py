@@ -28,11 +28,13 @@ class EventTable(DataTable):
         # Parent events to level 0 events are level 1 etc
         self.data['EVENT_LEVEL'] = None
         # All events that are higher level
-        parent_events = self.data['PARENT_EVENT'][
-            ~self.data['PARENT_EVENT'].isnull()
+        parent_events = self.data.loc[
+            ~self.data['PARENT_EVENT'].isnull(),
+            'PARENT_EVENT'
         ].unique().tolist()
-        self.data['EVENT_LEVEL'][
-            ~self.data['EVENT_NAME'].isin(parent_events)
+        self.data.loc[
+            ~self.data['EVENT_NAME'].isin(parent_events),
+            'EVENT_LEVEL'
         ] = 0
 
         # OLD
