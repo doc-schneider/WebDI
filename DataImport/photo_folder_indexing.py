@@ -1,101 +1,79 @@
-import os
+from pathlib import Path
+import pandas as pd
 from sqlalchemy import create_engine
 
-from DataStructures.TableTypes import find_optional_columns
-from DataStructures.Document import DocumentTableFactory
-from DataOperations.Photos import PhotoFactory
-from DataOperations.MySQL import (
-    create_specific_table,
-    insert_specific_dataframe,
-    read_specific_dataframe
-)
-from DataOperations.TableOperations import update_metatable
+"""
+Finds all folders in a root folder.
+- Folders can be bottom level, ie, containing a photo collection and no further sub-folders
+- Folders can be meta-collections, ie, contain sub-forders (eg, "best of") and a photo collection.
+All folders with their attributes are written into a table (csv, mysql)
 
+Creates: 
+- Dataframe 
+"""
 
-make_phototable_fromfolder = True
-# exist_pretable = False  # Automize by looking into folder
-write_csv = True
-read_csv = False
-create_phototable_mysql = True
-insert_phototable_mysql = True
-read_phototable_mysql = False
-update_meta_table = True
-
-path_root = 'Y:/'
-path_photo = '2023/'
-folder_photo = "2023_03_03"
-path_full = path_root + path_photo + folder_photo + "/"
-mysql_table = "photo_" + folder_photo.replace(
-    " ", "_"
-).replace(
-    "/", "_"
-).replace(
-    "-", "_"
-)
-# mysql_table = "photo_2022_08_28_sonntagsradeln_botanischer_garten"  # Use this as default table name
-optional_columns = []  # ["DOCUMENT_GROUP", "LOCATION"]
-additional = None  # {"EVENT": "Samstagseinkauf 07.01.2023"}
+# TODO
+#  - What to do with non-photo documents?
 
 db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
 db_connection = create_engine(db_connection_str)
 
-# Pre-description
-# TODO Document_Group is read as float (only if None present)
-if os.path.isfile(path_full + "PreDokumentliste.csv"):
-# if exist_pretable:
-    pretable = DocumentTableFactory.from_csv(
-        "photo",
-        path_full,
-        'PreDokumentliste'
-    )
-    pretable.format_to_category(optional_columns)
-else:
-    pretable = None
+person = "stefan"
+write_csv = True
+write_mysql = True
+path_root = Path('Z:/Bilder/')
+name_root = "Stefans Fotoarchiv"
+excluded_files = ["Thumbs.db"]  # TODO Instead: Certain endings
 
-# Main table
-if make_phototable_fromfolder:
-    phototable = PhotoFactory.table_from_folder(
-        path_root + path_photo,
-        folder_photo,
-        pretable=pretable,
-        transfer_events=False,
-        additional=additional
-    )
+# TODO Can read these from main photo table
+name_output = person + "_" + "photo" + "_" + name_root.replace(" ", "").lower()
 
-# Write Tables
+photocollections = {
+    "PATH": [],
+    "COLLECTION": [],
+    "PARENT_COLLECTION": [],
+    "CONTAINS_PHOTOS": [],
+    "PHOTO_TABLE": [],
+    "DESCRIPTION": []
+}
+
+# Go through the folder hierarchies
+pp = [p for p in path_root.glob('**/')]
+pp.pop(0)  # First is root directory
+for p in pp:
+    photocollections["PATH"].append(p.as_posix())
+for p in pp:
+    photocollections["COLLECTION"].append(p.name)  # str in case name is year / number
+    photocollections["PARENT_COLLECTION"].append(p.parts[-2])
+    if [y for y in p.iterdir() if (y.is_file() and not y.name in excluded_files)]:
+        photocollections["CONTAINS_PHOTOS"].append(True)
+    else:
+        photocollections["CONTAINS_PHOTOS"].append(False)
+    # TODO To be filled
+    photocollections["PHOTO_TABLE"].append(None)
+    photocollections["DESCRIPTION"].append(None)
+
+phototable = pd.DataFrame(
+    data=photocollections
+)
+
+phototable.loc[
+    phototable["PARENT_COLLECTION"] == path_root.parts[-1],
+    "PARENT_COLLECTION"
+] = name_root
+
 if write_csv:
-    phototable.to_csv(path_full, mysql_table)
-
-# Read csv table
-if read_csv:
-    phototable = DocumentTableFactory.from_csv(
-        "photo",
-        path_full,
-        mysql_table,
-        parse_date=['DATETIME']
+    phototable.to_csv(
+        str(Path.joinpath(path_root, Path(name_output + ".csv")).as_posix()),
+        sep=";",
+        encoding='ANSI',
+        index=False
     )
 
-# MySQL
-if create_phototable_mysql:
-    create_specific_table(
+if write_mysql:
+    phototable.to_sql(
+        name_output,
         db_connection,
-        mysql_table,
-        "photo",
-        find_optional_columns(phototable.data, "photo")
+        if_exists="replace",
+        index=False
     )
-
-if insert_phototable_mysql:
-    insert_specific_dataframe(
-        db_connection,
-        mysql_table,
-        "photo",
-        phototable.data,
-        find_optional_columns(phototable.data, "photo"),
-    )
-
-#  Read table from database
-if read_phototable_mysql:
-    phototable = read_specific_dataframe(db_connection, mysql_table, "photo")
-
-if update_meta_table:
-    update_metatable(db_connection, "photos", "photo")
