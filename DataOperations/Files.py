@@ -10,29 +10,30 @@ def get_files_info(pfad):
     Function retrieves file infos for all files
     inside the given directory
 
-    :param pfad:
-    :return:
     '''
 
-    PATH = list()
-    DOCUMENT_NAME = list()
-    DOCUMENT_TYPE = list()
-    TIME_CREATED = list()
+    excluded_files = ["Thumbs.db"]  # TODO Instead: Certain endings
+
+    info = {
+        "PATH": [],
+        "DOCUMENT_NAME": [],
+        "DOCUMENT_TYPE": [],
+        "TIME_CREATED": []
+    }
 
     # Get file names.
-    files = list(Path(pfad).glob('*'))
-    # TODO No loop?
+    files = [y for y in Path(pfad).iterdir() if (y.is_file() and not y.name in excluded_files)]
     for f in files:
-        PATH.append(pfad)
-        DOCUMENT_NAME.append(f.name)
-        DOCUMENT_TYPE.append(f.suffix[1:])    #  Removes dot . from string.
+        info["PATH"].append(pfad)
+        info["DOCUMENT_NAME"].append(f.name)
+        info["DOCUMENT_TYPE"].append(f.suffix[1:])    #  Removes dot . from string.
         # st_ctime : creation time (of file on computer)
         # st_mtime : last content modification time (creation time of data, e,g time photo taken)
-        TIME_CREATED.append(
+        info["TIME_CREATED"].append(
             dtm.datetime.fromtimestamp(f.stat().st_mtime)
         )
-    return pd.DataFrame(data={'TIME_CREATED': TIME_CREATED, 'PATH': PATH,
-                              'DOCUMENT_NAME': DOCUMENT_NAME, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
+
+    return pd.DataFrame(data=info)
 
 
 # Load data from file and return base64 for viewing in website

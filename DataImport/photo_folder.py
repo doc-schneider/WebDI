@@ -13,7 +13,7 @@ Creates:
 """
 
 # TODO
-#  - What to do with non-photo documents?
+#  - Album type information
 
 db_connection_str = 'mysql+mysqlconnector://Stefan:Moppel3@localhost/di'
 db_connection = create_engine(db_connection_str)
@@ -23,7 +23,6 @@ write_csv = True
 write_mysql = True
 path_root = Path('Z:/Bilder/')
 name_root = "Stefans Fotoarchiv"
-excluded_files = ["Thumbs.db"]  # TODO Instead: Certain endings
 
 # TODO Can read these from main photo table
 name_output = person + "_" + "photo" + "_" + name_root.replace(" ", "").lower()
@@ -45,7 +44,7 @@ for p in pp:
 for p in pp:
     photocollections["COLLECTION"].append(p.name)  # str in case name is year / number
     photocollections["PARENT_COLLECTION"].append(p.parts[-2])
-    if [y for y in p.iterdir() if (y.is_file() and not y.name in excluded_files)]:
+    if [y for y in p.iterdir() if y.is_file()]:
         photocollections["CONTAINS_PHOTOS"].append(True)
     else:
         photocollections["CONTAINS_PHOTOS"].append(False)
