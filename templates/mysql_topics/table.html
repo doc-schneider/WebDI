@@ -40,9 +40,16 @@
 					{% for j in range(n_rows) %} 
 						<tr>
 							{% for i in range(n_columns) %} 
-								{% if columns[i] == column_clickable %}
+								{% if (columns[i] == column_clickable) and (table[columns[i]][j] != None) %}
+									{% if table_type == "meta" %}
+										{% set target = "_self" %}
+										{% set action = "/mysql_topics/table" %}
+									{% elif table_type == "basic" %}
+										{% set target = "_blank" %}
+										{% set action = "/mysql_topics/content" %}
+									{% endif %}	
 									<td class="table-primary">
-										<form method="post" action="/mysql_topics/table" target="_self"> 
+										<form method="post" action="{{ action }}" target="{{ target }}"> 
 											<button class="btn" type="submit" name="{{ column_clickable }}" value="{{ table[columns[i]][j] }}"> 													
 												{{ table[columns[i]][j] }}							
 											</button>

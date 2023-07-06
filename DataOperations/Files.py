@@ -17,7 +17,7 @@ def get_files_info(pfad):
     info = {
         "PATH": [],
         "DOCUMENT_NAME": [],
-        "DOCUMENT_TYPE": [],
+        "DOCUMENT_FORMAT": [],
         "TIME_CREATED": []
     }
 
@@ -26,7 +26,7 @@ def get_files_info(pfad):
     for f in files:
         info["PATH"].append(pfad)
         info["DOCUMENT_NAME"].append(f.name)
-        info["DOCUMENT_TYPE"].append(f.suffix[1:])    #  Removes dot . from string.
+        info["DOCUMENT_FORMAT"].append(f.suffix[1:])    #  Removes dot . from string.
         # st_ctime : creation time (of file on computer)
         # st_mtime : last content modification time (creation time of data, e,g time photo taken)
         info["TIME_CREATED"].append(

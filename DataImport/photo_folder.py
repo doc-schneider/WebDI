@@ -2,6 +2,8 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine
 
+from DataOperations.MySQL import write_table
+
 """
 Finds all folders in a root folder.
 - Folders can be bottom level, ie, containing a photo collection and no further sub-folders
@@ -27,12 +29,12 @@ name_root = "Stefans Fotoarchiv"
 # TODO Can read these from main photo table
 name_output = person + "_" + "photo" + "_" + name_root.replace(" ", "").lower()
 
-photocollections = {
+collections = {
     "PATH": [],
     "COLLECTION": [],
     "PARENT_COLLECTION": [],
-    "CONTAINS_PHOTOS": [],
-    "PHOTO_TABLE": [],
+    "CONTAINS_FILES": [],
+    "NAME_TABLE": [],
     "DESCRIPTION": []
 }
 
@@ -40,29 +42,29 @@ photocollections = {
 pp = [p for p in path_root.glob('**/')]
 pp.pop(0)  # First is root directory
 for p in pp:
-    photocollections["PATH"].append(p.as_posix())
+    collections["PATH"].append(p.as_posix())
 for p in pp:
-    photocollections["COLLECTION"].append(p.name)  # str in case name is year / number
-    photocollections["PARENT_COLLECTION"].append(p.parts[-2])
+    collections["COLLECTION"].append(p.name)  # str in case name is year / number
+    collections["PARENT_COLLECTION"].append(p.parts[-2])
     if [y for y in p.iterdir() if y.is_file()]:
-        photocollections["CONTAINS_PHOTOS"].append(True)
+        collections["CONTAINS_FILES"].append(True)
     else:
-        photocollections["CONTAINS_PHOTOS"].append(False)
+        collections["CONTAINS_FILES"].append(False)
     # TODO To be filled
-    photocollections["PHOTO_TABLE"].append(None)
-    photocollections["DESCRIPTION"].append(None)
+    collections["NAME_TABLE"].append(None)
+    collections["DESCRIPTION"].append(None)
 
-phototable = pd.DataFrame(
-    data=photocollections
+table = pd.DataFrame(
+    data=collections
 )
 
-phototable.loc[
-    phototable["PARENT_COLLECTION"] == path_root.parts[-1],
+table.loc[
+    table["PARENT_COLLECTION"] == path_root.parts[-1],
     "PARENT_COLLECTION"
 ] = name_root
 
 if write_csv:
-    phototable.to_csv(
+    table.to_csv(
         str(Path.joinpath(path_root, Path(name_output + ".csv")).as_posix()),
         sep=";",
         encoding='ANSI',
@@ -70,9 +72,8 @@ if write_csv:
     )
 
 if write_mysql:
-    phototable.to_sql(
-        name_output,
+    write_table(
         db_connection,
-        if_exists="replace",
-        index=False
+        name_output,
+        table
     )

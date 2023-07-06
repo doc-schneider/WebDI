@@ -1,5 +1,21 @@
-from sqlalchemy import Text, DateTime, Date, Integer
+from sqlalchemy.types import Text, DateTime, Date, Integer, Boolean  # TODO types correct?
 
+
+columns_names_types = {
+    "TOPIC": Text,
+    "SUB_TOPIC": Text,
+    "PATH": Text,
+    "NAME_TABLE": Text,
+    "DESCRIPTION": Text,
+    "TYPE": Text,
+    "PERSON": Text,
+    "COLLECTION": Text,
+    "PARENT_COLLECTION": Text,
+    "CONTAINS_FILES": Boolean,
+    "DOCUMENT_NAME": Text,
+    "DOCUMENT_FORMAT": Text,
+    "TIME_CREATED": DateTime
+}
 
 # TODO What makes sense?
 #  - Common to all table types

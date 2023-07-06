@@ -1,8 +1,8 @@
 import pandas as pd
-from sqlalchemy import MetaData, Table, Column, Text, DateTime, Integer
+from sqlalchemy import MetaData, Table, Column
+from sqlalchemy.types import Text, DateTime, Integer, Boolean
 
-from DataStructures.TableTypes import column_types_table, find_optional_columns
-
+from DataStructures.TableTypes import column_types_table, find_optional_columns, columns_names_types
 
 # TODO Move column definitions to DataStructures
 #  Add / remove columns
@@ -32,6 +32,19 @@ def create_specific_table(db_connection, table_name, table_type, optional_column
         *[Column(key, value["sqlalchemytype"]) for (key, value) in dct.items()]
     )
     metadata.create_all(db_connection)
+
+def write_table(db_connection, table_name, table):
+    table.to_sql(
+        table_name,
+        db_connection,
+        if_exists="replace",
+        index=True,
+        index_label="ID",
+        dtype={c: columns_names_types[c] for c in table.columns}
+    )
+    db_connection.execute(
+        'ALTER TABLE ' + table_name + ' ADD PRIMARY KEY (ID);'
+    )
 
 
 # TODO Simplfy code with table type functions
@@ -100,6 +113,18 @@ def read_specific_dataframe(db_connection, table_name, table_type):
         inplace=True
     )
     return df
+
+def read_table(db_connection, table_name):
+    # TODO New Python version : dtype={"CONTAINS_FILES": bool}
+    table = pd.read_sql(
+        table_name,
+        con=db_connection,
+        index_col="ID"
+    )
+    # TODO Smart class check
+    if "CONTAINS_FILES" in table.columns:
+        table["CONTAINS_FILES"] = table["CONTAINS_FILES"].astype(bool)
+    return table
 
 
 def export_table(db_connection, table_name, pathname):

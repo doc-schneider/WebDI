@@ -3,6 +3,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 from DataOperations.Documents import DocumentFactory
+from DataOperations.MySQL import read_table, write_table
 
 """
 Walks through all folders indicated in a topic table
@@ -24,18 +25,16 @@ topic = "photo"
 sub_topic = "stefansfotoarchiv"
 
 subtopic_table_name = person + "_" + topic + "_" + sub_topic
-subtopic_table = pd.read_sql(
-    subtopic_table_name,
-    con=db_connection
-)
+
+subtopic_table = read_table(db_connection, subtopic_table_name)
 
 # Loop over all low level tables
 for i in range(subtopic_table.shape[0]):
     # Contains photos but no table written yet
     if (
-            bool(subtopic_table.loc[i, "CONTAINS_PHOTOS"])
+            bool(subtopic_table.loc[i, "CONTAINS_FILES"])
     ) & (
-            subtopic_table.loc[i, "PHOTO_TABLE"] is None
+            subtopic_table.loc[i, "NAME_TABLE"] is None
     ):
         collection_name = subtopic_table.loc[i, "COLLECTION"]
         pth = subtopic_table.loc[i, "PATH"]
@@ -67,16 +66,15 @@ for i in range(subtopic_table.shape[0]):
         )
 
         table_name = subtopic_table_name + "_" + collection_name
-        documenttable.to_sql(
-            table_name,
+        write_table(
             db_connection,
-            if_exists="replace",
-            index=False
+            table_name.lower(),
+            documenttable
         )
 
-        # Update sub-topic table
+        # Update higher-level table
         query = "UPDATE " + subtopic_table_name + \
-                " SET PHOTO_TABLE = " + "\"" + table_name + "\"" + \
+                " SET NAME_TABLE = " + "\"" + table_name + "\"" + \
                 " WHERE COLLECTION = " + "\"" + collection_name + "\"" + ";"
         db_connection.execute(query)
 
