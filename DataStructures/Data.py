@@ -42,18 +42,6 @@ class DataTable:
         self.data.sort_values(by=['DATETIME'], inplace=True)
         self.data.reset_index(drop=True, inplace=True)
 
-    #def add_time_to(self):
-    #    # If no end time (but only start time) add current time (for graphics depiction).
-    #    for i in range(self.length):
-    #        if not np.isnat(self.data['TIME_FROM'].iloc[i].to_datetime64()) and \
-    #                np.isnat(self.data['TIME_TO'].iloc[i].to_datetime64()):
-    #            self.data.at[i, 'TIME_TO'] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-    # TODO Remove ?
-    #def replace_NaT(self):
-    #    # Default: Replace by now
-    #    ix = self.data['TIME_TO'].apply(lambda x: not isinstance(x, pd.Timestamp))
-    #    self.data.loc[ix, 'TIME_TO'] = pd.Timestamp.now()
-
     def add_timefromto(self, timedelta):
         self.data["TIME_FROM"] = self.data["DATETIME"]
         self.add_timedelta(timedelta)
@@ -65,10 +53,10 @@ class DataTable:
         if "TIME_FROM" in self.data.columns:
             # Returns the index of all documents whose time_interval overlaps a requested time interval
             iix = pd.IntervalIndex.from_arrays(self.data['TIME_FROM'], self.data['TIME_TO'], closed='both')
-            return self.data.index[iix.overlaps(timeinterval)].to_list()
+            return self.data.index[iix.overlaps(timeinterval)].to_list(), DataTable(self.data[iix])
         elif "DATETIME" in self.data.columns:
             iix = (self.data["DATETIME"] >= timeinterval.left) & (self.data["DATETIME"] <= timeinterval.right)
-            return self.data.index[iix].to_list()
+            return self.data.index[iix].to_list(), DataTable(self.data[iix])
 
     def document_groups(self):
         # TODO Takes very long

@@ -5,7 +5,10 @@ from os import path
 import base64
 
 
-def get_files_info(pfad):
+def get_files_info(
+        pfad,
+        exclude_formats=[]
+):
     '''
     Function retrieves file infos for all files
     inside the given directory
@@ -24,14 +27,16 @@ def get_files_info(pfad):
     # Get file names.
     files = [y for y in Path(pfad).iterdir() if (y.is_file() and not y.name in excluded_files)]
     for f in files:
-        info["PATH"].append(pfad)
-        info["DOCUMENT_NAME"].append(f.name)
-        info["DOCUMENT_FORMAT"].append(f.suffix[1:])    #  Removes dot . from string.
-        # st_ctime : creation time (of file on computer)
-        # st_mtime : last content modification time (creation time of data, e,g time photo taken)
-        info["TIME_CREATED"].append(
-            dtm.datetime.fromtimestamp(f.stat().st_mtime)
-        )
+        format_file = f.suffix[1:]  #  Removes dot . from string.
+        if format_file not in exclude_formats:
+            info["PATH"].append(pfad)
+            info["DOCUMENT_NAME"].append(f.name)
+            info["DOCUMENT_FORMAT"].append(format_file)
+            # st_ctime : creation time (of file on computer)
+            # st_mtime : last content modification time (creation time of data, e,g time photo taken)
+            info["TIME_CREATED"].append(
+                dtm.datetime.fromtimestamp(f.stat().st_mtime)
+            )
 
     return pd.DataFrame(data=info)
 

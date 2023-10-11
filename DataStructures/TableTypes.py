@@ -7,6 +7,8 @@ columns_names_types = {
     "PATH": Text,
     "NAME_TABLE": Text,
     "DESCRIPTION": Text,
+    "TAG": Text,
+    "PARENT_TAG": Text,
     "TYPE": Text,
     "PERSON": Text,
     "COLLECTION": Text,
@@ -14,7 +16,16 @@ columns_names_types = {
     "CONTAINS_FILES": Boolean,
     "DOCUMENT_NAME": Text,
     "DOCUMENT_FORMAT": Text,
-    "TIME_CREATED": DateTime
+    "DOCUMENT_GROUP": Integer,
+    "TIME_CREATED": DateTime,
+    "TIME_FROM": DateTime,
+    "TIME_TO": DateTime,
+    "EVENT_NAME": Text,
+    "PARENT_EVENT": Text,
+    "EVENT_LEVEL": Integer,
+    "SUB_EVENT": Text,
+    "EVENT_GROUP": Text,
+    "PARTICIPANTS": Text
 }
 
 # TODO What makes sense?
@@ -441,69 +452,3 @@ def column_types_table(
         dct = [value["alias"] for (key, value) in dct.items()]
 
     return dct
-
-
-'''
-# Various DataFrame column names and their MySQL correspondence
-def columns_generictable():
-    return {
-        "NAME": {
-            "mysqltype": "text",
-            "alias": "NAME"
-        },
-        "DOCUMENT_NAME": {
-            "mysqltype": "varchar(255)",
-            "alias": "DOCUMENT_NAME"
-        },
-        "DOCUMENT_TYPE": {
-            "mysqltype": "varchar(255)",
-            "alias": "DOCUMENT_TYPE"
-        },
-        "DATETIME": {
-            "mysqltype": "datetime",
-            "alias": "DATETIME"
-        },
-        "PATH": {
-            "mysqltype": "varchar(255)",
-            "alias": "PATH"
-        },
-        "DESCRIPTION": {
-            "mysqltype": "varchar(255)",
-            "alias": "DESCRIPTION"
-        },
-        "EVENT": {
-            "mysqltype": "varchar(255)",
-            "alias": "EVENT"
-        },
-        "primary_key": "ID"
-    }
-
-def columns_portaltable():
-    return {
-        "NAME": {
-            "mysqltype": "text",
-            "alias": "NAME"
-        },
-        "SUB_PORTAL": {
-            "mysqltype": "text",
-            "alias": "SUB_PORTAL"
-        },
-        "DATABASE_NAME": {
-            "mysqltype": "text",
-            "alias": "DATABASE"
-        },
-        "TABLE_NAME": {
-            "mysqltype": "text",
-            "alias": "TABLE"
-        },
-        "DOCUMENT_CATEGORY": {
-            "mysqltype": "text",
-            "alias": "DOCUMENT_CATEGORY"
-        },
-        "VIEW_TYPE": {
-            "mysqltype": "text",
-            "alias": "VIEW_TYPE"
-        },
-        "primary_key": "PortalID"
-    }
-'''

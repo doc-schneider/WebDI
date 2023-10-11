@@ -20,7 +20,7 @@ topics_filename = "Z:/Biographie/Stefan/Tables/Data_Stefan.xlsx"
 read_topics_fromXLS = True
 topics_tablename = person + "_" + "topics"
 make_table_topics = False
-make_tables_topic = True
+make_tables_topic = ["tag"]  # "all"
 
 # Read main topic page
 if read_topics_fromXLS:
@@ -42,7 +42,7 @@ for t in table_topics["TOPIC"]:
         sheet_name=t,
         engine="openpyxl"
     )
-    if make_tables_topic:
+    if (all in make_tables_topic) | (t in make_tables_topic):
         write_table(
             db_connection,
             (person + "_topic_" + t).lower(),

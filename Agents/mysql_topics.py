@@ -38,7 +38,13 @@ def show_table():
 
     # Containing links to sub-tables?
     flag_table = None  # No subtables
-    if "NAME_TABLE" in column_names:
+    if ("NAME_TABLE" in column_names) & (
+            (
+                    "DOCUMENT_NAME" not in column_names
+            ) | (
+            "SUB_TOPIC" in column_names
+    )
+    ):
         flag_table = "NAME_TABLE"
 
     if flag_table is not None:
@@ -73,6 +79,6 @@ def show_content():
         return render_template(
             '/mysql_topics/content.html',
             data=data,
-            data_type=document_format,
+            data_type=document_format.lower(),
             description=description
         )

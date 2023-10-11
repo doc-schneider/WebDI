@@ -122,6 +122,7 @@ def read_table(db_connection, table_name):
         index_col="ID"
     )
     # TODO Smart class check
+    #  Document Group etc
     if "CONTAINS_FILES" in table.columns:
         table["CONTAINS_FILES"] = table["CONTAINS_FILES"].astype(bool)
     return table

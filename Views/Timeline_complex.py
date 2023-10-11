@@ -16,7 +16,7 @@ class TimelineViewer():
                  eventtable=None
                  ):
         self.MetaView = MetaView
-        self.n_timelines = 1  # TODO For the time being
+        self.n_timelines = len(tablecollection)
         self.documenttable = list()
         self.flag_single = flag_single    # TODO For the time bing
         self.marker = {
@@ -51,13 +51,14 @@ class TimelineViewer():
         # Assemble documenttables from meta-table
         for tc in tablecollection:
             self.documenttable.append(
-                tc.find_in_timeinterval(
+                tc.compound_table_from_timeinterval(
                     pd.Interval(
                         self.time_grid.loc[0, "TIME_INTERVAL"].left,
                         self.time_grid.iloc[-1]["TIME_INTERVAL"].right,
                         closed='left'
-                    )
-                )[1]
+                    ),
+                    self.MetaView.database_connection
+                )
             )
         self.BoxSeries = list()
         for i in range(self.n_timelines):
@@ -373,7 +374,7 @@ class TimelineFactory:
         for i in range(int(100 / rect_width_min)):
             if documenttable.find_in_timeinterval(pd.Interval(
                     marker_grid['TIME_FROM'].iloc[i],
-                    marker_grid['TIME_TO'].iloc[i], closed='left'))[0]:
+                    marker_grid['TIME_TO'].iloc[i], closed='left')):
                 markers.append((i * rect_width_min, rect_width_min))
         return markers
 

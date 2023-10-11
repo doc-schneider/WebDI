@@ -48,10 +48,9 @@ class Viewer:
             # For nan = None + None
             table.loc[table['PATH'].isnull(), 'LOCATION_DOCUMENT'] = None
 
-    def get_data_type(self, table):
-        # TODO Format instead of Type
-        if 'DOCUMENT_TYPE' in set(table.columns):
-            return table['DOCUMENT_TYPE'].tolist()
+    def get_data_format(self, table):
+        if 'DOCUMENT_FORMAT' in set(table.columns):
+            return table['DOCUMENT_FORMAT'].tolist()
         else:
             return list("")
 

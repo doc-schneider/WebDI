@@ -8,7 +8,7 @@ class BoxViewer:
 
     def update_Timeline(self, documenttable, time_interval):
         self.time_interval = time_interval
-        self.index_documents = documenttable.find_in_timeinterval(self.time_interval)
+        self.index_documents = documenttable.find_in_timeinterval(self.time_interval)[0]
         self.update(documenttable)
 
     # General update method for BoxView
@@ -70,14 +70,18 @@ class BoxViewer:
             'n_subboxes': self.n_subboxes,
             "category": self.View.document_category,
             'description': self.get_descriptions(),
-            "table_name": self.boxShow["TABLE_NAME"].tolist(),
-            'data_type': self.View.get_data_type(self.boxShow),  # TODO Format instead of Type
+            "table_name": self.boxShow["NAME_TABLE"].tolist(),
+            'data_format': self.View.get_data_format(self.boxShow),
             'data': self.View.get_data(self.boxShow)
         }
         if "EVENT" in self.boxShow.columns:
             dct["event"] = self.boxShow["EVENT"].tolist()
         else:
             dct["event"] = None
+        if "TAG" in self.boxShow.columns:
+            dct["tag"] = self.boxShow["TAG"].tolist()
+        else:
+            dct["tag"] = None
         return dct
 
     # Return list of descriptions

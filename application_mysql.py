@@ -1,5 +1,4 @@
 from flask import Flask
-from mysql.connector import connect
 from sqlalchemy import create_engine
 
 import config

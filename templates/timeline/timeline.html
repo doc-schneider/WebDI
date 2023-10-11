@@ -40,7 +40,7 @@
 											<iframe src="{{ url_for('static', filename=boxes[k][i][key][j]) }}"></iframe>
 											
 										{% elif boxes[k][i]["category"] == "photo" %}																								
-											{% if boxes[k][i]["data_type"][j] == "png" %}					
+											{% if boxes[k][i]["data_format"][j] == "png" %}					
 												<img src="data:image/png;base64,{{ boxes[k][i][key][j] }}" class="img-fluid"/>  
 											{% else %}
 												<img src="data:image/jpeg;base64,{{ boxes[k][i][key][j] }}" class="img-fluid"/> 
@@ -72,17 +72,24 @@
 								</div>	
 							{% endif %}				
 							
-							{% if display_events %}
-								<!-- Event -->
-								{% if boxes[k][i]["event"][j] != None %}
-									<div class="row justify-content-center border text-dark bg-info">
-										<div class="col overflow-scroll text-dark">					
-											{{ boxes[k][i]["event"][j] }}
-										</div>
-									</div>	
-								{% endif %}
+							<!-- Tag -->
+							{% if boxes[k][i]["tag"][j] != None %}
+								<div class="row justify-content-center border text-dark bg-info">
+									<div class="col overflow-scroll text-dark">					
+										{{ boxes[k][i]["tag"][j] }}
+									</div>
+								</div>	
 							{% endif %}
 							
+							<!-- Event -->
+							{% if boxes[k][i]["event"][j] != None %}
+								<div class="row justify-content-center border text-dark bg-info">
+									<div class="col overflow-scroll text-dark">					
+										{{ boxes[k][i]["event"][j] }}
+									</div>
+								</div>	
+							{% endif %}			
+
 						{% endfor %}	
 						
 					</div>
@@ -106,36 +113,30 @@
 						</svg>
 					</div>
 				{% endfor %}
-			</div>	
-		
+			</div>		
 		{% endfor %}
 		
 		{% if display_events %}
-			<!-- Event timelines -->
+			<!-- Event boxes -->
 			<div class="row justify-content-center pt-3 px-0"> 	
 				{% for i in range(boxes[0]|length) %} 	
-					{% set boxsize = box_size[i] %}
-					<div class="col-{{ boxsize }} px-0 border bg-info">					
-						<!-- Event Marker and Description -->
-						<svg width="100%" height="5">	
-							{% set key = "event_markers" %}
-							{% for j in range(event[key][i]|length) %} 				
-								{% if event[key][i][j] != None %}	
-									<rect x="{{event[key][i][j][0]}}%" width="{{event[key][i][j][1]}}%" height="3" style="fill:black;" />	
-								{% endif %}
-							{% endfor %}
-						</svg>		
-						{% set key = "event_labels" %}
-						{% for j in range(event["event_markers"][i]|length) %} 
-							{% if event[key][i][j][1] != None %}
-								<div>	
-									<span style="position: relative; left: {{event[key][i][j][0]}}%; width: 10%; background: WhiteSmoke; border:1px solid DodgerBlue;">{{event[key][i][j][1]}}</span>
-								</div>	
-							{% endif %}
-						{% endfor %}
+					{% set boxsize = box_size[i] %}		
+					<div class="col-{{ boxsize }} justify-content-center border">
+						{% if event["event_labels"][i][j][1] != None %}
+							<div>	
+								<span style="position: relative; left: {{event[key][i][j][0]}}%; width: 10%; background: WhiteSmoke; border:1px solid DodgerBlue;">{{event[key][i][j][1]}}</span>
+							</div>	
+						{% endif %}
+					
+						{% if boxes[0][i]["event"][j] != None %}
+							<div class="row justify-content-center border text-dark bg-info">
+								<div class="col overflow-scroll text-dark">					
+									{{ boxes[0][i]["event"][j] }}
+								</div>
+							</div>	
+						{% endif %}	
+						
 					</div>	
-				{% endfor %}
-			</div>		
 			<!-- Event Description -->
 			<div class="row justify-content-center"> 	
 				{% for i in range(boxes[0]|length) %} 	
