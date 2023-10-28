@@ -1,15 +1,37 @@
 import pandas as pd
 
+from DataStructures.Data import DataTable
+from Views.Timeline_Factory import TimelineFactory
+
 
 class BoxViewer:
     def __init__(self, View):
         self.View = View
         # TODO Call proper update method
 
-    def update_Timeline(self, documenttable, time_interval):
+    def update_Timeline(self, documenttable, eventtable, time_interval):
         self.time_interval = time_interval
         self.index_documents = documenttable.find_in_timeinterval(self.time_interval)[0]
+
         self.update(documenttable)
+
+        # Add Event information to Show document
+        self.event = {
+            "event_marker": None,
+            "event_name": None,
+            "event_description": None
+        }
+        events = eventtable.get_events(
+            DataTable(self.boxShow)
+        )
+        if not events.empty:
+            self.event["event_name"] = events["EVENT_NAME"].values[0]
+            self.event["event_description"] = events["DESCRIPTION"].values[0]
+            # Graphics
+            self.event["event_marker"] = TimelineFactory.position_width(
+                events.loc[0, ["TIME_FROM", "TIME_TO"]],
+                time_interval
+            )
 
     # General update method for BoxView
     def update(self, documenttable, shift_show=None):
@@ -70,14 +92,13 @@ class BoxViewer:
             'n_subboxes': self.n_subboxes,
             "category": self.View.document_category,
             'description': self.get_descriptions(),
-            "table_name": self.boxShow["NAME_TABLE"].tolist(),
+            "table_name": self.boxShow["NAME_TABLE"].values[0],
             'data_format': self.View.get_data_format(self.boxShow),
-            'data': self.View.get_data(self.boxShow)
+            'data': self.View.get_data(self.boxShow),
+            "event_name": self.event["event_name"],  # TODO Doesn't work for non-timeline
+            "event_description": self.event["event_description"],
+            "event_marker": self.event["event_marker"]
         }
-        if "EVENT" in self.boxShow.columns:
-            dct["event"] = self.boxShow["EVENT"].tolist()
-        else:
-            dct["event"] = None
         if "TAG" in self.boxShow.columns:
             dct["tag"] = self.boxShow["TAG"].tolist()
         else:

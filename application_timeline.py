@@ -3,8 +3,9 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 import config
-from Agents.timeline_agent import timeline
+from Agents.timeline import timeline
 from DataStructures.Data import DataTable
+from DataStructures.Collection import TableCollectionFactory
 from DataOperations.MySQL import read_table
 
 
@@ -14,36 +15,40 @@ config.db_connection = create_engine(db_connection_str)
 
 config.document_pathtype = 'PATH'
 
-config.person = "stefan"
-
+person = "stefan"
 # Which document categories
 config.document_category = [
     "photo"
 ]  #   TODO document_type seems better
 
+config.tablecollection = list()
+config.tablecollection.append(
+    TableCollectionFactory.create_compoundtable(
+        config.db_connection,
+        person,
+        "photo",
+        "main photo archive",
+        "photo"
+    )
+)
+
 # Starting time interval
 config.time_boxes = (
     pd.Interval(
-        pd.Timestamp('2022-01-01 00:00:00'),
-        pd.Timestamp('2022-12-31 00:00:00'),
+        pd.Timestamp('2023-01-01 00:00:00'),
+        pd.Timestamp('2023-12-31 00:00:00'),
         closed='left'
     ),
     "Y"
 )
 
-config.tablecollection = list()
-table = read_table(
+config.eventtable = TableCollectionFactory.create_compoundtable(
     config.db_connection,
-    config.person + "_photo_stefansfotoarchiv_all"
+    person,
+    "event",
+    "Stefans Eventliste",
+    "event"
 )
-table["DATETIME"] = table["TIME_CREATED"]  # TODO For the tim ebing
-config.tablecollection.append(
-    DataTable(
-        table
-    )
-)
-
-config.eventtable = None
 
 ## Flask
 app = Flask(__name__)

@@ -109,7 +109,13 @@ class PhotoFactory:
     # TODO Encoding to DataOperations / File
     @staticmethod
     def load_thumbnail(file, encode_type):
-        if (file is not None) and (file is not np.nan) and path.isfile(file):
+        if (
+                file is not None
+        ) and (
+                file is not np.nan
+        ) and (
+                path.isfile(file)
+        ):
             image = Image.open(file)
             image.thumbnail((512, 512))
             if encode_type == 'base64':

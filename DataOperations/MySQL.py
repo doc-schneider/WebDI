@@ -33,11 +33,11 @@ def create_specific_table(db_connection, table_name, table_type, optional_column
     )
     metadata.create_all(db_connection)
 
-def write_table(db_connection, table_name, table):
+def write_table(db_connection, table_name, table, if_exists="replace"):
     table.to_sql(
         table_name,
         db_connection,
-        if_exists="replace",
+        if_exists=if_exists,
         index=True,
         index_label="ID",
         dtype={c: columns_names_types[c] for c in table.columns}

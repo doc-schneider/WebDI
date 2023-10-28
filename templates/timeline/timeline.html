@@ -61,16 +61,7 @@
 										{{ boxes[k][i]["description"][j] }}
 									</div>
 								</div>	
-							{% endif %}
-							
-							<!-- Table Name -->
-							{% if boxes[k][i]["table_name"][j] != None %}
-								<div class="row justify-content-center border text-dark bg-success">
-									<div class="col overflow-scroll text-dark">					
-										{{ boxes[k][i]["table_name"][j] }}
-									</div>
-								</div>	
-							{% endif %}				
+							{% endif %}		
 							
 							<!-- Tag -->
 							{% if boxes[k][i]["tag"][j] != None %}
@@ -79,18 +70,42 @@
 										{{ boxes[k][i]["tag"][j] }}
 									</div>
 								</div>	
-							{% endif %}
-							
-							<!-- Event -->
-							{% if boxes[k][i]["event"][j] != None %}
-								<div class="row justify-content-center border text-dark bg-info">
-									<div class="col overflow-scroll text-dark">					
-										{{ boxes[k][i]["event"][j] }}
-									</div>
-								</div>	
-							{% endif %}			
+							{% endif %}		
 
 						{% endfor %}	
+							
+						<!-- Table Name -->
+						{% if boxes[k][i]["table_name"] != None %}
+							<div class="row justify-content-center border text-dark bg-success">
+								<div class="col overflow-scroll text-dark">					
+									{{ boxes[k][i]["table_name"] }}
+								</div>
+							</div>	
+						{% endif %}		
+							
+						<!-- Event -->
+						{% if boxes[k][i]["event_name"] != None %}
+							<div class="row justify-content-center border text-dark bg-info">
+								<div class="col overflow-scroll text-dark">					
+									{{ boxes[k][i]["event_name"] }}
+								</div>
+							</div>	
+						{% endif %}
+						{% if boxes[k][i]["event_description"] != None %}
+							<div class="row justify-content-center border text-dark bg-info">
+								<div class="col overflow-scroll text-dark">					
+									{{ boxes[k][i]["event_description"] }}
+								</div>
+							</div>	
+						{% endif %}		
+						{% if boxes[k][i]["event_name"] != None %}
+							<div class="row justify-content-center border text-dark bg-info pt-3">
+								<svg width="100%" height="10">	
+									{% set key = "event_marker" %}		
+									<rect x="{{boxes[k][i][key][0]}}%" width="{{boxes[k][i][key][1]}}%" height="5" style="fill:black;" />	
+								</svg>	
+							</div>							
+						{% endif %}
 						
 					</div>
 				{% endfor %}
@@ -134,20 +149,9 @@
 									{{ boxes[0][i]["event"][j] }}
 								</div>
 							</div>	
-						{% endif %}	
-						
+						{% endif %}						
 					</div>	
-			<!-- Event Description -->
-			<div class="row justify-content-center"> 	
-				{% for i in range(boxes[0]|length) %} 	
-					{% set boxsize = box_size[i] %}
-					<div class="col-{{ boxsize }} border overflow-scroll">					
-						{% if event["event_descriptions"][i][0] != None %}			
-							{{ event["event_descriptions"][i][0] }}
-						{% endif %}							
-					</div>
 				{% endfor %}
-			</div>		
 		{% endif %}
 	
 		<!-- Time axis -->

@@ -13,8 +13,8 @@ class EventTable(DataTable):
 
     def get_events(self, documenttable):
         # Events in EventTable belonging to events in DocumentTable
-        if "EVENT" in documenttable.data.columns:
-            events = list(documenttable.data["EVENT"].unique())
+        if "EVENT_NAME" in documenttable.data.columns:
+            events = list(documenttable.data["EVENT_NAME"].unique())
         else:
             events = []
         return self.data[self.data["EVENT_NAME"].isin(events)].reset_index(drop=True)

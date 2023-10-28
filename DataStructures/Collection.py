@@ -1,8 +1,84 @@
 import pandas as pd
 
 from DataStructures.Document import DocumentTable
-from DataOperations.MySQL import read_specific_dataframe
+from DataStructures.Data import DataTable
+from DataStructures.Event import EventTable
 from DataStructures.TableTypes import column_types_table
+from DataOperations.MySQL import read_specific_dataframe, read_table
+from DataOperations.Photos import PhotoFactory
+
+
+class TableCollectionFactory:
+
+    # Assemble a basic table (file information) from meta table and multiple tables
+    @staticmethod
+    def create_compoundtable(
+            db_connection,
+            person,
+            topic,
+            subtopic,
+            document_format
+    ):
+        topic_table = read_table(
+            db_connection,
+            person + "_topic_" + topic
+        )
+        subtopic_table = topic_table.loc[
+            topic_table["SUB_TOPIC"] == subtopic,
+            "NAME_TABLE"
+        ].values[0]
+        subtopic_table = read_table(
+            db_connection,
+            subtopic_table
+        )
+
+        if topic in ["photo"]:
+            compound_table = pd.DataFrame()
+            document_group = 0
+            for tn in subtopic_table["NAME_TABLE"]:
+                if tn:
+                    table = read_table(
+                        db_connection,
+                        tn
+                    )
+                    # TIME lables
+                    table["DATETIME"] = table["TIME_CREATED"]  # TODO For the time being
+                    # Document Groups: assign unique numbers for the compound table
+                    # TODO Integer (nan in other rows makes float)
+                    dgs = table.loc[
+                        ~table["DOCUMENT_GROUP"].isnull(),
+                        "DOCUMENT_GROUP"
+                    ].unique()
+                    for dg in list(dgs):
+                        table.loc[
+                            table["DOCUMENT_GROUP"] == dg,
+                            "DOCUMENT_GROUP"
+                        ] = document_group
+                        document_group += 1
+                    # Keeps all columns
+                    compound_table = pd.concat(
+                        [
+                            compound_table,
+                            table
+                        ], ignore_index=True, sort=False
+                    )
+            # Filter documetn type
+            if document_format == "photo":
+                compound_table = compound_table[
+                    compound_table["DOCUMENT_FORMAT"].apply(
+                        PhotoFactory.allowed_photo_formats
+                    )
+                ]
+            compound_table = DataTable(compound_table)
+            compound_table.datetimesort()
+
+        elif topic in ["event"]:
+            compound_table = subtopic_table
+            compound_table = EventTable(compound_table)
+
+        # Replace nan by None
+        compound_table.data = compound_table.data.where(pd.notnull(compound_table.data), None)
+        return compound_table
 
 
 class TableCollection:
