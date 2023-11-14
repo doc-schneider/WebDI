@@ -14,7 +14,7 @@ db_connection = create_engine(db_connection_str)
 person = "stefan"
 topic = "event"   # "tag"
 id = 0   # ID = index in topic table
-flag_append = True  # Only append new content
+flag_append = True  # Assume that additional rows read from Excel are just append to existing table for a new correct table
 
 topic_table = read_table(db_connection, person + "_topic_" + topic)
 sub_topic = topic_table.loc[id, "SUB_TOPIC"]
@@ -39,7 +39,7 @@ if flag_append:
     # Additional indeces
     table_append = table_new.iloc[table_old.shape[0]:table_new.shape[0]]
     # Append only works if tables are consistent
-    table_new = pd.concat([table_old, table_append])
+    table_new = pd.concat([table_old, table_append])  # ignore_index=True ?
 
 # TODO: Append case
 write_table(

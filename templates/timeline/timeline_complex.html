@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de"> 
+<head>
+    <title>Timeline</title>
+	
+	<!-- Required meta tags -->
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" media="screen" href="{{ url_for('static', filename='bootstrap-5.0.2-dist/css/bootstrap.min.css') }}">	
+    <!-- Optional JS. Popper.js first -->
+	<!-- <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>	-->
+	<script type="text/javascript" src="/static/bootstrap-5.0.2-dist/js/bootstrap.min.js"></script> 
+
+</head>
+<body class="bg-light">
+
+	<div class="container">		
+	
+		{% for k in range(boxes|length) %} 	
+		
+			<div class="row pt-3 justify-content-center">	
+				{% for i in range(boxes[k]|length) %} 	
+					{% set boxsize = box_size[i] %}
+					
+					<div class="col-{{ boxsize }} justify-content-center border">
+					
+						{% for j in range(boxes[k][i]["n_subboxes"]) %} 	
+						
+							{% set key = "data" %}
+							{% if boxes[k][i][key][j] != None %}									
+								<div class="row justify-content-center border">
+									<div class="col overflow-scroll">		<!-- TODO: Really necessary to have a col to the row? -->
+										<form method="post" action="/timeline/single" target="_self"> 
+										<button class="btn" type="submit" name="{{ k }}, {{ i }}"> 
+										
+										{% if boxes[k][i]["category"] == "browsing" %}										
+											<a href="{{ boxes[k][i][key][j] }}" class="link-primary">{{ boxes[k][i][key][j] }}</a>
+											
+										{% elif boxes[k][i]["category"] == "note" %}	<!-- TODO: Put html into data file? -->									
+											<iframe src="{{ url_for('static', filename=boxes[k][i][key][j]) }}"></iframe>
+											
+										{% elif boxes[k][i]["category"] == "photo" %}																								
+											{% if boxes[k][i]["data_type"][j] == "png" %}					
+												<img src="data:image/png;base64,{{ boxes[k][i][key][j] }}" class="img-fluid"/>  
+											{% else %}
+												<img src="data:image/jpeg;base64,{{ boxes[k][i][key][j] }}" class="img-fluid"/> 
+											{% endif %}
+											
+										{% endif %}		
+										
+										</button>
+										</form> 
+									</div>
+								</div>				
+							{% endif %}
+							
+							<!-- Description -->
+							{% if boxes[k][i]["description"][j] != None %}
+								<div class="row justify-content-center border text-dark">
+									<div class="col overflow-scroll text-dark">					
+										{{ boxes[k][i]["description"][j] }}
+									</div>
+								</div>	
+							{% endif %}
+							
+							<!-- Table Name -->
+							{% if boxes[k][i]["table_name"][j] != None %}
+								<div class="row justify-content-center border text-dark bg-success">
+									<div class="col overflow-scroll text-dark">					
+										{{ boxes[k][i]["table_name"][j] }}
+									</div>
+								</div>	
+							{% endif %}				
+							
+							{% if display_events %}
+								<!-- Event -->
+								{% if boxes[k][i]["event"][j] != None %}
+									<div class="row justify-content-center border text-dark bg-info">
+										<div class="col overflow-scroll text-dark">					
+											{{ boxes[k][i]["event"][j] }}
+										</div>
+									</div>	
+								{% endif %}
+							{% endif %}
+							
+						{% endfor %}	
+						
+					</div>
+				{% endfor %}
+			</div>	
+
+			<!-- Document markers -->
+			<div class="row justify-content-center px-0 pt-3"> 	
+				{% for i in range(boxes[k]|length) %} 	
+					{% set boxsize = box_size[i] %}
+					<div class="col-{{ boxsize }} px-0 border">	
+						<svg width="100%" height="5">
+							{% set key = "markers" %}
+							{% for j in range(marker[key][k][i]|length) %}
+								<rect x="{{marker[key][k][i][j][0]}}%" width="{{marker[key][k][i][j][1]}}%" height="5" style="fill:black;" />	
+							{% endfor %}
+							{% set key = "marker_show" %}
+							{%  if marker[key][k][i] | length > 0 %} 
+								<rect x="{{marker[key][k][i][0][0]}}%" width="{{marker[key][k][i][0][1]}}%" height="5" style="fill:red;" />
+							{% endif %} 
+						</svg>
+					</div>
+				{% endfor %}
+			</div>	
+		
+		{% endfor %}
+		
+		{% if display_events %}
+			<!-- Event timelines -->
+			<div class="row justify-content-center pt-3 px-0"> 	
+				{% for i in range(boxes[0]|length) %} 	
+					{% set boxsize = box_size[i] %}
+					<div class="col-{{ boxsize }} px-0 border bg-info">					
+						<!-- Event Marker and Description -->
+						<svg width="100%" height="5">	
+							{% set key = "event_markers" %}
+							{% for j in range(event[key][i]|length) %} 				
+								{% if event[key][i][j] != None %}	
+									<rect x="{{event[key][i][j][0]}}%" width="{{event[key][i][j][1]}}%" height="3" style="fill:black;" />	
+								{% endif %}
+							{% endfor %}
+						</svg>		
+						{% set key = "event_labels" %}
+						{% for j in range(event["event_markers"][i]|length) %} 
+							{% if event[key][i][j][1] != None %}
+								<div>	
+									<span style="position: relative; left: {{event[key][i][j][0]}}%; width: 10%; background: WhiteSmoke; border:1px solid DodgerBlue;">{{event[key][i][j][1]}}</span>
+								</div>	
+							{% endif %}
+						{% endfor %}
+					</div>	
+				{% endfor %}
+			</div>		
+			<!-- Event Description -->
+			<div class="row justify-content-center"> 	
+				{% for i in range(boxes[0]|length) %} 	
+					{% set boxsize = box_size[i] %}
+					<div class="col-{{ boxsize }} border overflow-scroll">					
+						{% if event["event_descriptions"][i][0] != None %}			
+							{{ event["event_descriptions"][i][0] }}
+						{% endif %}							
+					</div>
+				{% endfor %}
+			</div>		
+		{% endif %}
+	
+		<!-- Time axis -->
+		<div class="row justify-content-center"> 	
+			{% for i in range(boxes[0]|length) %} 	
+				{% set boxsize = box_size[i] %}
+				<div class="col-{{ boxsize }} px-0 pt-5">	
+					<svg width="100%" height="11">
+						<rect width="100%" height="2" style="fill:black;" />
+						<rect width="2" height="100%" style="fill:black;" />
+					</svg>
+				</div>
+			{% endfor %}
+		</div>
+		<div class="row justify-content-center"> 	
+			{% for i in range(boxes[0]|length) %} 	
+				{% set boxsize = box_size[i] %}			
+				<div class="col-{{ boxsize }} px-0">	
+					{{ timegrid[i] }}
+				</div>
+			{% endfor %}
+		</div>
+	
+		<!-- Buttons -->
+		<div class="row pt-3 justify-content-center"> 	
+			<div class="col-2">	
+				<form method="post">  
+					<div class="row justify-content-center"> 	
+						<input type="submit" name="submit" class="btn btn-outline-primary" value="zoom in">
+					</div>
+					<div class="row justify-content-center">
+						<div class="btn-group">
+							<input type="submit" name="submit" class="btn btn-outline-primary" value="earlier">
+							<input type="submit" name="submit" class="btn btn-outline-primary" value="later">
+						</div>
+					</div>
+					<div class="row justify-content-center"> 
+						<input type="submit" name="submit" class="btn btn-outline-primary" value="zoom out">
+					</div>
+				</form> 
+			</div>
+		</div>
+	
+	</div>	
+	
+</body>
+</html>
+
