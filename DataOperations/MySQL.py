@@ -1,37 +1,60 @@
 import pandas as pd
-from sqlalchemy import MetaData, Table, Column
+from sqlalchemy import ForeignKey, Table, Column, insert,  text
 from sqlalchemy.types import Text, DateTime, Integer, Boolean
 
-from DataStructures.TableTypes import column_types_table, find_optional_columns, columns_names_types
+from DataStructures.TableTypes import table_types
 
-# TODO Move column definitions to DataStructures
-#  Add / remove columns
+
+# TODO Table Type should not appear here. Go through TableFactory
+def create_table(db_engine, metadata, table_name, table_type, parent_table=None):
+    table = Table(
+        table_name,
+        metadata,
+        Column(
+            table_types[table_type.name]["PrimaryKey"], Integer, primary_key=True
+        ),
+        *[
+            Column(key, value["sqlalchemytype"]) for (key, value) in table_types[table_type.name]["Columns"].items()
+        ]
+    )
+    if "ForeignKey" in table_types[table_type.name].keys():
+        fk = table_types[table_type.name]["ForeignKey"]
+        table.append_column(
+            Column(fk, Integer, ForeignKey(f"{parent_table}.{fk}"))
+        )
+    metadata.create_all(db_engine)
+    # table.create(db_engine)
+
+# Reflect Table from database
+def init_table(db_engine, metadata, table_name):
+    return Table(
+        table_name,
+        metadata,
+        autoload_with=db_engine
+    )
+
+def table_insert(db_conn, table_mysql, table_df):
+    query = insert(table_mysql)
+    Result = db_conn.execute(query, table_df.to_dict(orient='records'))
+    db_conn.commit()
+
+def table_fetch(db_conn, table_mysql):
+    # TODO Why do I need db_conn if table is already reflected?
+    query = table_mysql.select()
+    query_result = db_conn.execute(query)
+    table_df = pd.DataFrame(query_result.fetchall())
+    return table_df
+
 
 def create_database(db_connection, db_name):
-    query = "CREATE DATABASE " + db_name
+    query = 'CREATE DATABASE ' + db_name
     # TODO engine.connect() method
-    db_connection.execute(query)
-
+    con = db_connection.connect()
+    con.execute(text(query))
 
 def drop_table(db_connection, table_name):
     query = "DROP TABLE IF EXISTS {0}".format(table_name)
-    db_connection.execute(query)
-
-def create_specific_table(db_connection, table_name, table_type, optional_columns=[], if_exist="drop"):
-    # TODO Need query for existance of table
-    if if_exist == "drop":
-        drop_table(db_connection, table_name)
-    dct = column_types_table(table_type, optional_columns=optional_columns)
-    primary_key = dct["primary_key"]
-    dct.pop("primary_key")
-    metadata = MetaData()
-    table_sql = Table(
-        table_name,
-        metadata,
-        Column(primary_key, Integer, primary_key=True),
-        *[Column(key, value["sqlalchemytype"]) for (key, value) in dct.items()]
-    )
-    metadata.create_all(db_connection)
+    db_connection.execute(text(query))
 
 def write_table(db_connection, table_name, table, if_exists="replace"):
     table.to_sql(
@@ -45,7 +68,6 @@ def write_table(db_connection, table_name, table, if_exists="replace"):
     db_connection.execute(
         'ALTER TABLE ' + table_name + ' ADD PRIMARY KEY (ID);'
     )
-
 
 # TODO Simplfy code with table type functions
 def alter_record(db_connection, table_name, document_category, set_tuple, where_tuple):

@@ -1,5 +1,5 @@
 import pandas as pd
-import mysql.connector
+# import mysql.connector
 from sqlalchemy import create_engine
 #import sqlalchemy as db
 
@@ -13,8 +13,8 @@ from DataOperations.MySQL import (
 # Create database
 flag_create_database = True
 if flag_create_database:
-    engine = create_engine('mysql+mysqlconnector://Stefan:Moppel3@localhost')
-    create_database(engine, "di")
+    engine = create_engine('mysql+mysqlconnector://root:Moppel3!@localhost')
+    create_database(engine, "lives")
 
 flag_continue = False
 if flag_continue:

@@ -1,75 +1,36 @@
-#import pandas_datareader.data as web
-#import pandas_datareader as pdr
-#import datetime
-
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
-#from dash.dependencies import Input, Output
-import plotly.graph_objects as go
+from dash import Dash, html, dcc
+from sqlalchemy import create_engine, MetaData
+
+from DataOperations import TableOperations
+from DataStructures.TableTypes import TableType
+import config
 
 
-#start = datetime.datetime(2015,1,1)
-#end = datetime.datetime(2018,2,8)
-#symbol = 'WIKI/AAPL'  # or 'AAPL.US'
-#df = web.DataReader(symbol, 'quandl', '2015-01-01', '2015-01-05')
-#df = pdr.get_data_fred('GS10')
+config.person = "stefan"
+# MySQL
+db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
+db_engine = create_engine(db_connection_str)
+db_conn = db_engine.connect()
+metadata = MetaData()
+metadata.reflect(bind=db_engine)
+config.mysql = {
+    "engine": db_engine,
+    "conn": db_conn,
+    "metadata": metadata
+}
+# View Table: Start with Topic / highest level
+#config.table_view = TableOperations.init_table(TableType["TOPIC"], config.person)
 
-app = dash.Dash()
-
-fig = go.Figure()
-# Constants
-img_width = 1600
-img_height = 900
-scale_factor = 0.5
-# Add invisible scatter trace.
-# This trace is added to help the autoresize logic work.
-fig.add_trace(
-    go.Scatter(
-        x=[0, img_width * scale_factor],
-        y=[0, img_height * scale_factor],
-        mode="markers",
-        marker_opacity=0
-    )
-)
-# Configure axes
-fig.update_xaxes(
-    visible=False,
-    range=[0, img_width * scale_factor]
-)
-fig.update_yaxes(
-    visible=False,
-    range=[0, img_height * scale_factor],
-    # the scaleanchor attribute ensures that the aspect ratio stays constant
-    scaleanchor="x"
-)
-# Add image
-fig.add_layout_image(
-    dict(
-        x=0,
-        sizex=img_width * scale_factor,
-        y=img_height * scale_factor,
-        sizey=img_height * scale_factor,
-        xref="x",
-        yref="y",
-        opacity=1.0,
-        layer="below",
-        sizing="stretch",
-        source="https://raw.githubusercontent.com/michaelbabyn/plot_data/master/bridge.jpg")
-)
-# Configure other layout
-fig.update_layout(
-    width=img_width * scale_factor,
-    height=img_height * scale_factor,
-    margin={"l": 0, "r": 0, "t": 0, "b": 0},
-)
-
-app.layout = html.Div(children=[
-    dcc.Graph(
-        id='test',
-        figure=fig
-    )
+app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
+app.layout = html.Div([
+    html.H1('Multi-page app with Dash Pages'),
+    html.Div([
+        html.Div(
+            dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
+        ) for page in dash.page_registry.values()
+    ]),
+    dash.page_container
 ])
-
-if __name__ == "__main__":
-    app.run_server(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

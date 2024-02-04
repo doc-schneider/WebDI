@@ -5,7 +5,7 @@ from DataStructures.Data import DataTable
 # TODO Has this class any distinctive purpose?
 class DocumentTable(DataTable):
 
-    def __init__(self, table, document_category, table_name=None):
+    def __init__(self, table, document_category=None, table_name=None):
         super().__init__(table, document_category, table_name)
 
 class DocumentTableFactory:

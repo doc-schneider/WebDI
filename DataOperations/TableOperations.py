@@ -1,70 +1,41 @@
-import pandas as pd
-
-from DataStructures.TableTypes import column_types_table
-from DataOperations.MySQL import (
-    create_specific_table,
-    read_specific_dataframe,
-    insert_specific_dataframe,
-    alter_record
-)
+from DataOperations import MySQL
+from DataStructures.TableTypes import TableType, table_types
+from DataStructures.TableFactory import DataTableFactory
+import config
 
 
-# TODO Specifc to each catoegory module
-def make_metatable(db_connection, meta_category):
-    create_specific_table(db_connection, meta_category, meta_category)
-
-def update_metatable(db_connection, meta_category, category):
-    metatable = read_specific_dataframe(db_connection, meta_category, meta_category)
-    tables_existing = set(metatable[category.upper() + "_TABLE"])
-    columns = column_types_table(
-        meta_category,
-        optional_columns=[],
-        remove_primarykey=True,
-        return_aliasnames=True
+# Init sqlalchemy table and fetch it from database
+def init_table(table_type, person):
+    table = {"df": None, "mysql": None, "type": table_type, "name": None}
+    table["name"] = person + "_" + table["type"].name.lower()
+    # TODO Is the init here necessary (autoload) if the schema is already known in metadata by reflect?
+    table["mysql"] = MySQL.init_table(config.mysql["engine"], config.mysql["metadata"], table["name"])
+    table["df"] = DataTableFactory.create_table(
+        table["type"],
+        MySQL.table_fetch(config.mysql["conn"], table["mysql"])
     )
-    # Find tables of category
-    table_names = db_connection.table_names()
-    table_names = [tn for tn in table_names if category + "_" in tn]
+    return table
 
-    # Make new table
-    metatable_new = {value: [] for value in columns}
-
-    for tn in table_names:
-        table = read_specific_dataframe(db_connection, tn, category)
-        t_min = table["DATETIME"].min()
-        t_max = table["DATETIME"].max()
-        if tn in list(set(table_names) - tables_existing):  # New entry?
-            # Assume first column is table name
-            metatable_new[columns[0]].append(tn)  # TODO bad style
-            metatable_new["TIME_FROM"].append(t_min)
-            metatable_new["TIME_TO"].append(t_max)
-            for item in set(columns[1:]) - set(["TIME_FROM", "TIME_TO", columns[0]]):
-                metatable_new[item].append(None)
-        else:
-            # Update times to latest entries
-            alter_record(
-                db_connection,
-                meta_category,
-                meta_category,
-                ("TIME_FROM", t_min),
-                (columns[0], tn)
-            )
-            alter_record(
-                db_connection,
-                meta_category,
-                meta_category,
-                ("TIME_TO", t_max),
-                (columns[0], tn)
-            )
-
-    if metatable_new[columns[0]]:  # Empty?
-        insert_specific_dataframe(
-            db_connection,
-            meta_category,
-            meta_category,
-            pd.DataFrame(metatable_new)
-        )
-
-
+# Create new table
+def create_table(table_type, person, n_rows=None):
+    table = {"df": None, "mysql": None, "type": table_type, "name": None}
+    table["name"] = person + "_" + table["type"].name.lower()
+    if "ParentType" in table_types[table["type"].name].keys():
+        parent_table = person + "_" + table_types[table["type"].name]["ParentType"].lower()
+    else:
+        parent_table = None
+    MySQL.create_table(
+        config.mysql["engine"],
+        config.mysql["metadata"],
+        table["name"],
+        table["type"],
+        parent_table
+    )
+    table["mysql"] = MySQL.init_table(config.mysql["engine"], config.mysql["metadata"], table["name"])
+    table["df"] = DataTableFactory.create_table(table["type"])
+    if n_rows:
+        # This is not committed to the database. Only dummy for editing in Dash
+        table["df"].create_dummy_table(n_rows=n_rows)
+    return table
 
 

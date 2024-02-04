@@ -1,454 +1,71 @@
-from sqlalchemy.types import Text, DateTime, Date, Integer, Boolean  # TODO types correct?
+from enum import Enum
+from sqlalchemy.types import Text, DateTime, Date, Integer, Boolean
 
 
+class TableType(Enum):
+    TOPIC = 0
+    SUBTOPIC = 1
+    BOOKLIST = 2
+
+
+# Re-usable Names and their Type
+#
 columns_names_types = {
-    "TOPIC": Text,
-    "SUB_TOPIC": Text,
-    "PATH": Text,
-    "NAME_TABLE": Text,
-    "DESCRIPTION": Text,
-    "TAG": Text,
-    "PARENT_TAG": Text,
-    "TYPE": Text,
-    "PERSON": Text,
-    "COLLECTION": Text,
-    "PARENT_COLLECTION": Text,
-    "CONTAINS_FILES": Boolean,
-    "DOCUMENT_NAME": Text,
-    "DOCUMENT_FORMAT": Text,
-    "DOCUMENT_GROUP": Integer,
-    "TIME_CREATED": DateTime,
-    "TIME_FROM": DateTime,
-    "TIME_TO": DateTime,
-    "EVENT_NAME": Text,
-    "PARENT_EVENT": Text,
-    "EVENT_LEVEL": Integer,
-    "SUB_EVENT": Text,
-    "EVENT_GROUP": Text,
-    "PARTICIPANTS": Text
-}
-
-# TODO What makes sense?
-#  - Common to all table types
-#  - Category, ..
-columns_common = {
-    "Description": {
+    "NAME":{
         "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DESCRIPTION"
+        "sqlalchemytype": Text
     },
-    "Tag": {
+    "DESCRIPTION":{
         "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "TAG"
+        "sqlalchemytype": Text
     },
-    "TableName": {
+    "PATH":{
         "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "TABLE_NAME"
-    }  # Self table name
-}
-# TODO TableName mandatory good?
-
-columns_optional = {
-    "DocumentGroup": {
-        "mysqltype": "integer",
-        "sqlalchemytype": Integer,
-        "alias": "DOCUMENT_GROUP"
-    },
-    "Location": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "LOCATION"
-    },
-    "Person": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PERSON"
-    },
-    "Category": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "CATEGORY"
-    },
-    "SubCategory": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "SUB_CATEGORY"
-    },
-    "Event": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "EVENT"
+        "sqlalchemytype": Text
     }
 }
 
-# Top-level list of categories
-columns_categories = {
-    "Category": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "CATEGORY"
+# Tables & Types
+#
+table_types = {
+    TableType.TOPIC.name: {
+        "Columns": {
+            "TOPIC": {
+                "mysqltype": "text",
+                "sqlalchemytype": Text
+            },
+            "DESCRIPTION": columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_TOPIC"
     },
-    "primary_key": "CategoryID"
+    TableType.SUBTOPIC.name: {
+        "Columns": {
+            "SUBTOPIC": {
+                "mysqltype": "text",
+                "sqlalchemytype": Text
+            },
+            "PATH": columns_names_types["PATH"],
+            "DESCRIPTION": columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_SUBTOPIC",
+        "ForeignKey": "ID_TOPIC",
+        "ParentType": TableType.TOPIC.name
+    },
+    TableType.BOOKLIST.name: {
+        "Columns":{
+        "NAME":  columns_names_types["NAME"],
+        "DESCRIPTION": columns_names_types["DESCRIPTION"],
+        "PATH": columns_names_types["PATH"],
+        "BELONGS_TO":{
+            "mysqltype": "text",
+            "sqlalchemytype": Text
+        },
+        "YEAR_PUBLISHED":{
+            "mysqltype": "integer",
+            "sqlalchemytype": Integer
+        }
+    },
+    "PrimaryKey": "ID_Booklist"
+    }
 }
 
-# Meta table for collections of book-like documents and collections of collections. Ontology
-columns_metatable = {
-    "Table": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "TABLE"
-    },
-    "Category": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "CATEGORY"
-    },
-    "primary_key": "MetaID"
-}
-
-# table for note tables
-columns_notestable = {
-    "NoteTable": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "NOTE_TABLE"
-    },
-    "TimeFrom": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "TIME_FROM"
-    },
-    "TimeTo": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "TIME_TO"
-    },
-    "Category": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "CATEGORY"
-    },
-    "primary_key": "NotesID"
-}
-
-columns_notetable = {
-    "DateTime": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "DATETIME"
-    },
-    "DocumentName": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_NAME"
-    },
-    "DocumentFormat": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_TYPE"
-    },
-    "Path": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PATH"
-    },
-    "DocumentTitle": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_TITLE"
-    },
-    "Attachment": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "ATTACHMENT"
-    },
-    "primary_key": "NoteID"
-}
-
-# table for CD tables
-columns_musicstable = {
-    "MusicTable": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "MUSIC_TABLE"
-    },
-    "Category": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "CATEGORY"
-    },
-    "primary_key": "MusicsID"
-}
-
-# Music lists like CDs
-columns_musictable = {
-    "DocumentName": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_NAME"
-    },
-    "DocumentCategory": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_CATEGORY"
-    },
-    "DocumentType": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_TYPE"
-    },
-    "Path": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PATH"
-    },
-    "Title": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "TITLE"
-    },
-    "Composer": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "COMPOSER"
-    },
-    "Perfomer": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PERFORMER"
-    },
-    "primary_key": "TrackID"
-}
-
-# table for photo tables
-columns_photostable = {
-    "PhotoTable": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PHOTO_TABLE"
-    },
-    "TimeFrom": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "TIME_FROM"
-    },
-    "TimeTo": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "TIME_TO"
-    },
-    "primary_key": "PhotosID"
-}
-
-# TODO
-#  - PhotosID?
-columns_phototable = {
-    "PhotoName": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_NAME"
-    },
-    "PhotoType": {   # TODO Should be "Format"
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_TYPE"
-    },
-    "DateTime": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "DATETIME"
-    },
-    "Path": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PATH"
-    },
-    "Event": {                    # TODO Should not be part of the core photo table.
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "EVENT"
-    },
-    "primary_key": "PhotoID"
-}
-
-columns_browsingtable = {
-    "DateTime": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "DATETIME"
-    },
-    "Link": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "LINK"
-    },
-    "Parent": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PARENT"
-    },
-    "Event": {                        # TODO Remove
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "EVENT"
-    },
-    "primary_key": "BrowsingID"
-}
-
-# TODO
-#  participants, path, ..
-columns_eventsstable = {
-    "EventName": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "EVENT_NAME"
-    },
-    "TimeFrom": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "TIME_FROM"
-    },
-    "TimeTo": {
-        "mysqltype": "datetime",
-        "sqlalchemytype": DateTime,
-        "alias": "TIME_TO"
-    },
-    "ParentEvent": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PARENT_EVENT"
-    },
-    "ParentEventId": {
-        "mysqltype": "integer",
-        "sqlalchemytype": Integer,
-        "alias": "PARENT_EVENT_ID"
-    },
-    "Path": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PATH"
-    },
-    "primary_key": "EventID"
-}
-
-# table of  books
-# Links to Pages table
-# DateCreated: Time created
-columns_bookstable = {
-    "DocumentName": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_NAME"
-    },
-    "BookTable": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "BOOK_TABLE"
-    },
-    "DateCreated": {
-        "mysqltype": "date",
-        "sqlalchemytype": Date,
-        "alias": "DATE_CREATED"
-    },
-    "primary_key": "BookID"
-}
-
-# Pages of book are single documents.
-# Links and information to pages recorded in table
-columns_booktable = {
-    "DocumentName": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_NAME"
-    },
-    "DocumentType": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "DOCUMENT_TYPE"
-    },
-    "Path": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "PATH"
-    },
-    "BookID": {
-        "mysqltype": "text",
-        "sqlalchemytype": Text,
-        "alias": "BOOK_ID"
-    },
-    "primary_key": "PageID"
-}
-
-def find_optional_columns(table, table_type, aliasnames=True):
-    cols_standard = column_types_table(
-        table_type,
-        optional_columns=[],
-        remove_primarykey=True,
-        return_aliasnames=aliasnames
-    )
-    if aliasnames:
-        return list(set(table.columns) - set(cols_standard))
-    else:
-        return list(
-            set(table.columns) - set([key for (key, value) in cols_standard.items()])
-        )
-
-def column_types_table(
-        table_type,
-        optional_columns=[],
-        remove_primarykey=False,
-        return_aliasnames=False
-):
-    if table_type == "categories":
-        dct = columns_categories.copy()
-    elif table_type == "browsing":
-        dct = columns_browsingtable.copy()
-    elif table_type == "note":
-        dct = columns_notetable.copy()
-    elif table_type == "notes":
-        dct = columns_notestable.copy()
-    elif table_type == "book":
-        dct = columns_booktable.copy()
-    elif table_type == "books":
-        dct = columns_bookstable.copy()
-    elif table_type == "music":
-        dct = columns_musictable.copy()
-    elif table_type == "musics":
-        dct = columns_musicstable.copy()
-    elif table_type == "photo":
-        dct = columns_phototable.copy()
-    elif table_type == "photos":
-        dct = columns_photostable.copy()
-    elif table_type == "events":
-        dct = columns_eventsstable.copy()
-    else:
-        raise ValueError("Table type unknown")
-
-    # Add default columns
-    if table_type not in ["categories"]:
-        dct.update(columns_common)
-    # Drop TableName for meta tables
-    if table_type in ["events", "photos", "musics", "notes", "books"]:
-        dct.pop("TableName")
-
-    # Optional columns
-    # Can be either alias of key
-    if len(optional_columns) != 0:
-        dct_optional = columns_optional.copy()
-        # TODO Not nice
-        dct.update(
-            {key: value for (key, value) in dct_optional.items() if (
-                    (value["alias"] in optional_columns) or (key in optional_columns)
-            )}
-        )
-
-    if remove_primarykey:
-        dct.pop("primary_key")
-
-    if return_aliasnames:
-        # Return list
-        dct = [value["alias"] for (key, value) in dct.items()]
-
-    return dct
