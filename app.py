@@ -1,15 +1,12 @@
 import dash
 from dash import Dash, html, dcc
-# from flask import Flask
 
 
-# flask_server = Flask(__name__)
-# app = Dash(__name__, server=flask_server, use_pages=True, suppress_callback_exceptions=True)
 dash_app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 app = dash_app.server
 
 dash_app.layout = html.Div([
-    html.H1('Multi-page app with Dash Pages'),
+    html.H1('Stefans Welt'),
     html.Div([
         html.Div(
             dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
