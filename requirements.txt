@@ -3,3 +3,4 @@ mysql-connector-python
 sqlalchemy
 openpyxl
 dash
+dash-svg
