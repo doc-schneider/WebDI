@@ -150,27 +150,21 @@ def time_boxes(n_boxes, time_interval, boxes_grid, text_boxes):
     return ix, x, text
 
 # TODO:
-#  - Why is this callback triggered: 1) Statring the app, 2) Building up this page, 3) Multiple times when clickng
-#  - Why is the store data not updated at very first click?
-#  - What is the strin-ineger error wiht updating the store data?
+#  - Why is this callback triggered: 1) Starting the app, 2) Building up this page, 3) Multiple times when clicking just one box
+#  - Why is the store data not updated at very first click? Still the case?
 @callback(
     Output('store', 'data'),
     Input({"type": "box", "index": ALL}, "n_clicks"),
     Input('store', 'data')
 )
-def testest(values, data):
-    #print("timeline")
-    #print("values: ", values, "data: ", data)
-    if ctx.triggered_id:
+def click_box(values, data):
+    # Need to do all the extra stuff to no loose store data by empty calls
+    if ctx.triggered_id and (ctx.triggered_id != "store"):   # TODO: Why can this be store?
         ix = ctx.triggered_id["index"]
-        #print("id: ", ix)
         if any(values):
-            #print("yes")
             return {'index': ix}
         else:
-            #print("no")
             return data
     else:
-        #print("no id")
         return data
 

@@ -2,6 +2,7 @@ import dash
 from dash import dcc, html, Input, Output, State, callback, dash_table
 import pandas as pd
 
+from DataStructures.Data import DataTable
 from Views.Content import ContentViewer
 import config
 
@@ -26,10 +27,13 @@ def update_content(data):
         return None
     else:
         init_Content(data['index'])  # Todo Actually only necessary if content has changed
-        return f"Data received: {data['index']}"
+        content_dct = config.ContentView.view()
+        return content_dct["description_boxes"]
 
 def init_Content(ix):
     config.ContentView = ContentViewer(
-        config.TimelineView.datatable.table.iloc[[ix]]
+        DataTable(
+            config.TimelineView.datatable.table.iloc[[ix]]
+        )
     )
 
