@@ -1,13 +1,19 @@
+import pandas as pd
 from PIL import Image
-from PIL.ExifTags import TAGS
-# import pyheif
-# import imageio
+from PIL.ExifTags import TAGS, GPSTAGS
+from pillow_heif import register_heif_opener
 from pathlib import Path
+import datetime as dtm
 
-from DataOperations.Files import get_files_info
+from DataOperations.Files import get_files_info, read_table_from_csv
+from DataStructures.TableTypes import TableType, table_definitions
+from DataStructures.Data import DataTable
 
+register_heif_opener()
 
-# TODO: iPhone HEVC, MOV, ..
+# TODO:
+#  - MOV, ..
+#  - Case insensitive
 allow_formats = [".HEIC", ".JPG"]
 
 class PhotoFactory:
@@ -17,68 +23,73 @@ class PhotoFactory:
             path_photo,
             album_name,
             chapters=None,
-            pretable=None
+            pretable_file=None
     ):
-        files_info = get_files_info(
-            path_photo[0],
-            [],
-            allow_formats,
-            [pretable.name],
+        # Create table from standard columns
+        cols = list(table_definitions[TableType.PHOTO]["Columns"].keys())
+
+        # Get pretable
+        # - Assumed that additional columns are valid
+        if pretable_file:
+            pretable = read_table_from_csv(pretable_file)
+            cols_add = list(set(pretable.columns) - set(cols))
+            cols = cols + cols_add
+
+        table = pd.DataFrame(
+            columns=cols
         )
 
-        # Create table from admissible columns
+        for i in range(len(path_photo)):
+            table_part = pd.DataFrame(
+                columns=cols
+            )
+
+            table_files = get_files_info(
+                path_photo[i],
+                [],
+                allow_formats,
+                [pretable_file.name],
+            )
+            table_files.drop(columns=set(table_files.columns) - set(cols), inplace=True)
+            table_part = pd.concat([table_part, table_files], axis=0, ignore_index=True)
+
+            table_part["CHAPTER"] = chapters[i]
+
+            table = pd.concat([table, table_part], axis=0, ignore_index=True)
 
         # Get creation time form meta data (exif)
-        for i in range(files_info.shape[0]):
-            pass
+        for i in range(table.shape[0]):
+            exif_dct = PhotoFactory.get_exif_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
+            table.loc[i, "DATE_TIME"] = dtm.datetime.strptime(exif_dct["DateTime"], "%Y:%m:%d %H:%M:%S")
+
+        table["PHOTO_ALBUM"] = album_name
+
+        if pretable_file:
+            table.set_index("FILE_NAME", inplace=True)
+            pretable.set_index("FILE_NAME", inplace=True)
+
+            # TODO More potential columns to drop?
+            if "PATH" in pretable.columns:
+                pretable.drop(columns=["PATH"], inplace=True)
+
+            table.loc[
+                pretable.index,
+                pretable.columns
+            ] = pretable
+        table.reset_index(inplace=True)
+
+        photo_table = DataTable(table, TableType.PHOTO)
+
+        photo_table.replace_nan()
+        photo_table.format_path()
+        photo_table.format_documentgroup()
+
+        return photo_table
+
+    @staticmethod
+    def get_exif_data(file_location):
+        image = Image.open(file_location)
+        exif_data = image.getexif()
+        return {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
 
 
-        i = 0
-        # Read HEIC file
-        # image = imageio.v3.imread(Path(files_info.loc[i, "PATH"], "IMG_8570 (2).heic"))
-        # Save the image in a different format (e.g., JPEG)
-        # imageio.imwrite("example_converted.jpg", image)
-        # Convert HEIC to a PIL Image
-        # image = Image.frombytes(
-        #     heif_file.mode,
-        #     heif_file.size,
-        #     heif_file.data,
-        #     "raw",
-        #     heif_file.mode,
-        #     heif_file.stride,
-        # )
-        #
-        # # Save the image in a different format (e.g., JPEG)
-        # image.save("example_converted.jpg", "JPEG")
-        image = Image.open(Path(files_info.loc[i, "PATH"], files_info.loc[i, "FILE_NAME"]))
-
-
-
-
-
-
-# def get_photo_taken_date(image_path):
-#     # Open an image file
-#     with Image.open(image_path) as img:
-#         # Get EXIF data
-#         exif_data = img._getexif()
-#
-#         if not exif_data:
-#             return None
-#
-#         # Extract datetime from EXIF data
-#         for tag_id in exif_data:
-#             # get the tag name
-#             tag = TAGS.get(tag_id, tag_id)
-#             if tag == 'DateTimeOriginal':
-#                 return exif_data[tag_id]
-#
-#     return None
-
-# Example usage
-# image_path = 'path/to/your/photo.jpg'
-# timestamp = get_photo_taken_date(image_path)
-# if timestamp:
-#     print(f"Photo was taken on: {timestamp}")
-# else:
-#     print("No original date metadata found.")

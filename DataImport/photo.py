@@ -14,12 +14,20 @@ photo_table = PhotoFactory().table_from_folder(
     [
         Path("Y:/2024/2024_04_26-05_01_Paris/01_Ankunft"),
         Path("Y:/2024/2024_04_26-05_01_Paris/02_Ile & Marais"),
+        Path("Y:/2024/2024_04_26-05_01_Paris/03_Versailles"),
+        Path("Y:/2024/2024_04_26-05_01_Paris/04_Louvre"),
+        Path("Y:/2024/2024_04_26-05_01_Paris/05_Letzter Tag")
     ],
     "Reise Paris 2024",
-    {
-        "Ankunft": ("IMG_8570.HEIC", "IMG_8579.HEIC"),
-        "Ile & Marais": ("IMG_8581.HEIC", "IMG_8645.HEIC"),
-    },
+    [
+        "Ankunft",
+        "Ile & Marais",
+        "Versailles",
+        "Louvre",
+        "Letzter Tag"
+    ],
     Path("Y:/2024/2024_04_26-05_01_Paris/PreDokumentliste.csv")
 )
+
+
 
