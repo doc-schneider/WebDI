@@ -1,8 +1,6 @@
 pandas
 Pillow
 pillow-heif
-# pyheif
-# imageio[heif]
 mysql-connector-python
 sqlalchemy
 openpyxl

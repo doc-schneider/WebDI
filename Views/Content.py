@@ -4,6 +4,7 @@ from Views.View_Factory import ViewFactory
 class ContentViewer():
     def __init__(self, table_row):
         self.datatable = table_row
+        self.table_type = table_row.table_type
         self.update(table_row)
 
     def update(self, datatable):

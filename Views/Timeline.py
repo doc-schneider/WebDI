@@ -12,6 +12,7 @@ class TimelineViewer():
             pd.Interval(datatable_initial.table["DATE_TIME"].min(), datatable_initial.table["DATE_TIME"].max(), closed="left")
         )
         self.datatable = None  # Clipped table
+        self.table_type = datatable_initial.table_type
         self.update(datatable_initial)
 
     def update(self, datatable):
@@ -64,24 +65,17 @@ class TimelineViewer():
         self.update(datatable)
 
     def view(self):
+        # Content
+        boxes = ViewFactory.view(self.datatable, view_mode="TIMELINE")
         # Timeline
-        time_grid = [
+        boxes["N_BOXES"] = len(boxes["DATE_TIME"])
+        boxes["TIME_GRID"] = [
             self.time_grid['TIME_INTERVAL'].loc[i].left for i in range(self.n_grid)
         ]
-        # Boxes
-        boxes = ViewFactory.view(self.datatable)
-        boxes["boxes_grid"] = self.datatable.table["DATE_TIME"]
-        #
-        return {
-            "time_interval": pd.Interval(
-                self.time_grid.loc[0, "TIME_INTERVAL"].left,
-                self.time_grid.iloc[-1]["TIME_INTERVAL"].right,
-                closed='left'
-            ),
-            "n_grid": self.n_grid,
-            'time_grid': time_grid,
-            "n_boxes": len(boxes["boxes_grid"]),
-            "boxes_grid": boxes["boxes_grid"],
-            "title_boxes": boxes["title_boxes"],
-            "description_boxes": boxes["description_boxes"]
-        }
+        boxes["TIME_INTERVAL"] = pd.Interval(
+            self.time_grid.loc[0, "TIME_INTERVAL"].left,
+            self.time_grid.iloc[-1]["TIME_INTERVAL"].right,
+            closed='left'
+        )
+        boxes["N_GRID"] = self.n_grid
+        return boxes

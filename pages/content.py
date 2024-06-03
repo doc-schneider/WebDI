@@ -12,10 +12,7 @@ dash.register_page(__name__)
 layout = html.Div([
     html.H1('Content'),
     html.Hr(),
-    html.Div([
-        html.H2(id="title"),
-        html.Div(id='content')
-    ]),
+    html.Div(id='content')
 ])
 
 @callback(
@@ -28,12 +25,16 @@ def update_content(data):
     else:
         init_Content(data['index'])  # Todo Actually only necessary if content has changed
         content_dct = config.ContentView.view()
-        return content_dct["description_boxes"]
+        return html.Div([
+            html.Img(src="data:image/jpeg;base64," + content_dct["THUMBNAIL"][0], width="100%"),
+            html.Div(content_dct["DESCRIPTION"][0])
+        ])
 
 def init_Content(ix):
     config.ContentView = ContentViewer(
         DataTable(
-            config.TimelineView.datatable.table.iloc[[ix]]
+            config.TimelineView.datatable.table.iloc[[ix]],
+            config.TimelineView.datatable.table_type
         )
     )
 

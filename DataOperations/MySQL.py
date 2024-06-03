@@ -22,8 +22,14 @@ def create_table(db_engine, metadata, table_name, table_dct, foreign_table=None)
     metadata.create_all(db_engine)
     # table.create(db_engine)
 
-def table_fetch(db_conn, table_mysql):
-    query = table_mysql.select()
+def table_insert(metadata, db_conn, table_name, table):
+    query = insert(metadata.tables[table_name])
+    Result = db_conn.execute(query, table.to_dict(orient='records'))
+    db_conn.commit()
+
+def table_fetch(metadata, db_conn, table_name):
+    table = metadata.tables[table_name]
+    query = table.select()
     query_result = db_conn.execute(query)
     table_df = pd.DataFrame(query_result.fetchall())
     return table_df

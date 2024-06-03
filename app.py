@@ -1,10 +1,9 @@
-import pandas as pd
 import dash
 from dash import Dash, html, dcc
 from sqlalchemy import create_engine, MetaData
 
-from DataOperations import MySQL
-from DataStructures.Data import DataTable
+from DataStructures.DataFactory import DataFactory
+from DataStructures.TableTypes import TableType
 import config
 
 
@@ -24,15 +23,21 @@ if config.environment == "local":
         "metadata": metadata,
     }
     # Table
-    config.table = {"mysql_name": "stefan_logbook", "mysql_table": None, "datatable": None}
-    config.table["mysql_table"] = metadata.tables[config.table["mysql_name"]]
-    config.table["datatable"] = DataTable(MySQL.table_fetch(config.mysql["conn"], config.table["mysql_table"]))
+    config.table = {
+        "table_type": TableType.PHOTO,
+        "mysql_name": "photos",
+        "mysql_table": None,
+        "data_table": None
+    }
+    config.table["data_table"] = DataFactory.fetch_table(
+        config.table["table_type"],
+        config.table["mysql_name"]
+    )
 
 # View type
-config.view_type = "timeline"
+config.view_type = "album"  # "timeline"
 if config.view_type == "timeline":
-    # This dict stores information about the timeline as created by the timeline module in pages
-    config.timeline = {"n_boxes": 0}
+    pass
 
 dash_app = Dash(__name__, use_pages=True)
 app = dash_app.server

@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, MetaData, insert
 
 from DataStructures.TableTypes import TableType, table_definitions
-from DataOperations.MySQL import create_table
+from DataOperations.MySQL import create_table, table_insert
 
 
 db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
@@ -15,8 +15,7 @@ table_dct = table_definitions[TableType.PHOTO]
 create_table(db_engine, metadata, "photos", table_dct)
 
 # Insert / add
-query = insert(metadata.tables["photos"])
-Result = db_conn.execute(query, photo_table.table.to_dict(orient='records'))
-db_conn.commit()
+table_insert(metadata, db_conn, "photos", photo_table.table)
+
 
 

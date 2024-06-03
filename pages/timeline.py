@@ -59,20 +59,23 @@ def create_svg():
     timeline_dct = config.TimelineView.view()
 
     # Convert to percentages
-    time_grid = 100 / timeline_dct["n_grid"] * np.arange(timeline_dct["n_grid"])   # Relative to 100%
+    time_grid = 100 / timeline_dct["N_GRID"] * np.arange(timeline_dct["N_GRID"])   # Relative to 100%
     time_grid_str = [
-        timeline_dct["time_grid"][i].strftime('%Y-%m-%d %H:%M')
-        for i in range(timeline_dct["n_grid"])
+        timeline_dct["TIME_GRID"][i].strftime('%Y-%m-%d %H:%M')
+        for i in range(timeline_dct["N_GRID"])
     ]
 
-    # Text boxes
-    ix_display, x_display, text_display = time_boxes(
-        timeline_dct["n_boxes"],
-        timeline_dct["time_interval"],
-        timeline_dct["boxes_grid"],
-        timeline_dct["title_boxes"]
+    # Content boxes (that can be shown)
+    ix_display, x_display = time_boxes(
+        timeline_dct["TIME_INTERVAL"],
+        timeline_dct["DATE_TIME"]
     )
-    config.timeline["n_boxes"] = len(x_display)
+    content_display = []
+    if config.table["table_type"].name == "PHOTO":
+        for ix in ix_display:
+            content_display.append(
+                timeline_dct["THUMBNAIL"][ix]
+            )
 
     return svg.G(
         fill='blue',
@@ -85,7 +88,7 @@ def create_svg():
             svg.Text(
                 time_grid_str[i],
                 x="{}%".format(time_grid[i]),
-                y="97.5%", stroke="black") for i in range(timeline_dct["n_grid"])
+                y="97.5%", stroke="black") for i in range(timeline_dct["N_GRID"])
         ] + [
             svg.Line(
                 x1="{}%".format(x),
@@ -109,8 +112,9 @@ def create_svg():
             dcc.Link(
                 svg.ForeignObject(
                     children=[
-                        html.Div(
-                            text_display[i]
+                        html.Img(
+                            src="data:image/jpeg;base64," + content_display[i],
+                            width="100%"
                         )
                     ],
                     x="{}%".format(x_display[i]),
@@ -127,27 +131,25 @@ def create_svg():
     )
 
 def init_Timeline():
-    config.TimelineView = TimelineViewer(config.table["datatable"])
+    config.TimelineView = TimelineViewer(config.table["data_table"])
 
-def time_boxes(n_boxes, time_interval, boxes_grid, text_boxes):
+def time_boxes(time_interval, boxes_time):
+    # Boxers that can be shown without overlap
     # TODO Round
-    if len(boxes_grid) > 0:
-        ix = [0]
+    if len(boxes_time) > 0:
         x_all = [
-            100 * (pd.Interval(time_interval.left, r, closed='left').length / time_interval.length) for r in boxes_grid
+            100 * (pd.Interval(time_interval.left, r, closed='left').length / time_interval.length) for r in boxes_time
         ]
-        x = [x_all[0]]
-        text = [text_boxes[0]]
+        ix = [0]  # Indices
+        x = [x_all[0]]  # x coordinates
         for i in range(1, len(x_all)):
             if x_all[i] - x_all[i-1] >= box_width + box_distance:
                 ix.append(i)
                 x.append(x_all[i])
-                text.append(text_boxes[i])
     else:
         ix = []
         x = []
-        text = []
-    return ix, x, text
+    return ix, x
 
 # TODO:
 #  - Why is this callback triggered: 1) Starting the app, 2) Building up this page, 3) Multiple times when clicking just one box

@@ -4,6 +4,8 @@ from PIL.ExifTags import TAGS, GPSTAGS
 from pillow_heif import register_heif_opener
 from pathlib import Path
 import datetime as dtm
+import base64
+from io import BytesIO
 
 from DataOperations.Files import get_files_info, read_table_from_csv
 from DataStructures.TableTypes import TableType, table_definitions
@@ -92,4 +94,12 @@ class PhotoFactory:
         exif_data = image.getexif()
         return {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
 
+    @staticmethod
+    def convert_image(file_location):
+        # Conversion to jpeg and base6
+        image = Image.open(file_location)
+        buffered = BytesIO()
+        image.save(buffered, format="JPEG")
+        return base64.b64encode(buffered.getvalue()).decode('ascii')
 
+        # image.thumbnail((512, 512))

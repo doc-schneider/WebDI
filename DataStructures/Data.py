@@ -7,9 +7,9 @@ class DataTable:
         self.table_type = table_type
 
     def find_in_timeinterval(self, timeinterval):
-        # Returns the index of all documents whose DATE_TIME overlaps a requested time interval
+        # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
         iix = (self.table["DATE_TIME"] >= timeinterval.left) & (self.table["DATE_TIME"] <= timeinterval.right)
-        return DataTable(self.table[iix].reset_index(drop=True))
+        return DataTable(self.table[iix].reset_index(drop=True), self.table_type)
 
     def replace_nan(self):
         for col in self.table.columns:
