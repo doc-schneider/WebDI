@@ -12,5 +12,4 @@ class ContentViewer():
 
     def view(self):
         box = ViewFactory.view(self.datatable)
-        box["date_time"] = self.datatable.table["DATE_TIME"]
         return box

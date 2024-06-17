@@ -74,7 +74,7 @@ def create_svg():
     if config.table["table_type"].name == "PHOTO":
         for ix in ix_display:
             content_display.append(
-                timeline_dct["THUMBNAIL"][ix]
+                timeline_dct["IMAGE"][ix]
             )
 
     return svg.G(
@@ -153,6 +153,7 @@ def time_boxes(time_interval, boxes_time):
 
 # TODO:
 #  - Why is this callback triggered: 1) Starting the app, 2) Building up this page, 3) Multiple times when clicking just one box
+#  - Why is this working even without a box id at initial call?
 #  - Why is the store data not updated at very first click? Still the case?
 @callback(
     Output('store', 'data'),

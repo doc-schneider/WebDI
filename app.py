@@ -43,7 +43,6 @@ dash_app = Dash(__name__, use_pages=True)
 app = dash_app.server
 
 dash_app.layout = html.Div([
-    html.H1('Stefans Welt'),
     html.Div([
         html.Div(
             dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
@@ -54,4 +53,4 @@ dash_app.layout = html.Div([
 ])
 
 if __name__ == '__main__':
-    dash_app.run(debug=True)
+    dash_app.run(debug=True)  # (host='192.168.0.225', port=5000, debug=True)

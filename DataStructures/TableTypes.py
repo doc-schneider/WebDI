@@ -8,6 +8,7 @@ class TableType(Enum):
     PHOTO = 10
 
 # All column names and their types
+# TODO ALBUM instead of PHOTO_ALBUM
 table_columns_names_types = {
     "FILE_NAME": {
         "mysqltype": "text",

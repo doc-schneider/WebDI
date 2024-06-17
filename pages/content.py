@@ -26,7 +26,7 @@ def update_content(data):
         init_Content(data['index'])  # Todo Actually only necessary if content has changed
         content_dct = config.ContentView.view()
         return html.Div([
-            html.Img(src="data:image/jpeg;base64," + content_dct["THUMBNAIL"][0], width="100%"),
+            html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
             html.Div(content_dct["DESCRIPTION"][0])
         ])
 

@@ -96,7 +96,7 @@ class PhotoFactory:
 
     @staticmethod
     def convert_image(file_location):
-        # Conversion to jpeg and base6
+        # Conversion to jpeg and base64
         image = Image.open(file_location)
         buffered = BytesIO()
         image.save(buffered, format="JPEG")

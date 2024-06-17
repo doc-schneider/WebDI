@@ -1,5 +1,5 @@
 from DataStructures.Data import DataTable
-from DataStructures.TableTypes import table_definitions, TableType
+from DataStructures.TableTypes import table_definitions
 from DataOperations.MySQL import table_fetch
 import config
 
