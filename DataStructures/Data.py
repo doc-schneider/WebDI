@@ -1,4 +1,4 @@
-from DataStructures.TableTypes import table_columns_names_types
+from DataStructures.TableTypes import table_columns_names_types, table_definitions
 
 
 class DataTable:
@@ -10,6 +10,18 @@ class DataTable:
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
         iix = (self.table["DATE_TIME"] >= timeinterval.left) & (self.table["DATE_TIME"] <= timeinterval.right)
         return DataTable(self.table[iix].reset_index(drop=True), self.table_type)
+
+    def match_foreignkey(self, foreignkey_value):
+        foreignkey = table_definitions[self.table_type]["ForeignKey"]
+        return DataTable(
+            self.table.loc[
+                self.table[foreignkey] == foreignkey_value, :
+            ].reset_index(drop=True),
+            self.table_type
+        )
+
+    def sort(self, column="DATE_TIME"):
+        self.table.sort_values(column, ignore_index=True, inplace=True)
 
     def replace_nan(self):
         for col in self.table.columns:

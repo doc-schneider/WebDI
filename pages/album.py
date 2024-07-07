@@ -1,6 +1,7 @@
 import dash
-from dash import html, Input, Output, callback, ctx, dcc
+from dash import html, Input, Output, State, callback, ctx, dcc
 
+from DataStructures.TableTypes import TableType
 from Views.Album import AlbumViewer
 import config
 
@@ -8,6 +9,8 @@ import config
 - xyz
 '''
 
+#TODO Fix
+table_type = TableType.PHOTO
 
 dash.register_page(__name__)
 
@@ -33,25 +36,26 @@ layout = html.Div([
     Output('album-slider', 'marks'),
     Input('earlier', "n_clicks"),
     Input('later', "n_clicks"),
-    Input('album-slider', 'value')
+    Input('album-slider', 'value'),
+    State('store', 'data')
 )
-def click_button(b1, b2, value):
+def click_button(b1, b2, value, current_data):
     if ctx.triggered_id == "earlier":
-        config.AlbumView.earlier(config.table["data_table"])
+        config.AlbumView.earlier(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "later":
-        config.AlbumView.later(config.table["data_table"])
+        config.AlbumView.later(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "album-slider":
-        config.AlbumView.jump(config.table["data_table"], value - 1)
+        config.AlbumView.jump(config.table[table_type]["data_table"], value - 1)
     else:
         pass  # None. Initial or refresh
 
-    return update_album()
+    return update_album(current_data["album"])
 
-def update_album():
+def update_album(album_dct):
     # Initialize at first call
-    # TODO Do on higher level?
-    if not hasattr(config, 'AlbumView'):
-        init_Album()
+    #TODO Do on higher level?
+    if not hasattr(config, 'AlbumView') or (album_dct['ID_ALBUM'] != config.AlbumView.album['ID_ALBUM']):
+        init_Album(album_dct)
 
     boxes_dct = config.AlbumView.view()
     n_dim = boxes_dct["N_DIM"]
@@ -59,10 +63,10 @@ def update_album():
     descriptions = boxes_dct["DESCRIPTION"]
     chapter = boxes_dct["CHAPTER"]
 
-    if config.table["table_type"].name == "PHOTO":
-        album = config.AlbumView.album["ALBUM"]
-        content_display = boxes_dct["IMAGE"]
-        date_time = boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X')
+    # if config.table["table_type"].name == "PHOTO":  #TODO Fix
+    album = config.AlbumView.album["ALBUM"]
+    content_display = boxes_dct["IMAGE"]
+    date_time = boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X')
 
     # TODO Updating slider properties which are actually fixed not so good. Should be handed over from higher level (config, store)
     slider_max = config.AlbumView.album["N_ELEMENTS"]
@@ -82,5 +86,8 @@ def update_album():
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
     ], slider_max, slider_value, slider_marks
 
-def init_Album():
-    config.AlbumView = AlbumViewer(config.table["data_table"])
+def init_Album(album_dct):
+    config.AlbumView = AlbumViewer(
+        config.table[table_type]["data_table"],
+        album_dct
+    )

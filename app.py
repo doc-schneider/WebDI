@@ -1,6 +1,7 @@
 import dash
 from dash import Dash, html, dcc
 from sqlalchemy import create_engine, MetaData
+import mysql.connector
 
 from DataStructures.DataFactory import DataFactory
 from DataStructures.TableTypes import TableType
@@ -22,22 +23,35 @@ if config.environment == "local":
         "conn": db_conn,
         "metadata": metadata,
     }
-    # Table
-    config.table = {
-        "table_type": TableType.PHOTO,
-        "mysql_name": "photos",
-        "mysql_table": None,
-        "data_table": None
-    }
-    config.table["data_table"] = DataFactory.fetch_table(
-        config.table["table_type"],
-        config.table["mysql_name"]
+    # Simple connector
+    db_connector = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        passwd="Moppel3!",
+        database="lives",
     )
+    db_cursor = db_connector.cursor()
+    config.mysql["connector"] = db_connector
+    config.mysql["cursor"] = db_cursor
 
-# View type
-config.view_type = "album"  # "timeline"
-if config.view_type == "timeline":
-    pass
+    # Tables
+    config.table = {
+        TableType.ALBUM: {
+            "mysql_name": "albums",
+            "mysql_table": None,
+            "data_table": None
+        },
+        TableType.PHOTO: {
+            "mysql_name": "photos",
+            "mysql_table": None,
+            "data_table": None
+        }
+    }
+    for key in config.table.keys():
+        config.table[key]["data_table"] = DataFactory.fetch_table(
+            key,
+            config.table[key]["mysql_name"]
+        )
 
 dash_app = Dash(__name__, use_pages=True)
 app = dash_app.server
@@ -49,7 +63,7 @@ dash_app.layout = html.Div([
         ) for page in dash.page_registry.values()
     ]),
     dash.page_container,
-    dcc.Store(storage_type="session", id='store')
+    dcc.Store(storage_type="session", id='store', data={"album": {'ID_ALBUM': 1}})   # TODO storage_type session?
 ])
 
 if __name__ == '__main__':

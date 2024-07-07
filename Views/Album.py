@@ -10,30 +10,42 @@ n_rows = 2
 n_cols = 3
 
 class AlbumViewer():
-    def __init__(self, datatable_initial):
+    def __init__(self, datatable_initial, album_dct):
         self.datatable = None  # Clipped table
         self.table_type = datatable_initial.table_type
+
+        # Which album out of the total collection?
+        id_album = album_dct['ID_ALBUM']   # TODO use ForeignKey
+        datatable = datatable_initial.match_foreignkey(id_album)
+
         # Structure of the album
-        chapters = datatable_initial.table["CHAPTER"].unique()
-        # TODO Can store them as simple self
+        chapters = datatable.table["CHAPTER"].unique()
         self.album = {
-            "ALBUM": datatable_initial.table.loc[0, "PHOTO_ALBUM"],
-            "N_ELEMENTS": datatable_initial.table.shape[0],
+            "ID_ALBUM": id_album,
+            "ALBUM": datatable.table.loc[0, "PHOTO_ALBUM"],
+            "N_ELEMENTS": datatable.table.shape[0],
             "CHAPTERS": {}
         }
-        # Fist elements
+
+        # First element of chapter
         for c in chapters:
-            self.album["CHAPTERS"][c] = datatable_initial.table.loc[
-                                        datatable_initial.table["CHAPTER"] == c,
+            self.album["CHAPTERS"][c] = datatable.table.loc[
+                                        datatable.table["CHAPTER"] == c,
                                         :
                                         ].index[0]
+
         # Get first n indices to initialise
         self.ix_show = np.arange(np.min((n_rows * n_cols, self.album["N_ELEMENTS"])))
+
         self.update(datatable_initial)
 
     def update(self, datatable):
         self.datatable = DataTable(
-            datatable.table.loc[self.ix_show, :].reset_index(drop=True),
+            datatable.table.loc[
+                datatable.table["ID_ALBUM"] == self.album["ID_ALBUM"], :
+            ].reset_index(drop=True).loc[
+                self.ix_show, :
+            ].reset_index(drop=True),
             self.table_type
         )
 

@@ -9,9 +9,9 @@ class DataFactory:
     def fetch_table(table_type, table_name):
         table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
         return DataTable(
-            table.drop(columns=table_definitions[table_type]["PrimaryKey"]),
+            table,
             table_type
         )
 
-
+# TODO table.drop(columns=table_definitions[table_type]["PrimaryKey"]) ?
 

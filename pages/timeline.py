@@ -155,19 +155,17 @@ def time_boxes(time_interval, boxes_time):
 #  - Why is this callback triggered: 1) Starting the app, 2) Building up this page, 3) Multiple times when clicking just one box
 #  - Why is this working even without a box id at initial call?
 #  - Why is the store data not updated at very first click? Still the case?
-@callback(
-    Output('store', 'data'),
-    Input({"type": "box", "index": ALL}, "n_clicks"),
-    Input('store', 'data')
-)
-def click_box(values, data):
-    # Need to do all the extra stuff to no loose store data by empty calls
-    if ctx.triggered_id and (ctx.triggered_id != "store"):   # TODO: Why can this be store?
-        ix = ctx.triggered_id["index"]
-        if any(values):
-            return {'index': ix}
-        else:
-            return data
-    else:
-        return data
+# @callback(
+#     Output('store', 'data'),
+#     Input({"type": "box", "index": ALL}, "n_clicks"),
+#     Input('store', 'data'),
+#     prevent_initial_call=True,
+# )
+# def click_box(values, current_data):
+#     # Need to do all the extra stuff to no loose store data by empty calls
+#     if ctx.triggered_id and (ctx.triggered_id != "store"):   # TODO: Why can this be store?
+#         ix = ctx.triggered_id["index"]
+#         if any(values):
+#             current_data["image"] = {'index': ix}
+#     return current_data
 

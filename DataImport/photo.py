@@ -4,30 +4,28 @@ from pathlib import Path
 from DataOperations.Photo import PhotoFactory
 
 
-db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
-db_engine = create_engine(db_connection_str)
-db_conn = db_engine.connect()
-metadata = MetaData()
-metadata.reflect(bind=db_engine)
-
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2024/2024_04_26-05_01_Paris/01_Ankunft"),
-        Path("Y:/2024/2024_04_26-05_01_Paris/02_Ile & Marais"),
-        Path("Y:/2024/2024_04_26-05_01_Paris/03_Versailles"),
-        Path("Y:/2024/2024_04_26-05_01_Paris/04_Louvre"),
-        Path("Y:/2024/2024_04_26-05_01_Paris/05_Letzter Tag")
+        Path("Y:/2022/2022_07_Lofoten/Auswahl/0_Flug"),
+        Path("Y:/2022/2022_07_Lofoten/Auswahl/1_Tromsö"),
+        Path("Y:/2022/2022_07_Lofoten/Auswahl/2_Lyngen Alpen_Setermoen"),
+        Path("Y:/2022/2022_07_Lofoten/Auswahl/3_Svolvaer"),
+        Path("Y:/2022/2022_07_Lofoten/Auswahl/4_Reine"),
+        Path("Y:/2022/2022_07_Lofoten/Auswahl/5_Rückfahrt"),
     ],
-    "Reise Paris 2024",
+    "Reise Nord-Norwegen 2022",
     [
-        "Ankunft",
-        "Ile & Marais",
-        "Versailles",
-        "Louvre",
-        "Letzter Tag"
+        "Flug",
+        "Tromsö",
+        "Lyngen Alpen_Setermoen",
+        "Svolvaer",
+        "Reine",
+        "Rückfahrt"
     ],
-    Path("Y:/2024/2024_04_26-05_01_Paris/PreDokumentliste.csv")
+    Path("Y:/2022/2022_07_Lofoten/Auswahl/Pre-Dokumentliste.csv")
 )
+
+print("done")
 
 
 

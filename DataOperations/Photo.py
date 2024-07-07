@@ -32,6 +32,7 @@ class PhotoFactory:
 
         # Get pretable
         # - Assumed that additional columns are valid
+        # TODO Need to add missing columns in database
         if pretable_file:
             pretable = read_table_from_csv(pretable_file)
             cols_add = list(set(pretable.columns) - set(cols))
@@ -69,6 +70,9 @@ class PhotoFactory:
         if pretable_file:
             table.set_index("FILE_NAME", inplace=True)
             pretable.set_index("FILE_NAME", inplace=True)
+
+            # Drop entries from pretable with no entry in table
+            pretable = pretable[pretable.index.isin(table.index)]
 
             # TODO More potential columns to drop?
             if "PATH" in pretable.columns:

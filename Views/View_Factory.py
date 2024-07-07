@@ -8,11 +8,12 @@ from DataOperations.Photo import PhotoFactory
 class ViewFactory:
     @staticmethod
     def view(datatable, view_mode=None):
-        # TODO Don't need these fields since they are already config.table
-        # Return text fields (but not the trivial file_name etc)
-        cols_text = [c for c in datatable.table.columns if table_columns_names_types[c]["mysqltype"] == "text"]
-        cols_text = [c for c in cols_text if not c in ["FILE_NAME", "PATH", "FILE_FORMAT"]]
-        dct = datatable.table[cols_text].to_dict("series")
+        # TODO
+        #  - Work directly with config.table? No dict, removal?
+
+        # Return fields (but not the trivial file_name etc)
+        cols = [c for c in datatable.table.columns if not c in ["FILE_NAME", "PATH", "FILE_FORMAT"]]
+        dct = datatable.table[cols].to_dict("series")
 
         # Source specifc
         if datatable.table_type.name == "PHOTO":
@@ -32,6 +33,9 @@ class ViewFactory:
             dct["DATE_TIME"] = datatable.table["DATE_TIME"]
         elif view_mode == "ALBUM":
             dct["DATE_TIME"] = datatable.table["DATE_TIME"]
+        elif view_mode == "COLLECTION":
+            dct["DATE_FROM"] = datatable.table["DATE_FROM"]
+            dct["DATE_TO"] = datatable.table["DATE_TO"]
         else:
             pass
 

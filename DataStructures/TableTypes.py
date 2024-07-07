@@ -3,9 +3,12 @@ from sqlalchemy.types import Text, DateTime, Date, Integer, Boolean
 
 
 # TODO
-#  - FILE tabel for file operation
+#  - FILE table for file operation
+# - PHOTO: In a sense of photo album  # TODO Redefine in a sense of general book-like collection
+# - ALBUM: Collection of albums / books / CDs .. Like a library
 class TableType(Enum):
     PHOTO = 10
+    ALBUM = 20
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -26,6 +29,14 @@ table_columns_names_types = {
         "mysqltype": "datetime",
         "sqlalchemytype": DateTime
     },
+    "DATE_FROM": {
+        "mysqltype": "datetime",
+        "sqlalchemytype": DateTime
+    },
+    "DATE_TO": {
+        "mysqltype": "datetime",
+        "sqlalchemytype": DateTime
+    },
     "DESCRIPTION": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -42,10 +53,17 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
+    "EVENT": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "LOCATION": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
 }
 
 # Tables & Types
-# - PHOTO: In a sense of photo album
 table_definitions = {
     TableType.PHOTO: {
         "Columns": {
@@ -58,6 +76,16 @@ table_definitions = {
             "PHOTO_ALBUM": table_columns_names_types["PHOTO_ALBUM"],
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },
-        "PrimaryKey": "ID_PHOTO"
+        "PrimaryKey": "ID_PHOTO",
+        "ForeignKey": "ID_ALBUM"
+    },
+    TableType.ALBUM: {
+        "Columns": {
+            "PHOTO_ALBUM": table_columns_names_types["PHOTO_ALBUM"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_ALBUM"
     },
 }

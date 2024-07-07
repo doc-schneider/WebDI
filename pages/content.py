@@ -15,20 +15,20 @@ layout = html.Div([
     html.Div(id='content')
 ])
 
-@callback(
-    Output('content', 'children'),
-    Input('store', 'data')
-)
-def update_content(data):
-    if data is None:
-        return None
-    else:
-        init_Content(data['index'])  # Todo Actually only necessary if content has changed
-        content_dct = config.ContentView.view()
-        return html.Div([
-            html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
-            html.Div(content_dct["DESCRIPTION"][0])
-        ])
+# @callback(
+#     Output('content', 'children'),
+#     Input('store', 'data')
+# )
+# def update_content(data):
+#     if data is None:
+#         return None
+#     else:
+#         init_Content(data['index'])  # Todo Actually only necessary if content has changed
+#         content_dct = config.ContentView.view()
+#         return html.Div([
+#             html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
+#             html.Div(content_dct["DESCRIPTION"][0])
+#         ])
 
 def init_Content(ix):
     config.ContentView = ContentViewer(
