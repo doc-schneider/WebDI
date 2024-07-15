@@ -39,25 +39,10 @@ def create_table(db_engine, metadata, table_name, table_dct, foreign_table=None)
 
 def table_insert(metadata, db_conn, table_name, table):
     query = insert(metadata.tables[table_name])
-    Result = db_conn.execute(query, table.to_dict(orient='records'))
+    db_conn.execute(query, table.to_dict(orient='records'))
     db_conn.commit()
 #
-#insert_query = """
-#INSERT INTO your_table (column1, column2, column3)
-#VALUES (%s, %s, %s)
-#"""
-#data = [
-#    ('value1a', 'value2a', 'value3a'),
-#    ('value1b', 'value2b', 'value3b'),
-#    ('value1c', 'value2c', 'value3c')
-#]
-# Execute the insert query for multiple rows
-#cursor.executemany(insert_query, data)
-# Commit the transaction
-#connection.commit()
-# Close the cursor and connection
-#cursor.close()
-#connection.close()
+# See table.py
 
 def table_fetch(metadata, db_conn, table_name):
     table = metadata.tables[table_name]

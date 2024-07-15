@@ -12,8 +12,10 @@ import config
 
 dash.register_page(__name__)
 
-#TODO Can get rid of dumym?
+#TODO Can get rid of dummy?
 layout = html.Div([
+    html.Br(),
+    html.Br(),
     html.Div(
         id="dummy-collection",
         n_clicks=0
@@ -68,7 +70,7 @@ def init_Collection():
     config.CollectionView.sort("DATE_FROM")
 
 @callback(
-    Output('store', 'data'),
+    Output('store', 'data', allow_duplicate=True),
     Input({"type": "item", "index": ALL}, "n_clicks"),
     State('store', 'data'),
     prevent_initial_call=True

@@ -18,6 +18,17 @@ register_heif_opener()
 #  - Case insensitive
 allow_formats = [".HEIC", ".JPG"]
 
+# Mapping for orientation correction
+# -90: Rotate the image by 90 degrees clockwise
+# ...
+# TODO What is wrong information? key or value?
+rotation_mapping = {
+    1: 0,
+    3: 180,
+    6: -90,
+    8: 90
+}
+
 class PhotoFactory:
 
     @staticmethod
@@ -99,9 +110,25 @@ class PhotoFactory:
         return {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
 
     @staticmethod
-    def convert_image(file_location):
+    def convert_image(file_location, correct_orientation=True):
         # Conversion to jpeg and base64
         image = Image.open(file_location)
+
+        if correct_orientation:
+            # Prevent rotated display on web page
+            exif_dct = PhotoFactory.get_exif_data(file_location)
+            if "Orientation" in exif_dct.keys():
+                # 1 - Normal (no rotation)
+                # 2 - Flipped horizontally
+                # 3 - Rotated 180 degrees
+                # 4 - Flipped vertically
+                # 5 - Transposed (flipped horizontally and rotated 270 degrees clockwise)
+                # 6 - Rotated 90 degrees clockwise
+                # 7 - Transverse (flipped horizontally and rotated 90 degrees clockwise)
+                # 8 - Rotated 270 degrees clockwise
+                image_orientation = exif_dct["Orientation"]
+                image = image.rotate(rotation_mapping[image_orientation], expand=True)
+
         buffered = BytesIO()
         image.save(buffered, format="JPEG")
         return base64.b64encode(buffered.getvalue()).decode('ascii')

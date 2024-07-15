@@ -3,7 +3,7 @@ from dash import Dash, html, dcc
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
 
-from DataStructures.DataFactory import DataFactory
+from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType
 import config
 
@@ -48,7 +48,7 @@ if config.environment == "local":
         }
     }
     for key in config.table.keys():
-        config.table[key]["data_table"] = DataFactory.fetch_table(
+        config.table[key]["data_table"] = DataTable.fetch_table(
             key,
             config.table[key]["mysql_name"]
         )
@@ -63,7 +63,10 @@ dash_app.layout = html.Div([
         ) for page in dash.page_registry.values()
     ]),
     dash.page_container,
-    dcc.Store(storage_type="session", id='store', data={"album": {'ID_ALBUM': 1}})   # TODO storage_type session?
+    dcc.Store(
+        storage_type="session", id='store',
+        data={"album": {'ID_ALBUM': 1}, "photo": {"ID_PHOTO": 1}}
+    )   # TODO Isn't updated at first click
 ])
 
 if __name__ == '__main__':

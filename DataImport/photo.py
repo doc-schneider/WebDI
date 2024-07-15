@@ -2,30 +2,38 @@ from sqlalchemy import create_engine, MetaData
 from pathlib import Path
 
 from DataOperations.Photo import PhotoFactory
+from DataOperations.MySQL import table_insert
+import config
 
+db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
+db_engine = create_engine(db_connection_str)
+db_conn = db_engine.connect()
+metadata = MetaData()
+metadata.reflect(bind=db_engine)
+config.mysql = {
+    "engine": db_engine,
+    "conn": db_conn,
+    "metadata": metadata,
+}
 
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2022/2022_07_Lofoten/Auswahl/0_Flug"),
-        Path("Y:/2022/2022_07_Lofoten/Auswahl/1_Tromsö"),
-        Path("Y:/2022/2022_07_Lofoten/Auswahl/2_Lyngen Alpen_Setermoen"),
-        Path("Y:/2022/2022_07_Lofoten/Auswahl/3_Svolvaer"),
-        Path("Y:/2022/2022_07_Lofoten/Auswahl/4_Reine"),
-        Path("Y:/2022/2022_07_Lofoten/Auswahl/5_Rückfahrt"),
+        Path("Y:/2023/2023_09_30-10_3_Amsterdam/01_Ankunft"),
+        Path("Y:/2023/2023_09_30-10_3_Amsterdam/02_Rijksmuseum"),
+        Path("Y:/2023/2023_09_30-10_3_Amsterdam/03_Letzter Tag"),
     ],
-    "Reise Nord-Norwegen 2022",
+    "Reise Amsterdam 2023",
     [
-        "Flug",
-        "Tromsö",
-        "Lyngen Alpen_Setermoen",
-        "Svolvaer",
-        "Reine",
-        "Rückfahrt"
+        "Ankunft",
+        "Rijksmuseum",
+        "Letzter Tag",
     ],
-    Path("Y:/2022/2022_07_Lofoten/Auswahl/Pre-Dokumentliste.csv")
+    Path("Y:/2023/2023_09_30-10_3_Amsterdam/PreDokumentliste.csv")
 )
 
+photo_table.add_foreignkey("PHOTO_ALBUM", "albums")
+
+table_insert(metadata, db_conn, "photos", photo_table.table)
+
 print("done")
-
-
 

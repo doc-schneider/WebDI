@@ -57,8 +57,8 @@ class AlbumViewer():
 
     def later(self, datatable):
         ix_show = self.ix_show + n_rows * n_cols
-        if not np.all(~(ix_show < datatable.table.shape[0])):
-            self.ix_show = ix_show[ix_show < datatable.table.shape[0]]  # Don't exceed last element
+        if not np.all(~(ix_show < self.album["N_ELEMENTS"])):
+            self.ix_show = ix_show[ix_show < self.album["N_ELEMENTS"]]  # Don't exceed last element
         self.update(datatable)
 
     def jump(self, datatable, ix):

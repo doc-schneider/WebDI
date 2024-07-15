@@ -3,6 +3,7 @@ import mysql.connector
 
 from DataStructures.TableTypes import TableType, table_definitions
 from DataOperations.MySQL import create_table, table_insert, add_columns
+import config
 
 
 conn = mysql.connector.connect(
@@ -18,6 +19,11 @@ db_engine = create_engine(db_connection_str)
 db_conn = db_engine.connect()
 metadata = MetaData()
 metadata.reflect(bind=db_engine)
+config.mysql = {
+    "engine": db_engine,
+    "conn": db_conn,
+    "metadata": metadata,
+}
 
 # Create a table
 table_dct = table_definitions[TableType.ALBUM]
@@ -25,6 +31,15 @@ create_table(db_engine, metadata, "albums", table_dct)
 
 # Insert / add
 table_insert(metadata, db_conn, "albums", album_table)
+
+# Insert
+table_name = "albums"
+insert_query = f"""INSERT INTO {table_name} ({cols[0]}, {cols[1]}, {cols[2]}, {cols[3]}) VALUES (%s, %s, %s, %s)"""
+data = [
+   tuple(album_table.loc[0, :])
+]
+mycursor.executemany(insert_query, data)
+conn.commit()
 
 # Add foreign key column
 

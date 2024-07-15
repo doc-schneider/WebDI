@@ -1,5 +1,5 @@
 import dash
-from dash import html, Input, Output, State, callback, ctx, dcc
+from dash import html, Input, Output, State, callback, ctx, dcc, ALL
 
 from DataStructures.TableTypes import TableType
 from Views.Album import AlbumViewer
@@ -15,9 +15,15 @@ table_type = TableType.PHOTO
 dash.register_page(__name__)
 
 layout = html.Div([
-    html.Button('earlier', id='earlier', n_clicks=0),
-    html.Button('later', id='later', n_clicks=0),
+    html.Br(),
+    html.Div([
+        html.Button('früher', id='earlier', n_clicks=0),
+        html.Button('später', id='later', n_clicks=0),
+    ], style={'display': 'flex', 'justify-content': 'center'}
+    ),
     html.Div(id="album"),
+    html.Br(),
+    html.Br(),
     html.Div(
         dcc.Slider(
             min=1,
@@ -26,7 +32,7 @@ layout = html.Div([
             step=1,
             id='album-slider'
         )
-    )
+    ),
 ])
 
 @callback(
@@ -79,10 +85,18 @@ def update_album(album_dct):
                html.H3(chapter)
            ] + [
         html.Div([
-            html.Div([
-                html.Img(src="data:image/jpeg;base64," + content_display[i], width="100%"),
-                html.Div(date_time[i] + ": " + descriptions[i])
-            ], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
+            html.Div(
+                [
+                    dcc.Link(
+                        html.Img(src="data:image/jpeg;base64," + content_display[i], width="100%"),
+                        href=dash.page_registry["pages.content"]["relative_path"], refresh=True
+                    ),
+                    html.Div(date_time[i] + ": " + descriptions[i])
+                ],
+                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'},
+                id={"type": "box", "index": i},
+                n_clicks=0
+            ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
     ], slider_max, slider_value, slider_marks
 
@@ -91,3 +105,16 @@ def init_Album(album_dct):
         config.table[table_type]["data_table"],
         album_dct
     )
+
+@callback(
+    Output('store', 'data', allow_duplicate=True),
+    Input({"type": "box", "index": ALL}, "n_clicks"),
+    State('store', 'data'),
+    prevent_initial_call=True
+)
+def click_box(values, current_data):
+    if ctx.triggered_id:   #TODO Do I need this?
+        ix = ctx.triggered_id["index"]
+        if any(values):
+            current_data["photo"] = {'ID_PHOTO': config.AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}
+    return current_data
