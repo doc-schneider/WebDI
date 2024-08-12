@@ -2,6 +2,7 @@ import pandas as pd
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 from pillow_heif import register_heif_opener
+from pymediainfo import MediaInfo
 from pathlib import Path
 import datetime as dtm
 import base64
@@ -14,11 +15,13 @@ from DataStructures.Data import DataTable
 register_heif_opener()
 
 # TODO:
-#  - MOV, ..
 #  - Case insensitive
-allow_formats = [".HEIC", ".JPG"]
+allow_formats_image_JPEG = ["JPG", "JPEG"]
+allow_formats_image_HEVC = ["HEIC"]
+allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC
+allow_formats_video = ["MOV", "MP4"]
 
-# Mapping for orientation correction
+# Mapping for image orientation correction
 # -90: Rotate the image by 90 degrees clockwise
 # ...
 # TODO What is wrong information? key or value?
@@ -35,7 +38,8 @@ class PhotoFactory:
     def table_from_folder(
             path_photo,
             album_name,
-            chapters=None,
+            chapters,
+            timezone_default="CET",
             pretable_file=None
     ):
         # Create table from standard columns
@@ -61,7 +65,7 @@ class PhotoFactory:
             table_files = get_files_info(
                 path_photo[i],
                 [],
-                allow_formats,
+                allow_formats_image + allow_formats_video,
                 [pretable_file.name],
             )
             table_files.drop(columns=set(table_files.columns) - set(cols), inplace=True)
@@ -71,10 +75,33 @@ class PhotoFactory:
 
             table = pd.concat([table, table_part], axis=0, ignore_index=True)
 
-        # Get creation time form meta data (exif)
+        # Get meta data (exif)
+        # TODO Process exif data in function
         for i in range(table.shape[0]):
-            exif_dct = PhotoFactory.get_exif_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
-            table.loc[i, "DATE_TIME"] = dtm.datetime.strptime(exif_dct["DateTime"], "%Y:%m:%d %H:%M:%S")
+
+            if table.loc[i, "FILE_FORMAT"] in allow_formats_image:
+                exif_dct, exif_gps = PhotoFactory.get_exif_data(
+                    Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]),
+                    table.loc[i, "FILE_FORMAT"]
+                )
+                # Extracting local time when image was taken
+                t = pd.to_datetime(exif_dct["DateTime"], format="%Y:%m:%d %H:%M:%S")
+                if not exif_gps:
+                    # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
+                    t = t.tz_localize("CET")
+                    t = t.tz_convert(timezone_default)
+                    t = t.tz_localize(None)
+            elif table.loc[i, "FILE_FORMAT"] in allow_formats_video:
+                exif_dct = PhotoFactory.get_meta_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
+                if "comapplequicktimemake" in exif_dct.keys():  # Apple MOV
+                    t = pd.Timestamp(exif_dct["comapplequicktimecreationdate"])  ## includes local tz
+                    t = t.tz_localize(None)
+                elif "recorded_date" in exif_dct.keys():  # Apple MP4
+                    t = pd.Timestamp(exif_dct["recorded_date"])
+                    t = t.tz_localize(None)
+
+            #TODO Use datetime?
+            table.loc[i, "DATE_TIME"] = t
 
         table["PHOTO_ALBUM"] = album_name
 
@@ -104,19 +131,38 @@ class PhotoFactory:
         return photo_table
 
     @staticmethod
-    def get_exif_data(file_location):
+    def get_exif_data(file_location, file_format):
         image = Image.open(file_location)
-        exif_data = image.getexif()
-        return {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+        # TODO Unify
+        if file_format in allow_formats_image_JPEG:
+            exif_data = image._getexif()
+        elif file_format in allow_formats_image_HEVC:
+            exif_data = image.getexif()
+        exif_dct = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+
+        # TODO Where is the gps info in HEIC?
+        exif_gps = {}
+        if file_format in allow_formats_image_JPEG:
+            gps_info = exif_dct.get('GPSInfo', {})
+            for key in gps_info.keys():
+                decoded = GPSTAGS.get(key, key)
+                exif_gps[decoded] = gps_info[key]
+
+        return exif_dct, exif_gps
 
     @staticmethod
-    def convert_image(file_location, correct_orientation=True):
+    def get_meta_data(file_location):
+        media_info = MediaInfo.parse(file_location)
+        return media_info.general_tracks[0].to_data()
+
+    @staticmethod
+    def convert_image(file_location, file_format, correct_orientation=True):
         # Conversion to jpeg and base64
         image = Image.open(file_location)
 
         if correct_orientation:
             # Prevent rotated display on web page
-            exif_dct = PhotoFactory.get_exif_data(file_location)
+            exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format)
             if "Orientation" in exif_dct.keys():
                 # 1 - Normal (no rotation)
                 # 2 - Flipped horizontally

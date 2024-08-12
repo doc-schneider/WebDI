@@ -53,10 +53,10 @@ def create_collection(values):
             dcc.Link(
                 html.Div(
                     content_display[i],
-                    id={"type": "item", "index": i},
-                    n_clicks=0, style={'backgroundColor': '#aaffaa', 'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                    style={'backgroundColor': '#aaffaa', 'flex': 1, 'padding': '10px', 'border': '1px solid black'},
+                    id={"type": "item", "index": i}
                 ),
-                href=dash.page_registry["pages.album"]["relative_path"], refresh=True
+                href=dash.page_registry["pages.album"]["relative_path"], refresh=False
             ),
             html.Div(
                 descriptions[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}

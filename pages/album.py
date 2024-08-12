@@ -2,6 +2,7 @@ import dash
 from dash import html, Input, Output, State, callback, ctx, dcc, ALL
 
 from DataStructures.TableTypes import TableType
+from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Album import AlbumViewer
 import config
 
@@ -66,11 +67,12 @@ def update_album(album_dct):
     boxes_dct = config.AlbumView.view()
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
-    descriptions = boxes_dct["DESCRIPTION"]
+    album = config.AlbumView.album["ALBUM"]
     chapter = boxes_dct["CHAPTER"]
+    descriptions = boxes_dct["DESCRIPTION"]
+    file_formats = boxes_dct["FILE_FORMAT"]
 
     # if config.table["table_type"].name == "PHOTO":  #TODO Fix
-    album = config.AlbumView.album["ALBUM"]
     content_display = boxes_dct["IMAGE"]
     date_time = boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X')
 
@@ -86,19 +88,40 @@ def update_album(album_dct):
            ] + [
         html.Div([
             html.Div(
-                [
-                    dcc.Link(
-                        html.Img(src="data:image/jpeg;base64," + content_display[i], width="100%"),
-                        href=dash.page_registry["pages.content"]["relative_path"], refresh=True
-                    ),
-                    html.Div(date_time[i] + ": " + descriptions[i])
-                ],
-                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'},
-                id={"type": "box", "index": i},
-                n_clicks=0
+                media_type_box(file_formats[i], content_display[i], i, date_time[i], descriptions[i]),
+                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
     ], slider_max, slider_value, slider_marks
+
+def media_type_box(media_type, content_display, i, date_time, description):
+    # TODO Link back to main code
+    if media_type in allow_formats_image:
+        return [
+            dcc.Link(
+                html.Img(
+                    src="data:image/jpeg;base64," + content_display,
+                    width="100%",
+                    id={"type": "box", "index": i}
+                ),
+                href=dash.page_registry["pages.content"]["relative_path"], refresh=False
+            ),
+            html.Div(date_time + ": " + description)
+        ]
+    elif media_type in allow_formats_video:
+        return [
+            dcc.Link(
+                html.Video(
+                    src=content_display,
+                    controls=True,
+                    width="100%",
+                    id={"type": "box", "index": i}
+                ),
+                href=dash.page_registry["pages.content"]["relative_path"], refresh=False
+            ),
+            html.Div(date_time + ": " + description)
+        ]
+# n_clicks=0
 
 def init_Album(album_dct):
     config.AlbumView = AlbumViewer(

@@ -1,6 +1,7 @@
 import dash
 from dash import html, Input, Output, callback
 
+from DataOperations.Photo import allow_formats_image, allow_formats_video
 from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType, table_definitions
 from Views.Content import ContentViewer
@@ -25,10 +26,20 @@ def update_content(current_data):
     # TODO Enable general types
     init_Content(current_data["photo"])   # TODO Actually only necessary if content has changed
     content_dct = config.ContentView.view()
-    return html.Div([
-        html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
-        html.Div(content_dct["DESCRIPTION"][0])
-    ])
+    if content_dct["FILE_FORMAT"][0] in allow_formats_image:
+        return html.Div([
+            html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
+            html.Div(content_dct["DESCRIPTION"][0])
+        ])
+    elif content_dct["FILE_FORMAT"][0] in allow_formats_video:
+        return html.Div([
+            html.Video(
+                src=content_dct["IMAGE"][0],
+                controls=True,
+                width="100%",
+            ),
+            html.Div(content_dct["DESCRIPTION"][0])
+        ])
 
 def init_Content(id):
     primary_key = table_definitions[table_type]["PrimaryKey"]

@@ -14,10 +14,11 @@ class AlbumViewer():
         self.datatable = None  # Clipped table
         self.table_type = datatable_initial.table_type
 
+        # TODO Store complete table?
         # Which album out of the total collection?
         id_album = album_dct['ID_ALBUM']   # TODO use ForeignKey
         datatable = datatable_initial.match_foreignkey(id_album)
-
+        datatable.sort()
         # Structure of the album
         chapters = datatable.table["CHAPTER"].unique()
         self.album = {
@@ -26,7 +27,6 @@ class AlbumViewer():
             "N_ELEMENTS": datatable.table.shape[0],
             "CHAPTERS": {}
         }
-
         # First element of chapter
         for c in chapters:
             self.album["CHAPTERS"][c] = datatable.table.loc[
@@ -40,6 +40,7 @@ class AlbumViewer():
         self.update(datatable_initial)
 
     def update(self, datatable):
+        datatable.sort()
         self.datatable = DataTable(
             datatable.table.loc[
                 datatable.table["ID_ALBUM"] == self.album["ID_ALBUM"], :

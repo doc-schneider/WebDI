@@ -24,7 +24,7 @@ def get_files_info(
     # TODO Make case insensitive
     if allow_formats:
         files = [y for y in pfad.iterdir() if (
-                y.is_file() and y.suffix in allow_formats and not y.name in exclude_files
+                y.is_file() and y.suffix[1:] in allow_formats and not y.name in exclude_files
         )]
     else:
         files = [y for y in pfad.iterdir() if (
@@ -36,6 +36,7 @@ def get_files_info(
         info["FILE_FORMAT"].append(f.suffix[1:])  #  Removes dot . from string.
         # st_ctime : creation time (of file on computer)
         # st_mtime : last content modification time
+        # TODO Has this timestamp any use?
         info["TIME_CREATED"].append(
             dtm.datetime.fromtimestamp(f.stat().st_ctime)
         )

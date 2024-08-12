@@ -64,10 +64,11 @@ dash_app.layout = html.Div([
     ]),
     dash.page_container,
     dcc.Store(
-        storage_type="session", id='store',
+        storage_type="session",
+        id='store',
         data={"album": {'ID_ALBUM': 1}, "photo": {"ID_PHOTO": 1}}
     )   # TODO Isn't updated at first click
 ])
 
 if __name__ == '__main__':
-    dash_app.run(debug=True)  # (host='192.168.0.225', port=5000, debug=True)
+    dash_app.run(host='192.168.0.225', port=5000, debug=True) # (debug=True)   (host='192.168.0.225', port=5000, debug=True)

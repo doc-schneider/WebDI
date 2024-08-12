@@ -1,6 +1,7 @@
 pandas
 Pillow
 pillow-heif
+pymediainfo
 mysql-connector-python
 sqlalchemy
 openpyxl
