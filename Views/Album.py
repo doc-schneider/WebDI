@@ -10,13 +10,12 @@ n_rows = 2
 n_cols = 3
 
 class AlbumViewer():
-    def __init__(self, datatable_initial, album_dct):
+    def __init__(self, datatable_initial, album, album_view):
         self.datatable = None  # Clipped table
         self.table_type = datatable_initial.table_type
 
-        # TODO Store complete table?
         # Which album out of the total collection?
-        id_album = album_dct['ID_ALBUM']   # TODO use ForeignKey
+        id_album = album['ID_ALBUM']   # TODO use ForeignKey
         datatable = datatable_initial.match_foreignkey(id_album)
         datatable.sort()
         # Structure of the album
@@ -33,9 +32,13 @@ class AlbumViewer():
                                         datatable.table["CHAPTER"] == c,
                                         :
                                         ].index[0]
-
-        # Get first n indices to initialise
-        self.ix_show = np.arange(np.min((n_rows * n_cols, self.album["N_ELEMENTS"])))
+        # Location inside album
+        ix_show = album_view["ID_PHOTO"]
+        if ix_show[0] is None:
+            # Get first n indices to initialise
+            self.ix_show = np.arange(np.min((n_rows * n_cols, self.album["N_ELEMENTS"])))
+        else:
+            self.ix_show = np.array(ix_show)
 
         self.update(datatable_initial)
 

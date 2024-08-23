@@ -24,8 +24,8 @@ layout = html.Div([
 )
 def update_content(current_data):
     # TODO Enable general types
-    init_Content(current_data["photo"])   # TODO Actually only necessary if content has changed
-    content_dct = config.ContentView.view()
+    ContentView = init_Content(current_data["photo"])
+    content_dct = ContentView.view()
     if content_dct["FILE_FORMAT"][0] in allow_formats_image:
         return html.Div([
             html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
@@ -44,7 +44,7 @@ def update_content(current_data):
 def init_Content(id):
     primary_key = table_definitions[table_type]["PrimaryKey"]
     # TODO Row selection shoudl be in Viewer
-    config.ContentView = ContentViewer(
+    return ContentViewer(
         DataTable(
             config.table[table_type]["data_table"].table.loc[
                 config.table[table_type]["data_table"].table[primary_key] == id[primary_key],

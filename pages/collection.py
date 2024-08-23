@@ -30,12 +30,10 @@ layout = html.Div([
     Input("dummy-collection", "n_clicks")
 )
 def create_collection(values):
-    # Initialize at first call
-    if not hasattr(config, 'TimelineView'):
-        init_Collection()
-    collection_dct = config.CollectionView.view()
+    CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"])
+    collection_dct = CollectionView.view()
     descriptions = collection_dct["DESCRIPTION"]
-    n_elements = config.CollectionView.collection["N_ELEMENTS"]
+    n_elements = CollectionView.collection["N_ELEMENTS"]
 
     # if config.table["table_type"].name == "ALBUM":  # TODO Content type is relevant here: book etc
     content_display = collection_dct["PHOTO_ALBUM"]
@@ -65,9 +63,10 @@ def create_collection(values):
         ) for i in range(n_elements)
     ]
 
-def init_Collection():
-    config.CollectionView = CollectionViewer(config.table[TableType.ALBUM]["data_table"])
-    config.CollectionView.sort("DATE_FROM")
+def init_Collection(data_table):
+    CollectionView = CollectionViewer(data_table)
+    CollectionView.sort("DATE_FROM")
+    return CollectionView
 
 @callback(
     Output('store', 'data', allow_duplicate=True),
@@ -76,9 +75,15 @@ def init_Collection():
     prevent_initial_call=True
 )
 def click_box(values, current_data):
+    print("collection, in", current_data["album"])
     if ctx.triggered_id:   #TODO Do I need this?
         ix = ctx.triggered_id["index"]
         if any(values):
-            current_data["album"] = {'ID_ALBUM': config.CollectionView.datatable.table.loc[ix, "ID_ALBUM"]}  # TODO: Use PrimaryKey
+            #TODO Can this object be stored from above init while being on page?
+            CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"])
+            current_data["album"] = {'ID_ALBUM': CollectionView.datatable.table.loc[ix, "ID_ALBUM"]}  # TODO: Use PrimaryKey
+            # Back to default
+            current_data["album_view"]["ID_PHOTO"] = [None]
+    print("collection, out", current_data["album"])
     return current_data
 

@@ -41,33 +41,35 @@ layout = html.Div([
     Output('album-slider', 'max'),
     Output('album-slider', 'value'),
     Output('album-slider', 'marks'),
+    Output('store', 'data', allow_duplicate=True),
     Input('earlier', "n_clicks"),
     Input('later', "n_clicks"),
     Input('album-slider', 'value'),
-    State('store', 'data')
+    State('store', 'data'),
+    prevent_initial_call=True
 )
 def click_button(b1, b2, value, current_data):
+    print("album in")
+    AlbumView = init_Album(current_data["album"], current_data["album_view"])
+
     if ctx.triggered_id == "earlier":
-        config.AlbumView.earlier(config.table[table_type]["data_table"])
+        AlbumView.earlier(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "later":
-        config.AlbumView.later(config.table[table_type]["data_table"])
+        AlbumView.later(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "album-slider":
-        config.AlbumView.jump(config.table[table_type]["data_table"], value - 1)
+        AlbumView.jump(config.table[table_type]["data_table"], value - 1)
     else:
         pass  # None. Initial or refresh
+    current_data["album_view"]["ID_PHOTO"] = AlbumView.ix_show  #TODO general identifier
 
-    return update_album(current_data["album"])
+    print("album out")
+    return update_album(AlbumView, current_data)
 
-def update_album(album_dct):
-    # Initialize at first call
-    #TODO Do on higher level?
-    if not hasattr(config, 'AlbumView') or (album_dct['ID_ALBUM'] != config.AlbumView.album['ID_ALBUM']):
-        init_Album(album_dct)
-
-    boxes_dct = config.AlbumView.view()
+def update_album(AlbumView, current_data):
+    boxes_dct = AlbumView.view()
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
-    album = config.AlbumView.album["ALBUM"]
+    album = AlbumView.album["ALBUM"]
     chapter = boxes_dct["CHAPTER"]
     descriptions = boxes_dct["DESCRIPTION"]
     file_formats = boxes_dct["FILE_FORMAT"]
@@ -77,9 +79,9 @@ def update_album(album_dct):
     date_time = boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X')
 
     # TODO Updating slider properties which are actually fixed not so good. Should be handed over from higher level (config, store)
-    slider_max = config.AlbumView.album["N_ELEMENTS"]
-    slider_value = config.AlbumView.ix_show[0]
-    slider_marks = {int(x)+1: y for y, x in config.AlbumView.album["CHAPTERS"].items()}
+    slider_max = AlbumView.album["N_ELEMENTS"]
+    slider_value = AlbumView.ix_show[0]
+    slider_marks = {int(x)+1: y for y, x in AlbumView.album["CHAPTERS"].items()}
 
     # TODO The basic layout is actually fixed. Only would need to exchange the content
     return [
@@ -92,7 +94,7 @@ def update_album(album_dct):
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
-    ], slider_max, slider_value, slider_marks
+    ], slider_max, slider_value, slider_marks, current_data
 
 def media_type_box(media_type, content_display, i, date_time, description):
     # TODO Link back to main code
@@ -123,10 +125,11 @@ def media_type_box(media_type, content_display, i, date_time, description):
         ]
 # n_clicks=0
 
-def init_Album(album_dct):
-    config.AlbumView = AlbumViewer(
+def init_Album(album, album_view):
+    return AlbumViewer(
         config.table[table_type]["data_table"],
-        album_dct
+        album,
+        album_view
     )
 
 @callback(
@@ -139,5 +142,6 @@ def click_box(values, current_data):
     if ctx.triggered_id:   #TODO Do I need this?
         ix = ctx.triggered_id["index"]
         if any(values):
-            current_data["photo"] = {'ID_PHOTO': config.AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}
+            AlbumView = init_Album(current_data["album"], current_data["album_view"])
+            current_data["photo"] = {'ID_PHOTO': AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}
     return current_data
