@@ -7,3 +7,5 @@ sqlalchemy
 openpyxl
 dash
 dash-svg
+flask-session
+redis

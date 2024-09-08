@@ -2,6 +2,8 @@ import dash
 from dash import Dash, html, dcc
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
+import os
+from flask_session import Session
 
 from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType
@@ -54,7 +56,15 @@ if config.environment == "local":
         )
 
 dash_app = Dash(__name__, use_pages=True)
-app = dash_app.server
+server = dash_app.server
+
+# Configure server-side session
+server.config['SECRET_KEY'] = 'supersecretkey'
+server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+Session(server)
 
 dash_app.layout = html.Div([
     html.Div([
@@ -67,7 +77,7 @@ dash_app.layout = html.Div([
         storage_type="session",
         id='store',
         data={"album": {'ID_ALBUM': 1}, "album_view": {"ID_PHOTO": [None]}, "photo": {"ID_PHOTO": 1}}
-    )   # TODO Isn't updated at first click
+    )
 ])
 
 if __name__ == '__main__':

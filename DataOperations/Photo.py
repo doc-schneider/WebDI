@@ -4,18 +4,15 @@ from PIL.ExifTags import TAGS, GPSTAGS
 from pillow_heif import register_heif_opener
 from pymediainfo import MediaInfo
 from pathlib import Path
-import datetime as dtm
 import base64
 from io import BytesIO
 
 from DataOperations.Files import get_files_info, read_table_from_csv
-from DataStructures.TableTypes import TableType, table_definitions
+from DataStructures.TableTypes import TableType, table_definitions, table_columns_names_types
 from DataStructures.Data import DataTable
 
 register_heif_opener()
 
-# TODO:
-#  - Case insensitive
 allow_formats_image_JPEG = ["JPG", "JPEG"]
 allow_formats_image_HEVC = ["HEIC"]
 allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC
@@ -32,6 +29,8 @@ rotation_mapping = {
     8: 90
 }
 
+date_format_German = '%d.%m.%Y %H:%M:%S'
+
 class PhotoFactory:
 
     @staticmethod
@@ -46,12 +45,17 @@ class PhotoFactory:
         cols = list(table_definitions[TableType.PHOTO]["Columns"].keys())
 
         # Get pretable
-        # - Assumed that additional columns are valid
-        # TODO Need to add missing columns in database
+        # - Additional columns
         if pretable_file:
-            pretable = read_table_from_csv(pretable_file)
+            pretable = read_table_from_csv(
+                pretable_file
+            )
+            PhotoFactory.parse_datetime(pretable)
             cols_add = list(set(pretable.columns) - set(cols))
-            cols = cols + cols_add
+            pretable_file_name = pretable_file.name
+        else:
+            cols_add = []
+            pretable_file_name = None
 
         table = pd.DataFrame(
             columns=cols
@@ -59,14 +63,14 @@ class PhotoFactory:
 
         for i in range(len(path_photo)):
             table_part = pd.DataFrame(
-                columns=cols
+                columns=cols + cols_add
             )
 
             table_files = get_files_info(
                 path_photo[i],
                 [],
                 allow_formats_image + allow_formats_video,
-                [pretable_file.name],
+                [pretable_file_name],
             )
             table_files.drop(columns=set(table_files.columns) - set(cols), inplace=True)
             table_part = pd.concat([table_part, table_files], axis=0, ignore_index=True)
@@ -105,8 +109,8 @@ class PhotoFactory:
 
         table["PHOTO_ALBUM"] = album_name
 
+        table.set_index("FILE_NAME", inplace=True)
         if pretable_file:
-            table.set_index("FILE_NAME", inplace=True)
             pretable.set_index("FILE_NAME", inplace=True)
 
             # Drop entries from pretable with no entry in table
@@ -129,6 +133,12 @@ class PhotoFactory:
         photo_table.format_documentgroup()
 
         return photo_table
+
+    @staticmethod
+    def parse_datetime(df):
+        cols = [k for k, v in table_columns_names_types.items() if v["mysqltype"]=="datetime" and k in df.columns]
+        for c in cols:
+            df[c] = pd.to_datetime(df[c], format=date_format_German)
 
     @staticmethod
     def get_exif_data(file_location, file_format):

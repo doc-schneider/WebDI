@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 
 from DataStructures.Data import DataTable
@@ -54,14 +53,14 @@ class AlbumViewer():
         )
 
     def earlier(self, datatable):
-        ix_show = self.ix_show - n_rows * n_cols
+        ix_show = self.ix_show[0] - n_rows * n_cols + np.arange(n_rows * n_cols)
         if not np.all(~(ix_show >= 0)):  # All indices out of range? Then do nothing
             self.ix_show = ix_show[ix_show >= 0]
         self.update(datatable)
 
     def later(self, datatable):
-        ix_show = self.ix_show + n_rows * n_cols
-        if not np.all(~(ix_show < self.album["N_ELEMENTS"])):
+        ix_show = self.ix_show[0] + n_rows * n_cols + np.arange(n_rows * n_cols)
+        if not np.all(~(ix_show < self.album["N_ELEMENTS"])):  # All indices out of range? Then do nothing
             self.ix_show = ix_show[ix_show < self.album["N_ELEMENTS"]]  # Don't exceed last element
         self.update(datatable)
 

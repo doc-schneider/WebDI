@@ -1,3 +1,4 @@
+import pandas as pd
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
 
@@ -25,23 +26,22 @@ config.mysql = {
     "metadata": metadata,
 }
 
-# Create a table
-table_dct = table_definitions[TableType.ALBUM]
-create_table(db_engine, metadata, "albums", table_dct)
 
-# Insert / add
-table_insert(metadata, db_conn, "albums", album_table)
-
-# Insert
-table_name = "albums"
-insert_query = f"""INSERT INTO {table_name} ({cols[0]}, {cols[1]}, {cols[2]}, {cols[3]}) VALUES (%s, %s, %s, %s)"""
-data = [
-   tuple(album_table.loc[0, :])
-]
-mycursor.executemany(insert_query, data)
+# Add column
+table_name = "photos"
+column_name = "TAG"
+column_type = "TEXT"
+after = "CHAPTER"
+query = f'ALTER TABLE {table_name} ADD  COLUMN {column_name} {column_type} AFTER {after};'
+mycursor.execute(query)
 conn.commit()
 
-# Add foreign key column
+# Delete column
+table_name = "photos"
+column_name = "TAG"
+query = f'ALTER TABLE {table_name} DROP COLUMN {column_name};'
+mycursor.execute(query)
+conn.commit()
 
 
 

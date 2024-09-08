@@ -22,30 +22,17 @@ config.mysql = {
 #
 #
 # Raw photo table
-# photo_table = PhotoFactory().table_from_folder(
-#     [
-#         Path("Y:/2024/2024_07_25-08_01_Rumänien/0_Anreise"),
-#         Path("Y:/2024/2024_07_25-08_01_Rumänien/1_Bukarest"),
-#     ],
-#     "Reise Rumänien 2024",
-#     [
-#         "Anreise",
-#         "Bukarest 1",
-#     ],
-#     timezone_default="Europe/Bucharest",
-#     pretable_file=Path("Y:/2024/2024_07_25-08_01_Rumänien/PreDokumentliste.csv")
-# )
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2022/2022_03_13_Liebermann")
+        Path("Y:/2024/2024_09_07_Igudesman & Joo"),
     ],
-    "Max Liebermann Ausstellung, Kunstpalast, 2022",
+    "Konzert Tonhalle 7. Sep 2024",
     [
-        "Ausstellungsbesuch mit Papa und Katrin"
+        "Igudesman & Joo & Gäste"
     ],
-    timezone_default="CET",
-    pretable_file=Path("Y:/2022/2022_03_13_Liebermann/PreDokumentliste.csv")
+    pretable_file=None
 )
+
 #
 # Extract album data from a new photo dataframe
 album = photo_table.table["PHOTO_ALBUM"].unique()[0]
@@ -62,6 +49,7 @@ album_table = pd.DataFrame(
         cols[3]: ""
     }
 )
+album_table["DESCRIPTION"] = "Igudesman & Joo kannte ich über YouTube. War überrascht, dass sie in Düsseldorf auftreten. Sehr gut, sehr unterhaltsam. Man merkt, dass es alles Musiker von Weltniveau sind. Sehr gekonnter Bogen von den Blödel-Barden Ass-Dur bis zu dem ernsthaften iranischen Lautenisten, der Woody Woodpecker vertont. Ein origineller Zugang zu klassicher Musik"
 #
 # Insert new album
 table_insert(metadata, db_conn, "albums", album_table)

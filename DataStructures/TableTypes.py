@@ -9,6 +9,7 @@ from sqlalchemy.types import Text, DateTime, Date, Integer, Boolean
 class TableType(Enum):
     PHOTO = 10
     ALBUM = 20
+    TAG = 30
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -45,6 +46,10 @@ table_columns_names_types = {
         "mysqltype": "integer",
         "sqlalchemytype": Integer
     },
+    "DOCUMENT_ORDER": {
+        "mysqltype": "integer",
+        "sqlalchemytype": Integer
+    },
     "PHOTO_ALBUM": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -54,6 +59,10 @@ table_columns_names_types = {
         "sqlalchemytype": Text
     },
     "EVENT": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "TAG": {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
@@ -87,5 +96,12 @@ table_definitions = {
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
         },
         "PrimaryKey": "ID_ALBUM"
+    },
+    TableType.TAG: {
+        "Columns": {
+            "TAG": table_columns_names_types["TAG"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_TAG"
     },
 }

@@ -3,6 +3,7 @@ from dash import html, Input, Output, State, ctx, ALL, callback, dcc
 
 from Views.Collection import CollectionViewer
 from DataStructures.TableTypes import TableType
+from SessionManager.ManageSessions import session_manager, show_session
 import config
 
 '''
@@ -30,6 +31,7 @@ layout = html.Div([
     Input("dummy-collection", "n_clicks")
 )
 def create_collection(values):
+    show_session("collection create")
     CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"])
     collection_dct = CollectionView.view()
     descriptions = collection_dct["DESCRIPTION"]
@@ -75,15 +77,21 @@ def init_Collection(data_table):
     prevent_initial_call=True
 )
 def click_box(values, current_data):
-    print("collection, in", current_data["album"])
-    if ctx.triggered_id:   #TODO Do I need this?
+    show_session("collection click in")
+    if ctx.triggered_id:  #TODO 2 if necessary?
         ix = ctx.triggered_id["index"]
         if any(values):
-            #TODO Can this object be stored from above init while being on page?
+            print("collection click", ix)
             CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"])
-            current_data["album"] = {'ID_ALBUM': CollectionView.datatable.table.loc[ix, "ID_ALBUM"]}  # TODO: Use PrimaryKey
             # Back to default
-            current_data["album_view"]["ID_PHOTO"] = [None]
-    print("collection, out", current_data["album"])
+            #TODO: Use PrimaryKey
+            session_manager(
+                {
+                    "album": {'ID_ALBUM': CollectionView.datatable.table.loc[ix, "ID_ALBUM"]},
+                    "album_view": {"ID_PHOTO": [None]}
+                }
+            )
+    show_session("collection click out")
     return current_data
+
 

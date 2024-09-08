@@ -41,8 +41,13 @@ def table_insert(metadata, db_conn, table_name, table):
     query = insert(metadata.tables[table_name])
     db_conn.execute(query, table.to_dict(orient='records'))
     db_conn.commit()
-#
-# See table.py
+# table_name = "albums"
+# insert_query = f"""INSERT INTO {table_name} ({cols[0]}, {cols[1]}, {cols[2]}, {cols[3]}) VALUES (%s, %s, %s, %s)"""
+# data = [
+#    tuple(album_table.loc[0, :])
+# ]
+# mycursor.executemany(insert_query, data)
+# conn.commit()
 
 def table_fetch(metadata, db_conn, table_name):
     table = metadata.tables[table_name]
@@ -51,12 +56,13 @@ def table_fetch(metadata, db_conn, table_name):
     table_df = pd.DataFrame(query_result.fetchall())
     return table_df
 
+# TODO Now metadata of sqlalchemy incorrect
+# TODO Can add "DEFAULT NULL", "AFTER"
 def add_columns(conn, mycursor, table_name, column_dct):
     for (column_name, column_type) in column_dct.items():
         query = f'ALTER TABLE {table_name} ADD  COLUMN {column_name} {column_type}'
         mycursor.execute(query)
     conn.commit()
-    # TODO Now metadata of sqlalchemy incorrect
 
 def add_foreign_key():
     pass

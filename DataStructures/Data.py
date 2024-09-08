@@ -49,6 +49,7 @@ class DataTable:
             if mysqltype == "text":
                 self.table[col].fillna("", inplace=True)
             elif mysqltype == "integer":
+                #TODO Not so reasonable. However, nan is not accepted by MySQL
                 self.table[col].fillna(0, inplace=True)
             elif mysqltype == "datetime":
                 pass

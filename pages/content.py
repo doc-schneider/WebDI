@@ -1,5 +1,6 @@
 import dash
 from dash import html, Input, Output, callback
+from flask import session
 
 from DataOperations.Photo import allow_formats_image, allow_formats_video
 from DataStructures.Data import DataTable
@@ -24,7 +25,7 @@ layout = html.Div([
 )
 def update_content(current_data):
     # TODO Enable general types
-    ContentView = init_Content(current_data["photo"])
+    ContentView = init_Content(session["photo"])
     content_dct = ContentView.view()
     if content_dct["FILE_FORMAT"][0] in allow_formats_image:
         return html.Div([

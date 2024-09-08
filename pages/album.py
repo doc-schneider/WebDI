@@ -1,6 +1,8 @@
 import dash
 from dash import html, Input, Output, State, callback, ctx, dcc, ALL
+from flask import session
 
+from SessionManager.ManageSessions import session_manager, show_session
 from DataStructures.TableTypes import TableType
 from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Album import AlbumViewer
@@ -49,20 +51,26 @@ layout = html.Div([
     prevent_initial_call=True
 )
 def click_button(b1, b2, value, current_data):
-    print("album in")
-    AlbumView = init_Album(current_data["album"], current_data["album_view"])
+    show_session("album view click in")
+    #TODO session_manager
+    AlbumView = init_Album(session["album"], session["album_view"])
 
-    if ctx.triggered_id == "earlier":
+    if ctx.triggered_id == "earlier" and b1 > 0:  #TODO ctx gives a wrong value for no click (earlier)
+        print("album view click earlier")
         AlbumView.earlier(config.table[table_type]["data_table"])
-    elif ctx.triggered_id == "later":
+    elif ctx.triggered_id == "later" and b2 > 0:
+        print("album view click later")
         AlbumView.later(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "album-slider":
+        print("album view click slider")
         AlbumView.jump(config.table[table_type]["data_table"], value - 1)
     else:
         pass  # None. Initial or refresh
-    current_data["album_view"]["ID_PHOTO"] = AlbumView.ix_show  #TODO general identifier
 
-    print("album out")
+    current_data["album_view"]["ID_PHOTO"] = list(AlbumView.ix_show)  #TODO general identifier
+    session_manager({"album_view": {"ID_PHOTO": list(AlbumView.ix_show)}})
+
+    show_session("album view click out")
     return update_album(AlbumView, current_data)
 
 def update_album(AlbumView, current_data):
@@ -142,6 +150,7 @@ def click_box(values, current_data):
     if ctx.triggered_id:   #TODO Do I need this?
         ix = ctx.triggered_id["index"]
         if any(values):
-            AlbumView = init_Album(current_data["album"], current_data["album_view"])
+            AlbumView = init_Album(session["album"], session["album_view"])
+            session_manager({"photo": {"ID_PHOTO": AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}})
             current_data["photo"] = {'ID_PHOTO': AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}
     return current_data
