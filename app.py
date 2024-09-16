@@ -38,6 +38,11 @@ if config.environment == "local":
 
     # Tables
     config.table = {
+        TableType.TAG: {
+            "mysql_name": "tags",
+            "mysql_table": None,
+            "data_table": None
+        },
         TableType.ALBUM: {
             "mysql_name": "albums",
             "mysql_table": None,
@@ -59,6 +64,7 @@ dash_app = Dash(__name__, use_pages=True)
 server = dash_app.server
 
 # Configure server-side session
+# TODO redis
 server.config['SECRET_KEY'] = 'supersecretkey'
 server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
 server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files

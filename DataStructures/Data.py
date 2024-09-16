@@ -15,6 +15,16 @@ class DataTable:
             table_type
         )
 
+    def sort(self, column="DATE_TIME"):
+        self.table.sort_values(column, ignore_index=True, inplace=True)
+
+    def filter(self, filter_table):
+        query_str = ' & '.join([f'{k} == @{k}' for k in filter_table.keys()])
+        return DataTable(
+            self.table.query(query_str, local_dict=filter_table).reset_index(drop=True),
+            self.table_type
+        )
+
     def find_in_timeinterval(self, timeinterval):
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
         iix = (self.table["DATE_TIME"] >= timeinterval.left) & (self.table["DATE_TIME"] <= timeinterval.right)
@@ -39,9 +49,6 @@ class DataTable:
             on=foreign_column,
             how="left"
         )
-
-    def sort(self, column="DATE_TIME"):
-        self.table.sort_values(column, ignore_index=True, inplace=True)
 
     def replace_nan(self):
         for col in self.table.columns:

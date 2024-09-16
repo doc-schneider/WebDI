@@ -4,9 +4,11 @@ import uuid
 
 
 def session_manager(*args):
-    new_user = check_user_id()  #TODO Not necessary, need no user id, just initial parameters for session
+    new_user = check_user_id()  #TODO Not necessary, need no user id, just initial parameters for session?
     if new_user:
+        # TODO Better store init values in config first
         session['user_id'] = str(uuid.uuid4())
+        session["collection"] = {"TAG": "Fotoalbum Stefan & Konstanze"}
         session["album"] = {'ID_ALBUM': 1}
         session["album_view"] = {"ID_PHOTO": [None]}
         session["photo"] = {"ID_PHOTO": 1}
@@ -24,6 +26,6 @@ def check_user_id():
 
 def show_session(label):
     print(label)
-    for key in ["timestamp", 'user_id', "album", "album_view", "photo"]:
+    for key in ["timestamp", 'user_id', "collection", "album", "album_view", "photo"]:
         if key in session.keys():
             print(session[key])

@@ -1,5 +1,6 @@
 import dash
 from dash import html, Input, Output, State, ctx, ALL, callback, dcc
+from flask import session
 
 from Views.Collection import CollectionViewer
 from DataStructures.TableTypes import TableType
@@ -13,14 +14,21 @@ import config
 
 dash.register_page(__name__)
 
-#TODO Can get rid of dummy?
+# TODO Can get rid of dummy?
 layout = html.Div([
     html.Br(),
     html.Br(),
-    html.Div(
-        id="dummy-collection",
-        n_clicks=0
+    dcc.Dropdown(
+        id='id-dropdown',
+        options=[
+            {'label': v, 'value': v}
+            for v in config.table[TableType.TAG]["data_table"].table["TAG"]
+        ],
+        value=config.table[TableType.TAG]["data_table"].table.loc[0, "TAG"],  # Default selected value
+        clearable=False,
     ),
+    html.Br(),
+    html.Br(),
     html.Div(
         id="collection"
     )
@@ -28,11 +36,19 @@ layout = html.Div([
 
 @callback(
     Output(component_id='collection', component_property='children'),
-    Input("dummy-collection", "n_clicks")
+    Input('id-dropdown', 'value')
 )
-def create_collection(values):
-    show_session("collection create")
-    CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"])
+def create_collection(selected_value):
+    # Init TAG for user if not yet done
+    session_manager()
+
+    # Drop choice
+    session_manager({"collection": {"TAG": selected_value}})
+
+    CollectionView = init_Collection(
+        config.table[TableType.ALBUM]["data_table"],
+        session["collection"]
+    )
     collection_dct = CollectionView.view()
     descriptions = collection_dct["DESCRIPTION"]
     n_elements = CollectionView.collection["N_ELEMENTS"]
@@ -65,8 +81,8 @@ def create_collection(values):
         ) for i in range(n_elements)
     ]
 
-def init_Collection(data_table):
-    CollectionView = CollectionViewer(data_table)
+def init_Collection(data_table, filter_table):
+    CollectionView = CollectionViewer(data_table, filter_table)
     CollectionView.sort("DATE_FROM")
     return CollectionView
 
@@ -77,12 +93,10 @@ def init_Collection(data_table):
     prevent_initial_call=True
 )
 def click_box(values, current_data):
-    show_session("collection click in")
-    if ctx.triggered_id:  #TODO 2 if necessary?
+    if ctx.triggered_id:  #TODO necessary?
         ix = ctx.triggered_id["index"]
         if any(values):
-            print("collection click", ix)
-            CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"])
+            CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"], session["collection"])
             # Back to default
             #TODO: Use PrimaryKey
             session_manager(
@@ -91,7 +105,6 @@ def click_box(values, current_data):
                     "album_view": {"ID_PHOTO": [None]}
                 }
             )
-    show_session("collection click out")
     return current_data
 
 

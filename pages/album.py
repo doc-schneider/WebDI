@@ -51,7 +51,6 @@ layout = html.Div([
     prevent_initial_call=True
 )
 def click_button(b1, b2, value, current_data):
-    show_session("album view click in")
     #TODO session_manager
     AlbumView = init_Album(session["album"], session["album_view"])
 
@@ -69,8 +68,6 @@ def click_button(b1, b2, value, current_data):
 
     current_data["album_view"]["ID_PHOTO"] = list(AlbumView.ix_show)  #TODO general identifier
     session_manager({"album_view": {"ID_PHOTO": list(AlbumView.ix_show)}})
-
-    show_session("album view click out")
     return update_album(AlbumView, current_data)
 
 def update_album(AlbumView, current_data):

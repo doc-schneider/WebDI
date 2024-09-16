@@ -28,10 +28,10 @@ config.mysql = {
 
 
 # Add column
-table_name = "photos"
+table_name = "albums"
 column_name = "TAG"
 column_type = "TEXT"
-after = "CHAPTER"
+after = "DESCRIPTION"
 query = f'ALTER TABLE {table_name} ADD  COLUMN {column_name} {column_type} AFTER {after};'
 mycursor.execute(query)
 conn.commit()
@@ -40,6 +40,15 @@ conn.commit()
 table_name = "photos"
 column_name = "TAG"
 query = f'ALTER TABLE {table_name} DROP COLUMN {column_name};'
+mycursor.execute(query)
+conn.commit()
+
+# Set column values
+table_name = "albums"
+column_set = "TAG"
+column_if = "ID_ALBUM"
+tag = 'Papas Kunst'
+query = f"UPDATE {table_name} SET {column_set} =  CASE WHEN {column_if} = 12 THEN 'Papas Kunst' ELSE 'Fotoalbum Stefan & Konstanze' END;"
 mycursor.execute(query)
 conn.commit()
 

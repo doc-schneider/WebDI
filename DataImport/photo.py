@@ -24,15 +24,16 @@ config.mysql = {
 # Raw photo table
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2024/2024_09_07_Igudesman & Joo"),
+        Path("Y:/2024/2024_09_08_Haus Horst"),
     ],
-    "Konzert Tonhalle 7. Sep 2024",
+    "Haus Horst 8. Sep 2024",
     [
-        "Igudesman & Joo & Gäste"
+        "Großer Spaziergang"
     ],
     pretable_file=None
 )
-
+#
+photo_table.table["TAG"] = "Fotoalbum Stefan & Konstanze"
 #
 # Extract album data from a new photo dataframe
 album = photo_table.table["PHOTO_ALBUM"].unique()[0]
@@ -49,7 +50,7 @@ album_table = pd.DataFrame(
         cols[3]: ""
     }
 )
-album_table["DESCRIPTION"] = "Igudesman & Joo kannte ich über YouTube. War überrascht, dass sie in Düsseldorf auftreten. Sehr gut, sehr unterhaltsam. Man merkt, dass es alles Musiker von Weltniveau sind. Sehr gekonnter Bogen von den Blödel-Barden Ass-Dur bis zu dem ernsthaften iranischen Lautenisten, der Woody Woodpecker vertont. Ein origineller Zugang zu klassicher Musik"
+album_table["DESCRIPTION"] = ""
 #
 # Insert new album
 table_insert(metadata, db_conn, "albums", album_table)
