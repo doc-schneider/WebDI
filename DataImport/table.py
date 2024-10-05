@@ -26,6 +26,8 @@ config.mysql = {
     "metadata": metadata,
 }
 
+# Create table
+create_table(db_engine, metadata, "notes", table_definitions[TableType.NOTE], foreign_table="notebooks")
 
 # Add column
 table_name = "albums"

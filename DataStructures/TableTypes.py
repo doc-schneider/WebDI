@@ -10,6 +10,8 @@ class TableType(Enum):
     PHOTO = 10
     ALBUM = 20
     TAG = 30
+    NOTE = 40
+    NOTEBOOK = 50
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -58,6 +60,26 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
+    "NOTEBOOK": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "TITLE": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "ATTACHMENT": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "NOTEBOOK_COLLECTION": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "NOTEBOOK_TYPE": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
     "EVENT": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -103,5 +125,28 @@ table_definitions = {
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
         },
         "PrimaryKey": "ID_TAG"
+    },
+    TableType.NOTE: {
+        "Columns": {
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
+            "DATE_TIME": table_columns_names_types["DATE_TIME"],
+            "TITLE": table_columns_names_types["TITLE"],
+            "ATTACHMENT": table_columns_names_types["ATTACHMENT"],
+            "NOTEBOOK": table_columns_names_types["NOTEBOOK"],
+        },
+        "PrimaryKey": "ID_NOTE",
+        "ForeignKey": "ID_NOTEBOOK"
+    },
+    TableType.NOTEBOOK: {
+        "Columns": {
+            "NOTEBOOK": table_columns_names_types["NOTEBOOK"],
+            "NOTEBOOK_COLLECTION": table_columns_names_types["NOTEBOOK_COLLECTION"],
+            "NOTEBOOK_TYPE": table_columns_names_types["NOTEBOOK_TYPE"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+        },
+        "PrimaryKey": "ID_NOTEBOOK"
     },
 }

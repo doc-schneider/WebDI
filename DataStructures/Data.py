@@ -62,10 +62,10 @@ class DataTable:
                 pass
                 # TODO ?
 
-    def format_path(self):
-        # Column PATH
+    def format_path(self, cols=["PATH"]):
         # type = str
-        self.table["PATH"] = self.table["PATH"].astype(str)
+        for col in cols:
+            self.table[col] = self.table[col].astype(str)
 
     def format_documentgroup(self):
         # Column DOCUMENT_GROUP

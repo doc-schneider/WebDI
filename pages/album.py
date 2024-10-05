@@ -55,13 +55,10 @@ def click_button(b1, b2, value, current_data):
     AlbumView = init_Album(session["album"], session["album_view"])
 
     if ctx.triggered_id == "earlier" and b1 > 0:  #TODO ctx gives a wrong value for no click (earlier)
-        print("album view click earlier")
         AlbumView.earlier(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "later" and b2 > 0:
-        print("album view click later")
         AlbumView.later(config.table[table_type]["data_table"])
     elif ctx.triggered_id == "album-slider":
-        print("album view click slider")
         AlbumView.jump(config.table[table_type]["data_table"], value - 1)
     else:
         pass  # None. Initial or refresh

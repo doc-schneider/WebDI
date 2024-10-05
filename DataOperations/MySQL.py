@@ -14,11 +14,11 @@ def create_table(db_engine, metadata, table_name, table_dct, foreign_table=None)
             Column(key, value["sqlalchemytype"]) for (key, value) in table_dct["Columns"].items()
         ]
     )
-    # if "ForeignKey" in table_types[table_type.name].keys():
-    #     fk = table_types[table_type.name]["ForeignKey"]
-    #     table.append_column(
-    #         Column(fk, Integer, ForeignKey(f"{foreign_table}.{fk}"))
-    #     )
+    if foreign_table:
+        fk = table_dct["ForeignKey"]
+        table.append_column(
+            Column(fk, Integer, ForeignKey(f"{foreign_table}.{fk}"))
+        )
     metadata.create_all(db_engine)
     # table.create(db_engine)
 #

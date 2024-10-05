@@ -20,20 +20,17 @@ config.mysql = {
 
 # Script new photo album + entry in collection
 #
-#
 # Raw photo table
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2024/2024_09_08_Haus Horst"),
+        Path("Y:/2024/2024_10_01_Yabase"),
     ],
-    "Haus Horst 8. Sep 2024",
+    "Essen gehen Yabase",
     [
-        "Großer Spaziergang"
+        "Sushi & Sake",
     ],
-    pretable_file=None
+    pretable_file=Path("Y:/2024/2024_10_01_Yabase/PreDokumentliste.csv")
 )
-#
-photo_table.table["TAG"] = "Fotoalbum Stefan & Konstanze"
 #
 # Extract album data from a new photo dataframe
 album = photo_table.table["PHOTO_ALBUM"].unique()[0]
@@ -50,7 +47,9 @@ album_table = pd.DataFrame(
         cols[3]: ""
     }
 )
-album_table["DESCRIPTION"] = ""
+album_table["DESCRIPTION"] = "Ich habe Konstanze für den Streß mit der Sofaanlieferung ein Luxusessen versprochen." \
+                             "Sie wählt - zu erwarten - Yabase"
+album_table["TAG"] = "Fotoalbum Stefan & Konstanze"
 #
 # Insert new album
 table_insert(metadata, db_conn, "albums", album_table)
