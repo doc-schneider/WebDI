@@ -27,10 +27,10 @@ config.mysql = {
 }
 
 # Create table
-create_table(db_engine, metadata, "notes", table_definitions[TableType.NOTE], foreign_table="notebooks")
+create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 
 # Add column
-table_name = "albums"
+table_name = "document_collections"
 column_name = "TAG"
 column_type = "TEXT"
 after = "DESCRIPTION"

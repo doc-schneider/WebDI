@@ -1,5 +1,5 @@
 import dash
-from dash import html, Input, Output, State, ctx, ALL, callback, dcc
+from dash import html, Input, Output, ctx, ALL, callback, dcc
 from flask import session
 
 from Views.Collection import CollectionViewer
@@ -14,7 +14,6 @@ import config
 
 dash.register_page(__name__)
 
-# TODO Can get rid of dummy?
 layout = html.Div([
     html.Br(),
     html.Br(),
@@ -31,80 +30,119 @@ layout = html.Div([
     html.Br(),
     html.Div(
         id="collection"
-    )
+    ),
+    html.Div(id='page-collection-dummy', style={'display': 'none'})
 ])
 
 @callback(
     Output(component_id='collection', component_property='children'),
-    Input('id-dropdown', 'value')
+    Input('id-dropdown', 'value'),
+    prevent_initial_call=False
 )
 def create_collection(selected_value):
+    show_session("collection: start")
+
     # Init TAG for user if not yet done
-    session_manager()
+    # session_manager()
+
+    # Initial call or re-trigger?
+    session_manager({"page": "collection"})
+    # if not ctx.triggered_id:
+    #     if session["page"] != "album":
+    #         session_manager({"page": "album"})
+    #     else:
+    #         raise dash.exceptions.PreventUpdate
 
     # Drop choice
     session_manager({"collection": {"TAG": selected_value}})
 
-    CollectionView = init_Collection(
-        config.table[TableType.ALBUM]["data_table"],
-        session["collection"]
-    )
+    # TODO Distinction should be made in Collection. Here uniform data types
+    if session["collection_type"] == TableType.ALBUM.name:
+        CollectionView = init_Collection(
+            config.table[TableType.ALBUM]["data_table"],
+            session["collection"]
+        )
+        link_page = "pages.album"
+    elif session["collection_type"] == TableType.NOTEBOOK.name:
+        CollectionView = init_Collection(
+            config.table[TableType.NOTEBOOK]["data_table"]
+        )
+        link_page = "pages.collection"
+    elif session["collection_type"] == TableType.NOTE.name:
+        CollectionView = init_Collection(
+            config.table[TableType.NOTE]["data_table"]
+        )
+        link_page = "pages.content"
     collection_dct = CollectionView.view()
-    descriptions = collection_dct["DESCRIPTION"]
+    title = collection_dct["TITLE"]
+    description = collection_dct["TEXT"]
+    date_time_0 = collection_dct["DATE_TIME_0"].dt.strftime('%Y-%m-%d %X')
+    date_time_1 = collection_dct["DATE_TIME_1"].dt.strftime('%Y-%m-%d %X')
     n_elements = CollectionView.collection["N_ELEMENTS"]
 
-    # if config.table["table_type"].name == "ALBUM":  # TODO Content type is relevant here: book etc
-    content_display = collection_dct["PHOTO_ALBUM"]
-    date_from = collection_dct["DATE_FROM"].dt.strftime('%Y-%m-%d %X')
-    date_to = collection_dct["DATE_TO"].dt.strftime('%Y-%m-%d %X')
+    show_session("collection: end")
 
     return [
         html.Div([
             html.Div(
-                date_from[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                date_time_0[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ),
             html.Div(
-                date_to[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                date_time_1[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ),
             dcc.Link(
                 html.Div(
-                    content_display[i],
+                    title[i],
                     style={'backgroundColor': '#aaffaa', 'flex': 1, 'padding': '10px', 'border': '1px solid black'},
                     id={"type": "item", "index": i}
                 ),
-                href=dash.page_registry["pages.album"]["relative_path"], refresh=False
+                href=dash.page_registry[link_page]["relative_path"], refresh=True
             ),
             html.Div(
-                descriptions[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                description[i], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             )
         ], style={'display': 'flex', 'flexDirection': 'row'}
         ) for i in range(n_elements)
     ]
 
-def init_Collection(data_table, filter_table):
+def init_Collection(data_table, filter_table=None):
     CollectionView = CollectionViewer(data_table, filter_table)
-    CollectionView.sort("DATE_FROM")
+    CollectionView.sort()
     return CollectionView
 
 @callback(
-    Output('store', 'data', allow_duplicate=True),
+    Output(component_id='page-collection-dummy', component_property='children'),
     Input({"type": "item", "index": ALL}, "n_clicks"),
-    State('store', 'data'),
     prevent_initial_call=True
 )
-def click_box(values, current_data):
+def click_box(values):
     if ctx.triggered_id:  #TODO necessary?
         ix = ctx.triggered_id["index"]
         if any(values):
-            CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"], session["collection"])
-            # Back to default
-            #TODO: Use PrimaryKey
-            session_manager(
-                {
-                    "album": {'ID_ALBUM': CollectionView.datatable.table.loc[ix, "ID_ALBUM"]},
-                    "album_view": {"ID_PHOTO": [None]}
-                }
-            )
-    return current_data
+            if session["collection_type"] == TableType.ALBUM.name:
+                CollectionView = init_Collection(config.table[TableType.ALBUM]["data_table"], session["collection"])
+                # Back to default
+                session_manager(
+                    {
+                        "album": {'ID_ALBUM': CollectionView.datatable.table.loc[ix, "ID_ALBUM"]},
+                        "album_view": {"ID_PHOTO": [None]}
+                    }
+                )
+            elif session["collection_type"] == TableType.NOTEBOOK.name:
+                CollectionView = init_Collection(config.table[TableType.NOTEBOOK]["data_table"])
+                session_manager(
+                    {
+                        "notebook": {'ID_NOTEBOOK': CollectionView.datatable.table.loc[ix, "ID_NOTEBOOK"]},
+                    }
+                )
+                session_manager({"collection_type": TableType.NOTE.name})
+            elif session["collection_type"] == TableType.NOTE.name:
+                CollectionView = init_Collection(config.table[TableType.NOTE]["data_table"])
+                session_manager(
+                    {
+                        "note": {'ID_NOTE': CollectionView.datatable.table.loc[ix, "ID_NOTE"]},
+                    }
+                )
+    return ""
 
 

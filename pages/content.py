@@ -19,28 +19,28 @@ layout = html.Div([
     html.Div(id='content')
 ])
 
-@callback(
-    Output('content', 'children'),
-    Input('store', 'data')
-)
-def update_content(current_data):
-    # TODO Enable general types
-    ContentView = init_Content(session["photo"])
-    content_dct = ContentView.view()
-    if content_dct["FILE_FORMAT"][0] in allow_formats_image:
-        return html.Div([
-            html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
-            html.Div(content_dct["DESCRIPTION"][0])
-        ])
-    elif content_dct["FILE_FORMAT"][0] in allow_formats_video:
-        return html.Div([
-            html.Video(
-                src=content_dct["IMAGE"][0],
-                controls=True,
-                width="100%",
-            ),
-            html.Div(content_dct["DESCRIPTION"][0])
-        ])
+# @callback(
+#     Output('content', 'children'),
+#     Input('store', 'data')
+# )
+# def update_content(current_data):
+#     # TODO Enable general types
+#     ContentView = init_Content(session["photo"])
+#     content_dct = ContentView.view()
+#     if content_dct["FILE_FORMAT"][0] in allow_formats_image:
+#         return html.Div([
+#             html.Img(src="data:image/jpeg;base64," + content_dct["IMAGE"][0], width="100%"),
+#             html.Div(content_dct["DESCRIPTION"][0])
+#         ])
+#     elif content_dct["FILE_FORMAT"][0] in allow_formats_video:
+#         return html.Div([
+#             html.Video(
+#                 src=content_dct["IMAGE"][0],
+#                 controls=True,
+#                 width="100%",
+#             ),
+#             html.Div(content_dct["DESCRIPTION"][0])
+#         ])
 
 def init_Content(id):
     primary_key = table_definitions[table_type]["PrimaryKey"]

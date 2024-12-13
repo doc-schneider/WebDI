@@ -22,6 +22,7 @@ layout = html.Div([
     html.Div([
         html.Button('früher', id='earlier', n_clicks=0),
         html.Button('später', id='later', n_clicks=0),
+        html.Button('neu laden', id='new', n_clicks=0),
     ], style={'display': 'flex', 'justify-content': 'center'}
     ),
     html.Div(id="album"),
@@ -36,38 +37,53 @@ layout = html.Div([
             id='album-slider'
         )
     ),
+    html.Div(id='page-album-dummy', style={'display': 'none'})
 ])
 
+# [State('initial-call', 'data')],
 @callback(
     Output('album', 'children'),
     Output('album-slider', 'max'),
     Output('album-slider', 'value'),
     Output('album-slider', 'marks'),
-    Output('store', 'data', allow_duplicate=True),
     Input('earlier', "n_clicks"),
     Input('later', "n_clicks"),
+    Input('new', "n_clicks"),
     Input('album-slider', 'value'),
-    State('store', 'data'),
-    prevent_initial_call=True
+    prevent_initial_call=False
 )
-def click_button(b1, b2, value, current_data):
-    #TODO session_manager
+def click_button(b1, b2, b3, value):
+    show_session("album: start")
+
+    # Initial call or re-trigger?
+    if not ctx.triggered_id:
+        if session["page"] != "album":
+            session_manager({"page": "album"})
+        else:
+            print("album callback exception")
+            raise dash.exceptions.PreventUpdate
+
+    print(b1, b2, b3, value)
     AlbumView = init_Album(session["album"], session["album_view"])
 
-    if ctx.triggered_id == "earlier" and b1 > 0:  #TODO ctx gives a wrong value for no click (earlier)
-        AlbumView.earlier(config.table[table_type]["data_table"])
+    if ctx.triggered_id == "earlier" and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)
+        AlbumView.earlier()
     elif ctx.triggered_id == "later" and b2 > 0:
-        AlbumView.later(config.table[table_type]["data_table"])
+        print("later")
+        AlbumView.later()
     elif ctx.triggered_id == "album-slider":
-        AlbumView.jump(config.table[table_type]["data_table"], value - 1)
+        print("slider")
+        AlbumView.jump(value - 1)
     else:
         pass  # None. Initial or refresh
 
-    current_data["album_view"]["ID_PHOTO"] = list(AlbumView.ix_show)  #TODO general identifier
+    print(AlbumView.ix_show)
     session_manager({"album_view": {"ID_PHOTO": list(AlbumView.ix_show)}})
-    return update_album(AlbumView, current_data)
 
-def update_album(AlbumView, current_data):
+    show_session("album: end")
+    return update_album(AlbumView)
+
+def update_album(AlbumView):
     boxes_dct = AlbumView.view()
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
@@ -96,10 +112,11 @@ def update_album(AlbumView, current_data):
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
-    ], slider_max, slider_value, slider_marks, current_data
+    ], slider_max, slider_value, slider_marks
 
 def media_type_box(media_type, content_display, i, date_time, description):
     # TODO Link back to main code
+    # TODO Why refresh=False ?
     if media_type in allow_formats_image:
         return [
             dcc.Link(
@@ -125,7 +142,6 @@ def media_type_box(media_type, content_display, i, date_time, description):
             ),
             html.Div(date_time + ": " + description)
         ]
-# n_clicks=0
 
 def init_Album(album, album_view):
     return AlbumViewer(
@@ -135,16 +151,14 @@ def init_Album(album, album_view):
     )
 
 @callback(
-    Output('store', 'data', allow_duplicate=True),
+    Output(component_id='page-album-dummy', component_property='children'),
     Input({"type": "box", "index": ALL}, "n_clicks"),
-    State('store', 'data'),
     prevent_initial_call=True
 )
-def click_box(values, current_data):
-    if ctx.triggered_id:   #TODO Do I need this?
+def click_box(values):
+    if ctx.triggered_id:
         ix = ctx.triggered_id["index"]
         if any(values):
             AlbumView = init_Album(session["album"], session["album_view"])
-            session_manager({"photo": {"ID_PHOTO": AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}})
-            current_data["photo"] = {'ID_PHOTO': AlbumView.datatable.table.loc[ix, "ID_PHOTO"]}
-    return current_data
+            session_manager({"photo": {"ID_PHOTO": AlbumView.datatable_show.table.loc[ix, "ID_PHOTO"]}})
+    return ""

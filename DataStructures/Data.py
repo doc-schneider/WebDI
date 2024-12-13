@@ -7,6 +7,7 @@ class DataTable:
     def __init__(self, table, table_type=None):
         self.table = table
         self.table_type = table_type
+
     @staticmethod
     def fetch_table(table_type, table_name):
         table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
@@ -18,12 +19,18 @@ class DataTable:
     def sort(self, column="DATE_TIME"):
         self.table.sort_values(column, ignore_index=True, inplace=True)
 
-    def filter(self, filter_table):
-        query_str = ' & '.join([f'{k} == @{k}' for k in filter_table.keys()])
-        return DataTable(
-            self.table.query(query_str, local_dict=filter_table).reset_index(drop=True),
-            self.table_type
-        )
+    def filter(self, filter_table=None):
+        if filter_table:
+            query_str = ' & '.join([f'{k} == @{k}' for k in filter_table.keys()])
+            return DataTable(
+                self.table.query(query_str, local_dict=filter_table).reset_index(drop=True),
+                self.table_type
+            )
+        else:
+            return DataTable(
+                self.table,
+                self.table_type
+            )
 
     def find_in_timeinterval(self, timeinterval):
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval

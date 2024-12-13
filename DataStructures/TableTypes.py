@@ -1,5 +1,5 @@
 from enum import Enum
-from sqlalchemy.types import Text, DateTime, Date, Integer, Boolean
+from sqlalchemy.types import Text, DateTime, Integer
 
 
 # TODO
@@ -12,6 +12,8 @@ class TableType(Enum):
     TAG = 30
     NOTE = 40
     NOTEBOOK = 50
+    DOCUMENT = 60
+    DOCUMENT_COLLECTION = 70
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -80,6 +82,10 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
+    "DOCUMENT_COLLECTION": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
     "EVENT": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -94,6 +100,9 @@ table_columns_names_types = {
     },
 }
 
+# TODO
+# - More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album, copy of a document)
+#
 # Tables & Types
 table_definitions = {
     TableType.PHOTO: {
@@ -148,5 +157,28 @@ table_definitions = {
             "DATE_TO": table_columns_names_types["DATE_TO"],
         },
         "PrimaryKey": "ID_NOTEBOOK"
+    },
+    TableType.DOCUMENT: {
+        "Columns": {
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
+            "DATE_TIME": table_columns_names_types["DATE_TIME"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "DOCUMENT_GROUP": table_columns_names_types["DOCUMENT_GROUP"],
+            "DOCUMENT_COLLECTION": table_columns_names_types["DOCUMENT_COLLECTION"],
+            "CHAPTER": table_columns_names_types["CHAPTER"],
+        },
+        "PrimaryKey": "ID_DOCUMENT",
+        "ForeignKey": "ID_DOCUMENT_COLLECTION"
+    },
+    TableType.DOCUMENT_COLLECTION: {
+        "Columns": {
+            "DOCUMENT_COLLECTION": table_columns_names_types["DOCUMENT_COLLECTION"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_DOCUMENT_COLLECTION"
     },
 }

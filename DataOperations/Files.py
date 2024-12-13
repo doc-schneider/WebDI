@@ -18,7 +18,8 @@ def get_files_info(
         "FILE_NAME": [],
         "PATH": [],
         "FILE_FORMAT": [],
-        "TIME_CREATED": []
+        "TIME_CREATED": [],
+        "TIME_MODIFIED": [],
     }
 
     if allow_formats:
@@ -35,9 +36,12 @@ def get_files_info(
         info["FILE_FORMAT"].append(f.suffix[1:].upper())  #  Removes dot . from string.
         # st_ctime : creation time (of file on computer)
         # st_mtime : last content modification time
-        # TODO Has this timestamp any use?
+        # TODO Has this timestamp any use? Modification time seems to be sometimes right
         info["TIME_CREATED"].append(
             dtm.datetime.fromtimestamp(f.stat().st_ctime)
+        )
+        info["TIME_MODIFIED"].append(
+            dtm.datetime.fromtimestamp(f.stat().st_mtime)
         )
 
     return pd.DataFrame(data=info)
