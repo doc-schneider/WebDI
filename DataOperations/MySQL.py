@@ -21,33 +21,36 @@ def create_table(db_engine, metadata, table_name, table_dct, foreign_table=None)
         )
     metadata.create_all(db_engine)
     # table.create(db_engine)
-#
-#    create_table_query = '''
-#    CREATE TABLE employees (
-#        id INT AUTO_INCREMENT PRIMARY KEY,
-#        first_name VARCHAR(50),
-#        last_name VARCHAR(50),
-#        hire_date DATE,
-#        salary DECIMAL(10, 2)
-#    )
-#    '''
-    # Execute the table creation query
-#    cursor.execute(create_table_query)
-# Closing the cursor and connection
-#    cursor.close()
-#    cnx.close()
+
+def create_table_mysql(conn, mycursor, table_name, table_dct, foreign_table_name=None, foreign_table_dct=None):
+    query = f'CREATE TABLE {table_name} ('
+    for k, v in table_dct["Columns"].items():
+        query = query + " " + k + " " + v["mysqltype"] + ","
+    query = query + " " + table_dct["PrimaryKey"] + " int AUTO_INCREMENT PRIMARY KEY"
+    # TODO Foreign KEy addition not working?
+    if foreign_table_name is not None:
+        query = query + ", " + table_dct["ForeignKey"] + " int,"
+        query = query + " FOREIGN KEY (" + table_dct["ForeignKey"] + ") REFERENCES " + foreign_table_name + "(" + foreign_table_dct["PrimaryKey"] + ")"
+    query = query + ");"
+    mycursor.execute(query)
+    conn.commit()
 
 def table_insert(metadata, db_conn, table_name, table):
     query = insert(metadata.tables[table_name])
     db_conn.execute(query, table.to_dict(orient='records'))
     db_conn.commit()
-# table_name = "albums"
-# insert_query = f"""INSERT INTO {table_name} ({cols[0]}, {cols[1]}, {cols[2]}, {cols[3]}) VALUES (%s, %s, %s, %s)"""
-# data = [
-#    tuple(album_table.loc[0, :])
-# ]
-# mycursor.executemany(insert_query, data)
-# conn.commit()
+
+def table_insert_mysql(conn, mycursor, table_name, table):
+    query = "INSERT INTO " + table_name + " ("
+    for col in table.columns:
+        query = query + " " + col + ","
+    query = query[:-1] + ") VALUES ("  # Remove last comma
+    for i in range(table.shape[1]):
+        query = query + " %s,"
+    query = query[:-1] + ");"
+    data = [tuple(row) for row in table.values]
+    mycursor.executemany(query, data)
+    conn.commit()
 
 def table_fetch(metadata, db_conn, table_name):
     table = metadata.tables[table_name]

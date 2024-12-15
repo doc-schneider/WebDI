@@ -1,9 +1,8 @@
-import pandas as pd
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
 
 from DataStructures.TableTypes import TableType, table_definitions
-from DataOperations.MySQL import create_table, table_insert, add_columns
+from DataOperations.MySQL import create_table, create_table_mysql, table_insert, add_columns
 import config
 
 
@@ -27,7 +26,14 @@ config.mysql = {
 }
 
 # Create table
-create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
+# create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
+create_table_mysql(
+    conn, mycursor,
+    "events",
+    table_definitions[TableType.EVENT],
+    foreign_table_name="events",
+    foreign_table_dct=table_definitions[TableType.EVENT],
+)
 
 # Add column
 table_name = "document_collections"

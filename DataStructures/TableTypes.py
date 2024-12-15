@@ -14,6 +14,7 @@ class TableType(Enum):
     NOTEBOOK = 50
     DOCUMENT = 60
     DOCUMENT_COLLECTION = 70
+    EVENT = 80
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -90,6 +91,10 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
+    "PARENT_EVENT": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
     "TAG": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -127,13 +132,6 @@ table_definitions = {
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
         },
         "PrimaryKey": "ID_ALBUM"
-    },
-    TableType.TAG: {
-        "Columns": {
-            "TAG": table_columns_names_types["TAG"],
-            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
-        },
-        "PrimaryKey": "ID_TAG"
     },
     TableType.NOTE: {
         "Columns": {
@@ -180,5 +178,23 @@ table_definitions = {
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
         },
         "PrimaryKey": "ID_DOCUMENT_COLLECTION"
+    },
+    TableType.TAG: {
+        "Columns": {
+            "TAG": table_columns_names_types["TAG"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_TAG"
+    },
+    TableType.EVENT: {
+        "Columns": {
+            "EVENT": table_columns_names_types["EVENT"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "PARENT_EVENT": table_columns_names_types["PARENT_EVENT"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_EVENT",
+        "ForeignKey": "ID_PARENT_EVENT"
     },
 }
