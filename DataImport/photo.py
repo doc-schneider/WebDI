@@ -23,13 +23,13 @@ config.mysql = {
 # Raw photo table
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2024/2024_10_01_Yabase"),
+        Path("Y:/2024/2024_11_Wohungsrenovierung"),
     ],
-    "Essen gehen Yabase",
+    "Wohnung streichen Nov 2024",
     [
-        "Sushi & Sake",
+        "Momentaufnahmen",
     ],
-    pretable_file=Path("Y:/2024/2024_10_01_Yabase/PreDokumentliste.csv")
+    pretable_file=None
 )
 #
 # Extract album data from a new photo dataframe
@@ -47,8 +47,7 @@ album_table = pd.DataFrame(
         cols[3]: ""
     }
 )
-album_table["DESCRIPTION"] = "Ich habe Konstanze für den Streß mit der Sofaanlieferung ein Luxusessen versprochen." \
-                             "Sie wählt - zu erwarten - Yabase"
+album_table["DESCRIPTION"] = ""
 album_table["TAG"] = "Fotoalbum Stefan & Konstanze"
 #
 # Insert new album

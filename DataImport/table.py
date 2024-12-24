@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
 
-from DataStructures.TableTypes import TableType, table_definitions
-from DataOperations.MySQL import create_table, create_table_mysql, table_insert, add_columns
+from DataStructures.TableTypes import TableType, table_definitions, table_columns_names_types
+from DataOperations.MySQL import create_table, create_table_mysql, table_insert, add_columns, add_foreign_key
 import config
 
 
@@ -25,6 +25,20 @@ config.mysql = {
     "metadata": metadata,
 }
 
+# Add foreign key column
+foreign_table = "events"
+foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
+add_foreign_key(conn, mycursor, "albums", foreign_column, foreign_table)
+
+# Add column
+table_name = "document_collections"
+column_name = "EVENT"
+#column_type = "TEXT"
+add_columns(conn, mycursor, table_name, {column_name: table_columns_names_types[column_name]["mysqltype"]})
+#query = f'ALTER TABLE {table_name} ADD  COLUMN {column_name} {column_type};'  # AFTER {after};'
+#mycursor.execute(query)
+#conn.commit()
+
 # Create table
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
@@ -35,15 +49,6 @@ create_table_mysql(
     foreign_table_dct=table_definitions[TableType.EVENT],
 )
 
-# Add column
-table_name = "document_collections"
-column_name = "TAG"
-column_type = "TEXT"
-after = "DESCRIPTION"
-query = f'ALTER TABLE {table_name} ADD  COLUMN {column_name} {column_type} AFTER {after};'
-mycursor.execute(query)
-conn.commit()
-
 # Delete column
 table_name = "photos"
 column_name = "TAG"
@@ -53,10 +58,9 @@ conn.commit()
 
 # Set column values
 table_name = "albums"
-column_set = "TAG"
+column_set = "ID_EVENT"
 column_if = "ID_ALBUM"
-tag = 'Papas Kunst'
-query = f"UPDATE {table_name} SET {column_set} =  CASE WHEN {column_if} = 12 THEN 'Papas Kunst' ELSE 'Fotoalbum Stefan & Konstanze' END;"
+query = f"UPDATE {table_name} SET {column_set} =  CASE WHEN {column_if} = 23 THEN 1 END;"
 mycursor.execute(query)
 conn.commit()
 

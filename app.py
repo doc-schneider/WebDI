@@ -11,66 +11,77 @@ from DataStructures.TableTypes import TableType
 import config
 
 
-# Settings
-config.environment = "local"   # "azure"
+# MySQL
+db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
+db_engine = create_engine(db_connection_str)
+db_conn = db_engine.connect()
+metadata = MetaData()
+metadata.reflect(bind=db_engine)
+config.mysql = {
+    "engine": db_engine,
+    "conn": db_conn,
+    "metadata": metadata,
+}
+# Simple connector
+db_connector = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="Moppel3!",
+    database="lives",
+)
+db_cursor = db_connector.cursor()
+config.mysql["connector"] = db_connector
+config.mysql["cursor"] = db_cursor
 
-if config.environment == "local":
-    # MySQL
-    db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
-    db_engine = create_engine(db_connection_str)
-    db_conn = db_engine.connect()
-    metadata = MetaData()
-    metadata.reflect(bind=db_engine)
-    config.mysql = {
-        "engine": db_engine,
-        "conn": db_conn,
-        "metadata": metadata,
-    }
-    # Simple connector
-    db_connector = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        passwd="Moppel3!",
-        database="lives",
+# Tables
+config.table = {
+    TableType.ALBUM: {
+        "mysql_name": "albums",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.PHOTO: {
+        "mysql_name": "photos",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.NOTE: {
+        "mysql_name": "notes",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.NOTEBOOK: {
+        "mysql_name": "notebooks",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.DOCUMENT: {
+        "mysql_name": "documents",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.DOCUMENT_COLLECTION: {
+        "mysql_name": "document_collections",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.TAG: {
+        "mysql_name": "tags",
+        "mysql_table": None,
+        "data_table": None
+    },
+    TableType.EVENT: {
+        "mysql_name": "events",
+        "mysql_table": None,
+        "data_table": None
+    },
+}
+for key in config.table.keys():
+    config.table[key]["data_table"] = DataTable.fetch_table(
+        key,
+        config.table[key]["mysql_name"]
     )
-    db_cursor = db_connector.cursor()
-    config.mysql["connector"] = db_connector
-    config.mysql["cursor"] = db_cursor
-
-    # Tables
-    config.table = {
-        TableType.TAG: {
-            "mysql_name": "tags",
-            "mysql_table": None,
-            "data_table": None
-        },
-        TableType.ALBUM: {
-            "mysql_name": "albums",
-            "mysql_table": None,
-            "data_table": None
-        },
-        TableType.PHOTO: {
-            "mysql_name": "photos",
-            "mysql_table": None,
-            "data_table": None
-        },
-        TableType.NOTE: {
-            "mysql_name": "notes",
-            "mysql_table": None,
-            "data_table": None
-        },
-        TableType.NOTEBOOK: {
-            "mysql_name": "notebooks",
-            "mysql_table": None,
-            "data_table": None
-        }
-    }
-    for key in config.table.keys():
-        config.table[key]["data_table"] = DataTable.fetch_table(
-            key,
-            config.table[key]["mysql_name"]
-        )
-    config.collection_types = [TableType.ALBUM, TableType.NOTE, TableType.NOTEBOOK]
+config.collection_types = [TableType.ALBUM, TableType.NOTE, TableType.NOTEBOOK]  #TODO What was that for?
 
 dash_app = Dash(__name__, use_pages=True)
 server = dash_app.server

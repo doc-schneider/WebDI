@@ -67,7 +67,11 @@ def add_columns(conn, mycursor, table_name, column_dct):
         mycursor.execute(query)
     conn.commit()
 
-def add_foreign_key():
-    pass
-    # - Create INT column NOT NULL
-    # - ALTER TABLE CONSTRAINT name ADD FOREIGN KEY ({column_name_id}) REFERENCES ..
+# Add a foreign key which is not in the definition of the table itself
+def add_foreign_key(conn, mycursor, table_name, foreign_column, foreign_table):
+    query = "ALTER TABLE " + table_name + " ADD COLUMN " + foreign_column + " int;"
+    mycursor.execute(query)
+    query = "ALTER TABLE " + table_name + " ADD FOREIGN KEY (" + foreign_column + ") REFERENCES " + foreign_table + "(" + foreign_column + ");"
+    mycursor.execute(query)
+    conn.commit()
+
