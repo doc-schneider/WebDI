@@ -33,6 +33,15 @@ layout = html.Div([
         clearable=False,
         style={'display': 'inline-block', 'marginLeft': '4%', 'width': 'auto', 'minWidth': '150px'},
     ),
+    dcc.Dropdown(
+        id='id-dropdown-tag',
+        options=[
+            {'label': row['TAG'], 'value': row['TAG']} for _, row in config.table[TableType.TAG]["data_table"].table[["TAG"]].iterrows()
+        ] + [{'label': "", 'value': ""}],
+        value="",
+        clearable=False,
+        style={'display': 'inline-block', 'marginLeft': '4%', 'width': 'auto', 'minWidth': '150px'},
+    ),
     html.Br(),
     html.Br(),
     html.Div(
@@ -44,12 +53,14 @@ layout = html.Div([
     Output(component_id='table', component_property='children'),
     Input('id-dropdown-tabletype', 'value'),
     Input('id-dropdown-event', 'value'),
+    Input('id-dropdown-tag', 'value'),
     prevent_initial_call=False
 )
-def create_table(selected_value_table, selected_value_event):
+def create_table(selected_value_table, selected_value_event, selected_value_tag):
     TableView = init_Table(
         config.table[TableType[selected_value_table]]["data_table"],
-        selected_value_event
+        selected_value_event,
+        selected_value_tag
     )
     table_dct = TableView.view()
     #TODO add headers
@@ -73,11 +84,12 @@ def create_table(selected_value_table, selected_value_event):
                 print("???")
     return show_table
 
-def init_Table(data_table, id_event):
+def init_Table(data_table, id_event, tag):
+    filter_table = {}
     if id_event > 0:
-        TableView = TableViewer(data_table, {"ID_EVENT": id_event})
-    else:
-        # "" -> None
-        TableView = TableViewer(data_table)
+        filter_table["ID_EVENT"] = id_event
+    if tag:
+        filter_table["TAG"] = tag
+    TableView = TableViewer(data_table, filter_table)
     TableView.sort()
     return TableView

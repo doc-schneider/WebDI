@@ -59,6 +59,11 @@ def table_fetch(metadata, db_conn, table_name):
     table_df = pd.DataFrame(query_result.fetchall())
     return table_df
 
+def table_fetch_mysql(conn, table_name):
+    query = "SELECT * FROM " + table_name
+    #TODO Check other methods
+    return pd.read_sql(query, con=conn)
+
 # TODO Now metadata of sqlalchemy incorrect
 # TODO Can add "DEFAULT NULL", "AFTER"
 def add_columns(conn, mycursor, table_name, column_dct):
@@ -75,3 +80,8 @@ def add_foreign_key(conn, mycursor, table_name, foreign_column, foreign_table):
     mycursor.execute(query)
     conn.commit()
 
+def update_column(conn, mycursor, table_name, column_update, column_condition, value_dct):
+    for (cond, val) in value_dct.items():
+        query = "UPDATE " + table_name + " SET " + column_update + " = " + str(val) + " WHERE " + column_condition + " = '" + cond + "';"
+        mycursor.execute(query)
+    conn.commit()

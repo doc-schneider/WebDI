@@ -6,9 +6,9 @@ from Views.View_Factory import ViewFactory
 
 
 class TableViewer():
-    def __init__(self, datatable_initial, filter_table=None):
-        self.datatable = datatable_initial.filter(filter_table)
+    def __init__(self, datatable_initial, filter_table={}):
         self.table_type = datatable_initial.table_type
+        self.datatable = datatable_initial.filter(filter_table)
         self.collection = {
             "N_ELEMENTS":  self.datatable.table.shape[0]
         }

@@ -1,5 +1,6 @@
 from DataStructures.TableTypes import table_columns_names_types, table_definitions
 from DataOperations.MySQL import table_fetch
+from DataOperations.Tag import TagFactory
 import config
 
 
@@ -8,6 +9,7 @@ class DataTable:
         self.table = table
         self.table_type = table_type
 
+    #TODO Could this be a class method?
     @staticmethod
     def fetch_table(table_type, table_name):
         table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
@@ -20,18 +22,31 @@ class DataTable:
     def sort(self, column="DATE_TIME"):
         self.table.sort_values(column, ignore_index=True, inplace=True)
 
-    def filter(self, filter_table=None):
+    def filter(self, filter_table=[{}]):
         if filter_table:
-            query_str = ' & '.join([f'{k} == @{k}' for k in filter_table.keys()])
-            return DataTable(
-                self.table.query(query_str, local_dict=filter_table).reset_index(drop=True),
-                self.table_type
-            )
+            if "TAG" in filter_table.keys():
+                tag = filter_table.pop("TAG")
+                # Find rows in TAG column containing tag
+                if "TAG" in self.table.columns:
+                    tag_series = self.table["TAG"].apply(lambda x: TagFactory.process_tags(x))
+                    table = self.table[tag_series.apply(lambda x: tag in x)].reset_index(drop=True)
+                else:
+                    table = self.table
+            else:
+                table = self.table
+            # Normal columns
+            filtered_dict = {key: value for key, value in filter_table.items() if key in self.table.columns}
+            if filtered_dict:
+                query_str = ' & '.join([f'{k} == @{k}' for k in filtered_dict.keys()])
+                table = table.query(query_str, local_dict=filter_table).reset_index(drop=True)
         else:
-            return DataTable(
-                self.table,
-                self.table_type
-            )
+            table = self.table
+        return DataTable(
+            table,
+            self.table_type
+        )
+
+    #TODO Separate function for converting TAG column to lists?
 
     def find_in_timeinterval(self, timeinterval):
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
@@ -80,4 +95,6 @@ class DataTable:
         # - type = int
         self.table["DOCUMENT_GROUP"] = self.table["DOCUMENT_GROUP"].astype(int)
         # TODO Roll out DESCRIPTION ect?
+
+
 

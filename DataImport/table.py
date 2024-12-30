@@ -28,7 +28,7 @@ config.mysql = {
 # Add foreign key column
 foreign_table = "events"
 foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
-add_foreign_key(conn, mycursor, "albums", foreign_column, foreign_table)
+add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
 table_name = "document_collections"
