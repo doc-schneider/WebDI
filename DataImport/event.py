@@ -26,15 +26,15 @@ foreign_key = table_definitions[TableType.EVENT]["ForeignKey"]
 event_table = pd.DataFrame(
     index=[0],
     data={
-        cols[0]: "Rundgang durch Prenzlauer Berg",
-        cols[1]: pd.Timestamp(2023, 7, 19, 16, 30, 0),
-        cols[2]: pd.Timestamp(2023, 7, 19, 20, 30, 0),
+        cols[0]: "Reise Berlin 2008",
+        cols[1]: pd.Timestamp(2008, 4, 5, 8, 0, 0),
+        cols[2]: pd.Timestamp(2008, 4, 7, 20, 0, 0),
         cols[3]: "",
-        cols[4]: ""
+        cols[4]: "Eine unserer vielen kleinen Reisen damals. Auch in der Reihe meiner damaligen Berlin-Begeisterung noch aus Unizeiten."
     }
 )
 # Potentially add foreign key (parent)
-event_table[foreign_key] = 2
+# event_table[foreign_key] = 2
 # ...
 table_insert_mysql(conn, mycursor, "events", event_table)
 

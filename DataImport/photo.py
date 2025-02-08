@@ -23,14 +23,16 @@ config.mysql = {
 # Raw photo table
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2024/2024_11_Wohungsrenovierung"),
+        Path("Y:/2025/2025_02_08_Manufactum"),
     ],
-    "Wohnung streichen Nov 2024",
+    "Manufactum: Neuer Trolley & Stulle",
     [
-        "Momentaufnahmen",
+        "Stulle essen",
     ],
-    pretable_file=None
+    pretable_file=Path("Y:/2025/2025_02_08_Manufactum/PreDokumentliste.csv")
 )
+# Add Event
+photo_table.table["EVENT"] = ""
 #
 # Extract album data from a new photo dataframe
 album = photo_table.table["PHOTO_ALBUM"].unique()[0]
@@ -47,8 +49,10 @@ album_table = pd.DataFrame(
         cols[3]: ""
     }
 )
-album_table["DESCRIPTION"] = ""
-album_table["TAG"] = "Fotoalbum Stefan & Konstanze"
+album_table["DESCRIPTION"] = "Manufactum: Wir brauchen einen neuen Trolley"
+album_table["TAG"] = "Fotoalbum Stefan & Konstanze;samstags"
+# Add Event
+#album_table["ID_EVENT"] = 6
 #
 # Insert new album
 table_insert(metadata, db_conn, "albums", album_table)

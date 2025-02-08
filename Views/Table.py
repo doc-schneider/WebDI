@@ -19,8 +19,10 @@ class TableViewer():
         else:
             if self.table_type in [TableType.ALBUM, TableType.NOTEBOOK, TableType.DOCUMENT_COLLECTION]:
                 self.datatable.sort("DATE_FROM")
-            else:
+            elif self.table_type in [TableType.PHOTO, TableType.NOTE, TableType.DOCUMENT]:
                 self.datatable.sort("DATE_TIME")
+            else:
+                pass
 
     def view(self):
         # All content
@@ -59,4 +61,8 @@ class TableViewer():
             boxes['DATE_TO'] = dct['DATE_TO']
             boxes['DOCUMENT_COLLECTION'] = dct['DOCUMENT_COLLECTION']
             boxes['DESCRIPTION'] = dct['DESCRIPTION']
+        elif self.table_type == TableType.EVENT:
+            pass
+        elif self.table_type == TableType.TAG:
+            pass
         return boxes

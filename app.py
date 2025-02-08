@@ -1,13 +1,11 @@
-import dash
-from dash import Dash, html, dcc
+from dash import Dash, dcc, callback, html, Input, Output, State, ctx, ALL
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
-import os
-from flask_session import Session
-import redis
 
 from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType
+from Page.album import update_album, init_Album
+from Page.collection import init_Collection
 import config
 
 
@@ -83,34 +81,114 @@ for key in config.table.keys():
     )
 config.collection_types = [TableType.ALBUM, TableType.NOTE, TableType.NOTEBOOK]  #TODO What was that for?
 
-dash_app = Dash(__name__, use_pages=True)
-server = dash_app.server
+dash_app = Dash(__name__, suppress_callback_exceptions=True)
 
-# Configure server-side session
-server.config['SECRET_KEY'] = 'supersecretkey'
-server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
-server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
-server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
-server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
-# Redis Configuration
-# server.config["SESSION_TYPE"] = "redis"
-# server.config["SESSION_PERMANENT"] = False
-# server.config["SESSION_USE_SIGNER"] = True  # For added security
-# server.config["SESSION_KEY_PREFIX"] = "dash_session:"
-# server.config["SESSION_REDIS"] = redis.StrictRedis(host="localhost", port=6379, db=0)
-#
-Session(server)
-
-# TODO get rid of store (or redo)
-dash_app.layout = html.Div([
+CollectionView = init_Collection(
+    config.table[TableType.ALBUM]["data_table"]
+)
+collection_dct = CollectionView.view()
+title = collection_dct["PHOTO_ALBUM"]["value"]
+n_elements = CollectionView.collection["N_ELEMENTS"]
+layout_collection = html.Div([
+    html.Br(),
+    html.Br(),
     html.Div([
-        html.Div(
-            dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
-        ) for page in dash.page_registry.values()
+        html.Div([
+            html.Div(
+                title[i],
+                style={'backgroundColor': '#aaffaa', 'flex': 1, 'padding': '10px', 'border': '1px solid black'},
+                id={"type": "item_collection", "index": i}
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row'}
+        ) for i in range(n_elements)
     ]),
-    dcc.Store(id='initial-call', data=True),
-    dash.page_container,
+    html.Br(),
+    html.Br(),
 ])
+
+layout_album = html.Div([
+    html.Br(),
+    html.Div([
+        html.Button('früher', id='earlier', n_clicks=0),
+        html.Button('später', id='later', n_clicks=0),
+    ], style={'display': 'flex', 'justify-content': 'center'}
+    ),
+    html.Div(id="album"),
+    html.Br(),
+    html.Br(),
+    html.Div(
+        dcc.Slider(
+            min=1,
+            max=240,
+            value=1,
+            step=1,
+            id='album-slider'
+        )
+    ),
+])
+
+dash_app.layout = html.Div([
+    html.Br(),
+    html.Br(),
+    html.Br(),
+    html.Div(id='page-content', children=layout_album),
+    dcc.Store(
+        id='store', storage_type='session', data={
+            "type": TableType.ALBUM.name,
+            "album": {"ID_ALBUM": 6},
+            "album_view": {"ID_PHOTO": [None]}
+        }
+    ),
+])
+
+# @callback(
+#     Output('page-content', 'children'),
+#     Input('id-dropdown', 'value'),
+# )
+# def display_page(selected_value):
+#     if selected_value == "albums":
+#         return layout_collection
+#     elif selected_value == "photos":
+#         print("!")
+#         return layout_album
+
+# @callback(
+#     Output('store', 'data'),
+#     Input({"type": "item_collection", "index": ALL}, "n_clicks"),
+#     State('store', 'data'),
+#     prevent_initial_call=True,
+#     allow_duplicate=True
+# )
+# def click_box(box_click, store_data):
+#     print(ctx.triggered_id)
+#     print(box_click)
+#     return store_data
+
+@callback(
+    Output('album', 'children'),
+    Output('album-slider', 'max'),
+    Output('album-slider', 'value'),
+    Output('album-slider', 'marks'),
+    Output('store', 'data'),
+    Input('earlier', "n_clicks"),
+    Input('later', "n_clicks"),
+    Input('album-slider', 'value'),
+    State('store', 'data'),
+)
+def click_button_album(b1, b2, slider_value, store_data):
+    print(store_data["album_view"])
+    AlbumView = init_Album(store_data["album"], store_data["album_view"])
+    if ctx.triggered_id == "earlier" and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)
+        AlbumView.earlier()
+    elif ctx.triggered_id == "later":
+        AlbumView.later()
+    elif ctx.triggered_id == "album-slider":
+        AlbumView.jump(slider_value - 1)
+    else:
+        pass  # None. Initial or refresh
+    store_data["album_view"] = {"ID_PHOTO": list(AlbumView.ix_show)}
+    print(store_data["album_view"])
+    return update_album(AlbumView) + (store_data,)
 
 if __name__ == '__main__':
     dash_app.run(host='192.168.0.225', port=5000, debug=True)  # (debug=True)   (host='192.168.0.225', port=5000, debug=True)

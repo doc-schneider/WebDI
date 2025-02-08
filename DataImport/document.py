@@ -23,19 +23,17 @@ config.mysql = {
 # Raw  table
 document_table = DocumentFactory().table_from_folder(
     [
-        Path("X:/Wohnung/2024_Anstreichen/Vorab"),
-        Path("X:/Wohnung/2024_Anstreichen/Abnahme"),
+        Path("W:/Reisen/2008-04 Berlin"),
     ],
-    "Wohnung streichen 2024",
+    "Reiseunterlagen Berlin 2008",
     [
-        "Vorab",
-        "Abnahme"
+        "Unterlagen",
     ],
-    pretable_file=Path("X:/Wohnung/2024_Anstreichen/PreDokumentliste.csv")
+    pretable_file=None
 )
 #
 # Extract album data from a new photo dataframe
-document_collection = document_table.table[""].unique()[0]
+document_collection = document_table.table["DOCUMENT_COLLECTION"].unique()[0]
 d_t = document_table.table["DATE_TIME"]
 date_from = d_t.min()
 date_to = d_t.max()
@@ -49,10 +47,10 @@ document_collection_table = pd.DataFrame(
         cols[3]: ""
     }
 )
-document_collection_table["DESCRIPTION"] = "Nach meiner Strategie wähle ich einen Handwerker aus der Nachbarschaft." \
-                             "Mit sehr guten Google Rezensionen"
-#TODO Adding column doesn't work with metadata
-document_collection_table["TAG"] = "Handwerker"
+document_collection_table["DESCRIPTION"] = "Noch mit AirBerlin nach Tegel"
+#TODO Adding new column doesn't work with metadata
+# document_collection_table["TAG"] = "Papa Tod"
+document_collection_table["ID_EVENT"] = 6
 #
 # Insert new album
 table_insert(metadata, db_conn, "document_collections", document_collection_table)

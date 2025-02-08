@@ -26,7 +26,7 @@ class ViewFactory:
         # Source specifc
         #TODO value:type
         if datatable.table_type.name == "PHOTO" and load_media:
-            dct["IMAGE"] = []
+            dct["IMAGE"] = []  # TODO type / value ?
             for i in range(datatable.table.shape[0]):
                 if datatable.table.loc[i, "FILE_FORMAT"] in allow_formats_image:
                     # Return image as base64 jpg

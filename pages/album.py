@@ -1,31 +1,96 @@
 import dash
-from dash import html, Input, Output, State, callback, ctx, dcc, ALL
-from flask import session
+from dash import html, Input, Output, State, callback, ctx, dcc, ALL, MATCH
+import datetime as dtm
 
-from SessionManager.ManageSessions import session_manager, show_session
 from DataStructures.TableTypes import TableType
 from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Album import AlbumViewer
+from Views.Collection import CollectionViewer
 import config
 
 '''
 - xyz
 '''
 
-#TODO Fix
-table_type = TableType.PHOTO
 
 dash.register_page(__name__)
 
 layout = html.Div([
     html.Br(),
     html.Div([
-        html.Button('früher', id='earlier', n_clicks=0),
-        html.Button('später', id='later', n_clicks=0),
-        html.Button('neu laden', id='new', n_clicks=0),
+        html.Button('Alben', id='button_go_albums', n_clicks=0),
+        html.Button('Fotos', id='button_go_photos', n_clicks=0),
+        dcc.Input(id="input-album", type="number", value=1, debounce=True),
     ], style={'display': 'flex', 'justify-content': 'center'}
     ),
-    html.Div(id="album"),
+    html.Br(),
+    html.Div(id="album-main"),
+    html.Br(),
+])
+
+@callback(
+    Output('album-main', 'children'),
+    Input('button_go_albums', "n_clicks"),
+    Input('button_go_photos', "n_clicks"),
+)
+def click_go_albums(b1, b2):
+    if ctx.triggered_id == "button_go_photos":
+        return layout_photos
+    else:
+        return create_collection()
+
+# Album collection
+
+def create_collection():
+    CollectionView = init_Collection(
+        config.table[TableType.ALBUM]["data_table"]
+    )
+    collection_dct = CollectionView.view()
+    title = collection_dct["PHOTO_ALBUM"]["value"]
+    n_elements = CollectionView.collection["N_ELEMENTS"]
+    return [
+        html.Div([
+            html.Div(
+                title[i],
+                style={'backgroundColor': '#aaffaa', 'flex': 1, 'padding': '10px', 'border': '1px solid black'},
+                id={"type": "table_row", "index": i}
+            ),
+        ], style={'display': 'flex', 'flexDirection': 'row'}
+        ) for i in range(n_elements)
+    ]
+
+@callback(
+    Output("input-album", "value"),
+    Input({"type": "table_row", "index": ALL}, "n_clicks"),
+    State("input-album", "value"),
+    prevent_initial_call=True
+)
+def click_album(n_clicks_list_table, id_album):
+    clicked = ctx.triggered_id
+    if any(c is not None for c in n_clicks_list_table):
+        ix = clicked["index"]
+        CollectionView = init_Collection(
+            config.table[TableType.ALBUM]["data_table"]
+        )
+        return CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
+    else:
+        return id_album
+
+def init_Collection(data_table, filter_table=None):
+    CollectionView = CollectionViewer(data_table, filter_table)
+    CollectionView.sort()
+    return CollectionView
+
+# Photos
+
+layout_photos = html.Div([
+    html.Br(),
+    html.Div([
+        html.Button('früher', id='earlier', n_clicks=0),
+        html.Button('später', id='later', n_clicks=0),
+    ], style={'display': 'flex', 'justify-content': 'center'}
+    ),
+    html.Div(id="photos"),
     html.Br(),
     html.Br(),
     html.Div(
@@ -37,64 +102,40 @@ layout = html.Div([
             id='album-slider'
         )
     ),
-    html.Div(id='page-album-dummy', style={'display': 'none'})
 ])
 
-# [State('initial-call', 'data')],
 @callback(
-    Output('album', 'children'),
+    Output('photos', 'children'),
     Output('album-slider', 'max'),
     Output('album-slider', 'value'),
     Output('album-slider', 'marks'),
+    Output('store', 'data'),
     Input('earlier', "n_clicks"),
     Input('later', "n_clicks"),
-    Input('new', "n_clicks"),
     Input('album-slider', 'value'),
-    prevent_initial_call=False
+    State("input-album", "value"),
+    State('store', 'data'),
 )
-def click_button(b1, b2, b3, value):
-    show_session("album: start")
-
-    # Initial call or re-trigger?
-    if not ctx.triggered_id:
-        if session["page"] != "album":
-            session_manager({"page": "album"})
-        else:
-            print("album callback exception")
-            raise dash.exceptions.PreventUpdate
-
-    print(b1, b2, b3, value)
-    AlbumView = init_Album(session["album"], session["album_view"])
+def click_photos(b1, b2, slider_value, id_album, store_data):
+    store_data["album"]["ID_ALBUM"] = id_album
+    AlbumView = init_Album(store_data["album"], store_data["album_view"])
 
     if ctx.triggered_id == "earlier" and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)
         AlbumView.earlier()
-    elif ctx.triggered_id == "later" and b2 > 0:
-        print("later")
+    elif ctx.triggered_id == "later":
         AlbumView.later()
     elif ctx.triggered_id == "album-slider":
-        print("slider")
-        AlbumView.jump(value - 1)
+        AlbumView.jump(slider_value - 1)
     else:
         pass  # None. Initial or refresh
 
-    print(AlbumView.ix_show)
-    session_manager({"album_view": {"ID_PHOTO": list(AlbumView.ix_show)}})
-
-    show_session("album: end")
-    return update_album(AlbumView)
+    store_data["album_view"] = {"IX_PHOTO": list(AlbumView.ix_show)}
+    return update_album(AlbumView) + (store_data,)
 
 def update_album(AlbumView):
     boxes_dct = AlbumView.view()
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
-    album = AlbumView.album["ALBUM"]
-    chapter = boxes_dct["CHAPTER"]
-    descriptions = boxes_dct["DESCRIPTION"]
-    file_formats = boxes_dct["FILE_FORMAT"]
-
-    # if config.table["table_type"].name == "PHOTO":  #TODO Fix
-    content_display = boxes_dct["IMAGE"]
-    date_time = boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X')
 
     # TODO Updating slider properties which are actually fixed not so good. Should be handed over from higher level (config, store)
     slider_max = AlbumView.album["N_ELEMENTS"]
@@ -103,12 +144,18 @@ def update_album(AlbumView):
 
     # TODO The basic layout is actually fixed. Only would need to exchange the content
     return [
-               html.H2(album),
-               html.H3(chapter)
+               html.H2(AlbumView.album["ALBUM"]),
+               html.H3(boxes_dct["CHAPTER"]["value"][0])
            ] + [
         html.Div([
             html.Div(
-                media_type_box(file_formats[i], content_display[i], i, date_time[i], descriptions[i]),
+                media_type_box(
+                    boxes_dct["FILE_FORMAT"]["value"][i],
+                    boxes_dct["IMAGE"][i],
+                    i,
+                    boxes_dct["DATE_TIME"]["value"].dt.strftime('%Y-%m-%d %X')[i],
+                    boxes_dct["DESCRIPTION"]["value"][i]
+                ),
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
@@ -116,49 +163,31 @@ def update_album(AlbumView):
 
 def media_type_box(media_type, content_display, i, date_time, description):
     # TODO Link back to main code
-    # TODO Why refresh=False ?
     if media_type in allow_formats_image:
         return [
-            dcc.Link(
-                html.Img(
-                    src="data:image/jpeg;base64," + content_display,
-                    width="100%",
-                    id={"type": "box", "index": i}
-                ),
-                href=dash.page_registry["pages.content"]["relative_path"], refresh=False
+            html.Img(
+                src="data:image/jpeg;base64," + content_display,
+                width="100%",
+                id={"type": "box", "index": i}
             ),
             html.Div(date_time + ": " + description)
         ]
     elif media_type in allow_formats_video:
         return [
-            dcc.Link(
-                html.Video(
-                    src=content_display,
-                    controls=True,
-                    width="100%",
-                    id={"type": "box", "index": i}
-                ),
-                href=dash.page_registry["pages.content"]["relative_path"], refresh=False
+            html.Video(
+                src=content_display,
+                preload='none',
+                controls=True,
+                width="100%",
+                id={"type": "box", "index": i}
             ),
             html.Div(date_time + ": " + description)
-        ]
+]
 
 def init_Album(album, album_view):
     return AlbumViewer(
-        config.table[table_type]["data_table"],
+        config.table[TableType.PHOTO]["data_table"],
         album,
         album_view
     )
 
-@callback(
-    Output(component_id='page-album-dummy', component_property='children'),
-    Input({"type": "box", "index": ALL}, "n_clicks"),
-    prevent_initial_call=True
-)
-def click_box(values):
-    if ctx.triggered_id:
-        ix = ctx.triggered_id["index"]
-        if any(values):
-            AlbumView = init_Album(session["album"], session["album_view"])
-            session_manager({"photo": {"ID_PHOTO": AlbumView.datatable_show.table.loc[ix, "ID_PHOTO"]}})
-    return ""

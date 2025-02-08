@@ -33,7 +33,7 @@ class AlbumViewer():
                                         :
                                         ].index[0]
         # Location inside album
-        ix_show = album_view["ID_PHOTO"]
+        ix_show = album_view["IX_PHOTO"]
         if ix_show[0] is None:
             # Get first n indices to initialise
             self.ix_show = np.arange(np.min((n_rows * n_cols, self.album["N_ELEMENTS"])))
@@ -80,14 +80,10 @@ class AlbumViewer():
 
     def view(self):
         # Raw content
-        boxes = ViewFactory.view(self.datatable_show, view_mode="ALBUM")
-
-        # Information needed only once or not
-        boxes["N_BOXES"] = len(boxes["FILE_NAME"])
-        boxes["CHAPTER"] = boxes["CHAPTER"][0]
-        del boxes["PHOTO_ALBUM"]
+        dct = ViewFactory.view(self.datatable_show)
 
         # Dimension information for viewing  # TODO Should be in pages and config
-        boxes["N_DIM"] = (n_rows, n_cols)
+        dct["N_BOXES"] = len(dct["FILE_NAME"]["value"])
+        dct["N_DIM"] = (n_rows, n_cols)
 
-        return boxes
+        return dct

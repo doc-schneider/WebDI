@@ -10,7 +10,7 @@ allow_formats_image_JPEG = ["JPG", "JPEG"]
 allow_formats_image_HEVC = ["HEIC"]
 allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC
 allow_formats_video = ["MOV", "MP4"]
-allow_formats_document = ["PDF"]
+allow_formats_document = ["PDF", "DOCX", "TXT", "XLS", "XLSX"]
 allow_formats_html = ["HTML"]
 allow_formats_all = allow_formats_image + allow_formats_video + allow_formats_document + allow_formats_html
 

@@ -80,6 +80,7 @@ def add_foreign_key(conn, mycursor, table_name, foreign_column, foreign_table):
     mycursor.execute(query)
     conn.commit()
 
+#TODO INT and STR values
 def update_column(conn, mycursor, table_name, column_update, column_condition, value_dct):
     for (cond, val) in value_dct.items():
         query = "UPDATE " + table_name + " SET " + column_update + " = " + str(val) + " WHERE " + column_condition + " = '" + cond + "';"

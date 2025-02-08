@@ -57,10 +57,10 @@ mycursor.execute(query)
 conn.commit()
 
 # Set column values
-table_name = "albums"
+table_name = "photos"
 column_set = "ID_EVENT"
 column_if = "ID_ALBUM"
-query = f"UPDATE {table_name} SET {column_set} =  CASE WHEN {column_if} = 23 THEN 1 END;"
+query = f"UPDATE {table_name} SET {column_set} =  CASE WHEN {column_if} = 24 THEN 5 END;"
 mycursor.execute(query)
 conn.commit()
 

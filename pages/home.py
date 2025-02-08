@@ -1,7 +1,6 @@
 import dash
 from dash import html, dcc, callback, Input, Output
 
-from SessionManager.ManageSessions import session_manager
 import config
 
 
@@ -30,8 +29,8 @@ layout = html.Div([
     Input('id-dropdown-collectiontype', 'value')
 )
 def create_collection(selected_value):
-    session_manager()  # Init if not yet done
-    session_manager({"collection_type": selected_value})
+    # session_manager()  # Init if not yet done
+    # session_manager({"collection_type": selected_value})
     return ""
 
 

@@ -1,5 +1,5 @@
 import dash
-from dash import html, Input, Output, callback, dcc
+from dash import html, Input, Output, callback, dcc, ALL, State, ctx
 
 from Views.Table import TableViewer
 from DataStructures.TableTypes import TableType
@@ -66,7 +66,9 @@ def create_table(selected_value_table, selected_value_event, selected_value_tag)
     #TODO add headers
     show_table = []
     for n in range(TableView.collection["N_ELEMENTS"]):
-        show_table.append(html.Div([], style={'display': 'flex', 'flexDirection': 'row'}))
+        show_table.append(
+            html.Div([], style={'display': 'flex', 'flexDirection': 'row'}, id={"type": "table_row", "index": n}),
+        )
         for k in table_dct.keys():
             if table_dct[k]["mysqltype"] == "datetime":
                 show_table[-1].children.append(
@@ -93,3 +95,21 @@ def init_Table(data_table, id_event, tag):
     TableView = TableViewer(data_table, filter_table)
     TableView.sort()
     return TableView
+
+@callback(
+    Output('store', 'data'),
+    Input({"type": "table_row", "index": ALL}, "n_clicks"),
+    Input("test", "n_clicks"),
+    State('store', 'data'),
+    prevent_initial_call=True
+)
+def click_row(n_clicks_list_table, n_clicks_test, store_data):
+    clicked = ctx.triggered_id
+    if any(c is not None for c in n_clicks_list_table):
+        print(store_data["index"])
+        ix = clicked["index"]
+        store_data["index"] = ix
+        print("n_clicks_list: ", n_clicks_list_table, ", index: ", ix)
+    else:
+        print("empty")
+    return store_data

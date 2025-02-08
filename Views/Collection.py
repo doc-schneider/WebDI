@@ -17,27 +17,23 @@ class CollectionViewer():
         if column:
             self.datatable.sort(column)
         else:
-            if self.table_type == TableType.ALBUM or self.table_type == TableType.NOTEBOOK:
+            if self.table_type in [TableType.ALBUM, TableType.NOTEBOOK, TableType.DOCUMENT_COLLECTION]:
                 self.datatable.sort("DATE_FROM")
-            elif self.table_type == TableType.NOTE:
+            elif self.table_type in [TableType.PHOTO, TableType.NOTE, TableType.DOCUMENT]:
                 self.datatable.sort("DATE_TIME")
+            else:
+                pass
 
     def view(self):
-        # Raw content
-        boxes = ViewFactory.view(self.datatable, view_mode="COLLECTION")
+        # All content
+        dct = ViewFactory.view(self.datatable, load_media=False)
+        # Table relevant entries
+        boxes = {}
         if self.table_type == TableType.ALBUM:
-            boxes['DATE_TIME_0'] = boxes.pop('DATE_FROM')
-            boxes['DATE_TIME_1'] = boxes.pop('DATE_TO')
-            boxes['TITLE'] = boxes.pop('PHOTO_ALBUM')
-            boxes['TEXT'] = boxes.pop('DESCRIPTION')
-        elif self.table_type == TableType.NOTEBOOK:
-            boxes['DATE_TIME_0'] = boxes.pop('DATE_FROM')
-            boxes['DATE_TIME_1'] = boxes.pop('DATE_TO')
-            boxes['TITLE'] = boxes.pop('NOTEBOOK')
-            boxes['TEXT'] = boxes.pop('NOTEBOOK_COLLECTION')
-        elif self.table_type == TableType.NOTE:
-            boxes['DATE_TIME_0'] = boxes.pop('DATE_TIME')
-            boxes['DATE_TIME_1'] = boxes.pop('DATE_TIME')
-            boxes['TITLE'] = boxes.pop('TITLE')
-            boxes['TEXT'] = boxes.pop('NOTEBOOK')
+            boxes["DATE_FROM"] = dct["DATE_FROM"]
+            boxes['DATE_TO'] = dct['DATE_TO']
+            boxes['PHOTO_ALBUM'] = dct['PHOTO_ALBUM']
+            boxes['DESCRIPTION'] = dct['DESCRIPTION']
+        else:
+            pass
         return boxes
