@@ -20,17 +20,17 @@ event_table = table_fetch_mysql(conn, "events")
 value_dct = event_table.set_index('EVENT')['ID_EVENT'].to_dict()
 update_column(conn, mycursor, "photos", "ID_EVENT", "EVENT", value_dct)
 
-# Add Event toe Event Table
+# Add Event to Event Table
 cols = list(table_definitions[TableType.EVENT]["Columns"].keys())
 foreign_key = table_definitions[TableType.EVENT]["ForeignKey"]
 event_table = pd.DataFrame(
     index=[0],
     data={
-        cols[0]: "Reise Berlin 2008",
-        cols[1]: pd.Timestamp(2008, 4, 5, 8, 0, 0),
-        cols[2]: pd.Timestamp(2008, 4, 7, 20, 0, 0),
+        cols[0]: "Geburtstagsreise Konstanze 2025 nach Berlin",
+        cols[1]: pd.Timestamp(2025, 2, 13, 16, 0, 0),
+        cols[2]: pd.Timestamp(2025, 2, 17, 16, 0, 0),
         cols[3]: "",
-        cols[4]: "Eine unserer vielen kleinen Reisen damals. Auch in der Reihe meiner damaligen Berlin-Begeisterung noch aus Unizeiten."
+        cols[4]: "Konstanze hat Berlin ins Herz geschlossen. Und die Reise erfüllt auch diese Erwartung: Wir sehen tolle Kultur und essen sehr schick"
     }
 )
 # Potentially add foreign key (parent)

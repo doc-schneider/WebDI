@@ -43,10 +43,10 @@ add_columns(conn, mycursor, table_name, {column_name: table_columns_names_types[
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
     conn, mycursor,
-    "events",
-    table_definitions[TableType.EVENT],
-    foreign_table_name="events",
-    foreign_table_dct=table_definitions[TableType.EVENT],
+    "messages",
+    table_definitions[TableType.MESSAGE],
+    foreign_table_name="message_collections",
+    foreign_table_dct=table_definitions[TableType.MESSAGE_COLLECTION],
 )
 
 # Delete column

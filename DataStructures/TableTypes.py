@@ -15,6 +15,8 @@ class TableType(Enum):
     DOCUMENT = 60
     DOCUMENT_COLLECTION = 70
     EVENT = 80
+    MESSAGE = 90
+    MESSAGE_COLLECTION = 100
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -44,6 +46,10 @@ table_columns_names_types = {
         "sqlalchemytype": DateTime
     },
     "DESCRIPTION": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "TEXT": {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
@@ -84,6 +90,30 @@ table_columns_names_types = {
         "sqlalchemytype": Text
     },
     "DOCUMENT_COLLECTION": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "MESSAGE_TYPE": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "SENDER": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "RECEIVER": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "MESSAGE_COLLECTION": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "OWNER": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "PARTICIPANT": {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
@@ -178,6 +208,33 @@ table_definitions = {
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
         },
         "PrimaryKey": "ID_DOCUMENT_COLLECTION"
+    },
+    TableType.MESSAGE: {
+        "Columns": {
+            "MESSAGE_TYPE": table_columns_names_types["MESSAGE_TYPE"],
+            "DATE_TIME": table_columns_names_types["DATE_TIME"],
+            "SENDER": table_columns_names_types["SENDER"],
+            "RECEIVER": table_columns_names_types["RECEIVER"],
+            "TEXT": table_columns_names_types["TEXT"],
+            "ATTACHMENT": table_columns_names_types["ATTACHMENT"],
+            "MESSAGE_COLLECTION": table_columns_names_types["MESSAGE_COLLECTION"],
+        },
+        "PrimaryKey": "ID_MESSAGE",
+        "ForeignKey": "ID_MESSAGE_COLLECTION"
+    },
+    TableType.MESSAGE_COLLECTION: {
+        "Columns": {
+            "MESSAGE_COLLECTION": table_columns_names_types["MESSAGE_COLLECTION"],
+            "OWNER": table_columns_names_types["OWNER"],
+            "PARTICIPANT": table_columns_names_types["PARTICIPANT"],
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_MESSAGE_COLLECTION"
     },
     TableType.TAG: {
         "Columns": {

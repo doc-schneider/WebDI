@@ -176,7 +176,6 @@ def media_type_box(media_type, content_display, i, date_time, description):
         return [
             html.Video(
                 src=content_display,
-                preload='none',
                 controls=True,
                 width="100%",
                 id={"type": "box", "index": i}

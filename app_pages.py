@@ -82,6 +82,14 @@ config.collection_types = [TableType.ALBUM, TableType.NOTE, TableType.NOTEBOOK] 
 
 dash_app = Dash(__name__, use_pages=True)
 
+# server = dash_app.server
+# server.config['SECRET_KEY'] = 'supersecretkey'
+# server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+# server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+# server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+# server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+# Session(server)
+
 dash_app.layout = html.Div([
     html.Div([
         html.Div(
