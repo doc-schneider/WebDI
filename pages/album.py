@@ -1,6 +1,7 @@
 import dash
 from dash import html, Input, Output, State, callback, ctx, dcc, ALL, MATCH
 import datetime as dtm
+from flask import session
 
 from DataStructures.TableTypes import TableType
 from DataOperations.Photo import allow_formats_image, allow_formats_video
@@ -20,12 +21,12 @@ layout = html.Div([
     html.Div([
         html.Button('Alben', id='button_go_albums', n_clicks=0),
         html.Button('Fotos', id='button_go_photos', n_clicks=0),
-        dcc.Input(id="input-album", type="number", value=1, debounce=True),
     ], style={'display': 'flex', 'justify-content': 'center'}
     ),
     html.Br(),
     html.Div(id="album-main"),
     html.Br(),
+    html.Div(id="album-dummy", style={"display": "none"})
 ])
 
 @callback(
@@ -40,6 +41,7 @@ def click_go_albums(b1, b2):
         return create_collection()
 
 # Album collection
+# TODO Separate out layout?
 
 def create_collection():
     CollectionView = init_Collection(
@@ -59,23 +61,23 @@ def create_collection():
         ) for i in range(n_elements)
     ]
 
+# Clicking on a row / specific album
+# TODO Should directly jump to photo layout
 @callback(
-    Output("input-album", "value"),
+    Output("album-dummy", "children"),
     Input({"type": "table_row", "index": ALL}, "n_clicks"),
-    State("input-album", "value"),
     prevent_initial_call=True
 )
-def click_album(n_clicks_list_table, id_album):
+def click_album(n_clicks_list_table):
     clicked = ctx.triggered_id
     if any(c is not None for c in n_clicks_list_table):
         ix = clicked["index"]
         CollectionView = init_Collection(
             config.table[TableType.ALBUM]["data_table"]
         )
-        return CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
-    else:
-        return id_album
-
+        id_album = CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
+        session['album']["ID_ALBUM"] = id_album
+    return "dummy output"
 def init_Collection(data_table, filter_table=None):
     CollectionView = CollectionViewer(data_table, filter_table)
     CollectionView.sort()
@@ -109,16 +111,12 @@ layout_photos = html.Div([
     Output('album-slider', 'max'),
     Output('album-slider', 'value'),
     Output('album-slider', 'marks'),
-    Output('store', 'data'),
     Input('earlier', "n_clicks"),
     Input('later', "n_clicks"),
     Input('album-slider', 'value'),
-    State("input-album", "value"),
-    State('store', 'data'),
 )
-def click_photos(b1, b2, slider_value, id_album, store_data):
-    store_data["album"]["ID_ALBUM"] = id_album
-    AlbumView = init_Album(store_data["album"], store_data["album_view"])
+def click_photos(b1, b2, slider_value):
+    AlbumView = init_Album(session['album'], session["album_view"])
 
     if ctx.triggered_id == "earlier" and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)
         AlbumView.earlier()
@@ -129,8 +127,8 @@ def click_photos(b1, b2, slider_value, id_album, store_data):
     else:
         pass  # None. Initial or refresh
 
-    store_data["album_view"] = {"IX_PHOTO": list(AlbumView.ix_show)}
-    return update_album(AlbumView) + (store_data,)
+    session["album_view"] = {"IX_PHOTO": list(AlbumView.ix_show)}
+    return update_album(AlbumView)
 
 def update_album(AlbumView):
     boxes_dct = AlbumView.view()

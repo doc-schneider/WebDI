@@ -23,16 +23,23 @@ config.mysql = {
 # Raw photo table
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_02_08_Manufactum"),
+        Path("Y:/2025/2025_02_13-17_Berlin/00_Anreise"),
+        Path("Y:/2025/2025_02_13-17_Berlin/01_Naturkunde & Kaviar"),
+        Path("Y:/2025/2025_02_13-17_Berlin/02_Charlottenburg & Vegan"),
+        Path("Y:/2025/2025_02_13-17_Berlin/03_Ethno & Teatime"),
     ],
-    "Manufactum: Neuer Trolley & Stulle",
+    "Geburtstagsreise Berlin 2025",
     [
-        "Stulle essen",
+        "Anreise",
+        "Naturkunde & Kaviar",
+        "Charlottenburg & Vegan",
+        "Ethno & Teatime"
     ],
-    pretable_file=Path("Y:/2025/2025_02_08_Manufactum/PreDokumentliste.csv")
+    pretable_file=Path("Y:/2025/2025_02_13-17_Berlin/PreDokumentliste.csv")
 )
 # Add Event
-photo_table.table["EVENT"] = ""
+# photo_table.table["EVENT"] = "Geburtstagsreise Konstanze 2025 nach Berlin"
+photo_table.table["ID_EVENT"] = 7
 #
 # Extract album data from a new photo dataframe
 album = photo_table.table["PHOTO_ALBUM"].unique()[0]
@@ -49,10 +56,10 @@ album_table = pd.DataFrame(
         cols[3]: ""
     }
 )
-album_table["DESCRIPTION"] = "Manufactum: Wir brauchen einen neuen Trolley"
-album_table["TAG"] = "Fotoalbum Stefan & Konstanze;samstags"
+album_table["DESCRIPTION"] = "Konstanze hat Berlin ins Herz geschlossen. Und die Reise erfüllt auch diese Erwartung: Wir sehen tolle Kultur und essen sehr schick"
+album_table["TAG"] = "Fotoalbum Stefan & Konstanze"
 # Add Event
-#album_table["ID_EVENT"] = 6
+album_table["ID_EVENT"] = 7
 #
 # Insert new album
 table_insert(metadata, db_conn, "albums", album_table)

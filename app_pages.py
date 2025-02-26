@@ -1,7 +1,10 @@
 import dash
 from dash import Dash, html, dcc
+from flask import session
+from flask_session import Session
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
+import os
 
 from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType
@@ -82,13 +85,20 @@ config.collection_types = [TableType.ALBUM, TableType.NOTE, TableType.NOTEBOOK] 
 
 dash_app = Dash(__name__, use_pages=True)
 
-# server = dash_app.server
-# server.config['SECRET_KEY'] = 'supersecretkey'
-# server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
-# server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
-# server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
-# server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
-# Session(server)
+server = dash_app.server
+server.config['SECRET_KEY'] = 'supersecretkey'
+server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+Session(server)
+
+@server.before_request
+def ensure_session_initialized():
+    if 'initialized' not in session:
+        session['album'] = {"ID_ALBUM": 14}
+        session['album_view'] = {"IX_PHOTO": [None]}
+        session['initialized'] = True
 
 dash_app.layout = html.Div([
     html.Div([
@@ -96,7 +106,6 @@ dash_app.layout = html.Div([
             dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
         ) for page in dash.page_registry.values()
     ]),
-    dcc.Store(id='store', storage_type='session', data={"album": {"ID_ALBUM": 14}, "album_view": {"IX_PHOTO": [None]}}),
     dash.page_container,
 ])
 
