@@ -46,5 +46,7 @@ def get_files_info(
 
     return pd.DataFrame(data=info)
 
+# TODO Parallel function in Data?
 def read_table_from_csv(file):
     return pd.read_csv(file, sep=";", encoding="ANSI")
+

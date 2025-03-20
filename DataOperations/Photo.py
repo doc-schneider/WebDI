@@ -13,7 +13,7 @@ from DataStructures.Data import DataTable
 
 register_heif_opener()
 
-allow_formats_image_JPEG = ["JPG", "JPEG"]
+allow_formats_image_JPEG = ["JPG", "JPEG", "PNG"]
 allow_formats_image_HEVC = ["HEIC"]
 allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC
 allow_formats_video = ["MOV", "MP4"]
@@ -89,7 +89,8 @@ class PhotoFactory:
                     table.loc[i, "FILE_FORMAT"]
                 )
                 # Extracting local time when image was taken
-                t = pd.to_datetime(exif_dct["DateTime"], format="%Y:%m:%d %H:%M:%S")
+                t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
+                t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
                 if not exif_gps:
                     # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
                     t = t.tz_localize("CET")
@@ -103,7 +104,6 @@ class PhotoFactory:
                 elif "recorded_date" in exif_dct.keys():  # Apple MP4
                     t = pd.Timestamp(exif_dct["recorded_date"])
                     t = t.tz_localize(None)
-
             #TODO Use datetime?
             table.loc[i, "DATE_TIME"] = t
 
@@ -150,13 +150,15 @@ class PhotoFactory:
             exif_data = image.getexif()
         exif_dct = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
 
-        # TODO Where is the gps info in HEIC?
         exif_gps = {}
         if file_format in allow_formats_image_JPEG:
             gps_info = exif_dct.get('GPSInfo', {})
             for key in gps_info.keys():
                 decoded = GPSTAGS.get(key, key)
                 exif_gps[decoded] = gps_info[key]
+        elif file_format in allow_formats_image_HEVC:
+            exif_gps = exif_dct.get('GPSInfo', {})
+            # TODO This is only an offset number
 
         return exif_dct, exif_gps
 
@@ -189,4 +191,3 @@ class PhotoFactory:
         image.save(buffered, format="JPEG")
         return base64.b64encode(buffered.getvalue()).decode('ascii')
 
-        # image.thumbnail((512, 512))

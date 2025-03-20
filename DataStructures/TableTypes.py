@@ -17,6 +17,7 @@ class TableType(Enum):
     EVENT = 80
     MESSAGE = 90
     MESSAGE_COLLECTION = 100
+    PERSON = 110
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -30,6 +31,14 @@ table_columns_names_types = {
         "sqlalchemytype": Text
     },
     "PATH": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "AZURE_CONTAINER": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "AZURE_BLOB": {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
@@ -133,10 +142,22 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
+    "PERSON": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "FIRST_NAME": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "LAST_NAME": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
 }
 
-# TODO
-# - More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album, copy of a document)
+# TODO AZURE columns
+# TODO More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album, copy of a document)
 #
 # Tables & Types
 table_definitions = {
@@ -160,6 +181,7 @@ table_definitions = {
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "OWNER": table_columns_names_types["OWNER"],
         },
         "PrimaryKey": "ID_ALBUM"
     },
@@ -253,5 +275,14 @@ table_definitions = {
         },
         "PrimaryKey": "ID_EVENT",
         "ForeignKey": "ID_PARENT_EVENT"
+    },
+    TableType.PERSON: {
+        "Columns": {
+            "PERSON": table_columns_names_types["PERSON"],
+            "FIRST_NAME": table_columns_names_types["FIRST_NAME"],
+            "LAST_NAME": table_columns_names_types["LAST_NAME"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        },
+        "PrimaryKey": "ID_PERSON"
     },
 }

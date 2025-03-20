@@ -38,6 +38,7 @@ class ViewFactory:
                     )
                 elif datatable.table.loc[i, "FILE_FORMAT"] in allow_formats_video:
                     # TODO Really necessary? Can change access rights instead?
+                    # TODO Can load as byte object in memory?
                     shutil.copyfile(
                         Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"]),
                         "assets/" + datatable.table.loc[i, "FILE_NAME"]

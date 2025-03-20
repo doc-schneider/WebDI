@@ -27,7 +27,7 @@ def create_table_mysql(conn, mycursor, table_name, table_dct, foreign_table_name
     for k, v in table_dct["Columns"].items():
         query = query + " " + k + " " + v["mysqltype"] + ","
     query = query + " " + table_dct["PrimaryKey"] + " int AUTO_INCREMENT PRIMARY KEY"
-    # TODO Foreign KEy addition not working?
+    # TODO Foreign Key addition not working?
     if foreign_table_name is not None:
         query = query + ", " + table_dct["ForeignKey"] + " int,"
         query = query + " FOREIGN KEY (" + table_dct["ForeignKey"] + ") REFERENCES " + foreign_table_name + "(" + foreign_table_dct["PrimaryKey"] + ")"
@@ -80,9 +80,16 @@ def add_foreign_key(conn, mycursor, table_name, foreign_column, foreign_table):
     mycursor.execute(query)
     conn.commit()
 
-#TODO INT and STR values
+#TODO INT and STR values, no condition case
 def update_column(conn, mycursor, table_name, column_update, column_condition, value_dct):
+    query = "UPDATE " + table_name + " SET " + column_update + " = %s WHERE " + column_condition + " = %s;"
     for (cond, val) in value_dct.items():
-        query = "UPDATE " + table_name + " SET " + column_update + " = " + str(val) + " WHERE " + column_condition + " = '" + cond + "';"
-        mycursor.execute(query)
+        # query = "UPDATE " + table_name + " SET " + column_update + " = " + str(val) + " WHERE " + column_condition + " = '" + cond + "';"
+        mycursor.execute(query, (val, cond))
+    conn.commit()
+
+def delete_record(conn, mycursor, table_name, column_name, column_value):
+    query = f"DELETE FROM {table_name} WHERE {column_name} = %s"
+    value = (column_value,)
+    mycursor.execute(query, value)
     conn.commit()

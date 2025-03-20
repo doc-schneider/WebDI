@@ -26,24 +26,34 @@ layout = html.Div([
     html.Br(),
     html.Div(id="album-main"),
     html.Br(),
-    html.Div(id="album-dummy", style={"display": "none"})
 ])
 
 @callback(
     Output('album-main', 'children'),
     Input('button_go_albums', "n_clicks"),
     Input('button_go_photos', "n_clicks"),
+    Input({"type": "table_row", "index": ALL}, "n_clicks"),
 )
-def click_go_albums(b1, b2):
+def click_main(b1, b2, n_clicks_list_table):
+    clicked = ctx.triggered_id
     if ctx.triggered_id == "button_go_photos":
         return layout_photos
-    else:
-        return create_collection()
+    elif any(c is not None for c in n_clicks_list_table):
+        ix = clicked["index"]
+        CollectionView = init_Collection(
+            config.table[TableType.ALBUM]["data_table"]
+        )
+        id_album = CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
+        session['album']["ID_ALBUM"] = id_album
+        session['album_view'] = {"IX_PHOTO": [None]}
+        return layout_photos
+    else:   # Initial & button
+        return create_albums()
 
 # Album collection
-# TODO Separate out layout?
+# TODO Separate layout?
 
-def create_collection():
+def create_albums():
     CollectionView = init_Collection(
         config.table[TableType.ALBUM]["data_table"]
     )
@@ -61,23 +71,6 @@ def create_collection():
         ) for i in range(n_elements)
     ]
 
-# Clicking on a row / specific album
-# TODO Should directly jump to photo layout
-@callback(
-    Output("album-dummy", "children"),
-    Input({"type": "table_row", "index": ALL}, "n_clicks"),
-    prevent_initial_call=True
-)
-def click_album(n_clicks_list_table):
-    clicked = ctx.triggered_id
-    if any(c is not None for c in n_clicks_list_table):
-        ix = clicked["index"]
-        CollectionView = init_Collection(
-            config.table[TableType.ALBUM]["data_table"]
-        )
-        id_album = CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
-        session['album']["ID_ALBUM"] = id_album
-    return "dummy output"
 def init_Collection(data_table, filter_table=None):
     CollectionView = CollectionViewer(data_table, filter_table)
     CollectionView.sort()
@@ -117,7 +110,6 @@ layout_photos = html.Div([
 )
 def click_photos(b1, b2, slider_value):
     AlbumView = init_Album(session['album'], session["album_view"])
-
     if ctx.triggered_id == "earlier" and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)
         AlbumView.earlier()
     elif ctx.triggered_id == "later":
@@ -126,7 +118,6 @@ def click_photos(b1, b2, slider_value):
         AlbumView.jump(slider_value - 1)
     else:
         pass  # None. Initial or refresh
-
     session["album_view"] = {"IX_PHOTO": list(AlbumView.ix_show)}
     return update_album(AlbumView)
 
@@ -134,13 +125,9 @@ def update_album(AlbumView):
     boxes_dct = AlbumView.view()
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
-
-    # TODO Updating slider properties which are actually fixed not so good. Should be handed over from higher level (config, store)
     slider_max = AlbumView.album["N_ELEMENTS"]
     slider_value = AlbumView.ix_show[0]
     slider_marks = {int(x)+1: y for y, x in AlbumView.album["CHAPTERS"].items()}
-
-    # TODO The basic layout is actually fixed. Only would need to exchange the content
     return [
                html.H2(AlbumView.album["ALBUM"]),
                html.H3(boxes_dct["CHAPTER"]["value"][0])

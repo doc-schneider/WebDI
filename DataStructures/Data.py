@@ -1,5 +1,10 @@
+from pathlib import Path
+import pandas as pd
+import io
+
 from DataStructures.TableTypes import table_columns_names_types, table_definitions
 from DataOperations.MySQL import table_fetch
+from DataOperations.Azure import AzureFactory
 from DataOperations.Tag import TagFactory
 import config
 
@@ -12,12 +17,37 @@ class DataTable:
     #TODO Could this be a class method?
     @staticmethod
     def fetch_table(table_type, table_name):
-        table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
-        #TODO Foreign Key column NaN entries, int -> float.
+        if config.environment_storage == "LOCAL":
+            table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
+        elif config.environment_storage == "AZURE":
+            table = AzureFactory.read_table_from_blob("tables", table_name, config.environment_app)
+            for col in table.columns:
+                if col in table_columns_names_types.keys():
+                    mysqltype = table_columns_names_types[col]["mysqltype"]
+                    if mysqltype == "text":
+                        table[col] = table[col].astype(str)
+                        table[col].fillna("", inplace=True)
+                    elif mysqltype == "integer":
+                        pass
+                        # TODO for null case
+                    elif mysqltype == "datetime":
+                        table[col] = pd.to_datetime(table[col])
+                else:
+                    # ID
+                    # TODO for null case?
+                    pass
         return DataTable(
             table,
             table_type
         )
+
+    # TODO Into Files module?
+    # TODO Too complicated. Do direct creation, not buffer
+    def write_table_to_csv(self):
+        csv_buffer = io.StringIO()
+        self.table.to_csv(csv_buffer, index=False, sep=";")
+        csv_buffer.seek(0)
+        return csv_buffer
 
     def sort(self, column="DATE_TIME"):
         self.table.sort_values(column, ignore_index=True, inplace=True)
@@ -73,6 +103,9 @@ class DataTable:
             how="left"
         )
 
+    # TODO These should possibly located in MySQL. In memory / DataFrame should store them as Path etc
+    #
+    # Can't I upload "null" to MySql ?
     def replace_nan(self):
         for col in self.table.columns:
             mysqltype = table_columns_names_types[col]["mysqltype"]
@@ -84,12 +117,12 @@ class DataTable:
             elif mysqltype == "datetime":
                 pass
                 # TODO ?
-
+    #
     def format_path(self, cols=["PATH"]):
         # type = str
         for col in cols:
             self.table[col] = self.table[col].astype(str)
-
+    #
     def format_documentgroup(self):
         # Column DOCUMENT_GROUP
         # - type = int

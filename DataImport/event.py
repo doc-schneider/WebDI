@@ -26,11 +26,11 @@ foreign_key = table_definitions[TableType.EVENT]["ForeignKey"]
 event_table = pd.DataFrame(
     index=[0],
     data={
-        cols[0]: "Geburtstagsreise Konstanze 2025 nach Berlin",
-        cols[1]: pd.Timestamp(2025, 2, 13, 16, 0, 0),
-        cols[2]: pd.Timestamp(2025, 2, 17, 16, 0, 0),
+        cols[0]: "Reise nach Indien 2024",
+        cols[1]: events_dct["Anreise"]["DATE_FROM"],
+        cols[2]: events_dct["Delhi Abreise"]["DATE_TO"],
         cols[3]: "",
-        cols[4]: "Konstanze hat Berlin ins Herz geschlossen. Und die Reise erfüllt auch diese Erwartung: Wir sehen tolle Kultur und essen sehr schick"
+        cols[4]: "Indien war Teil meines Welt-Reiseplans. Alle wichtigen Kulturräume der Welt. Zum Glück hatte Konstanze irgendwann umgeschwenkt von Ablehnung zu Interesse. Das Indien eine eigene Welt ist, ist richtig."
     }
 )
 # Potentially add foreign key (parent)

@@ -8,4 +8,7 @@ openpyxl
 dash
 dash-svg
 flask-session
-redis
+dotenv
+azure-core
+azure-storage-blob
+# redis
