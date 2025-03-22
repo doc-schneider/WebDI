@@ -15,7 +15,7 @@ import config
 load_dotenv()  # TODO To be replaced in Azure
 
 config.environment_app = "LOCAL"  # AZURE
-config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
+config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 
 if config.environment_storage == "LOCAL":
     # MySQL
