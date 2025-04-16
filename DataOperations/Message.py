@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 from DataStructures.Data import DataTable
-from DataOperations.Files import read_table_from_csv
+from DataOperations.Files import read_table_from_csv, get_files_info
 from DataStructures.TableTypes import TableType, table_definitions, table_columns_names_types
 
 
@@ -34,9 +34,20 @@ class MessageFactory:
             message_table.loc[~ix, "RECEIVER"] = sender_receiver_default
             message_table["TEXT"] = table_stream["Text"]  # TODO There are occasional non-resolved symbol codes
             message_table.loc[message_table["TEXT"].isnull(), "TEXT"] = ""  # TODO Postprocessing by Data class
-            path_attachments = path_message_stream.parent
+
+            # Attachments
+            path_attachments = path_message_stream.parent / Path("Anhänge")  # TODO Parameter
+            ats = get_files_info(path_attachments)
             message_table["ATTACHMENT"] = ""
             ix = ~table_stream["Anhang"].isnull()
+            attachment_names = table_stream.loc[
+                ix, "Anhang"
+            ]
+            # Match names in table with real file names
+            # TODO Missing videos?
+            for a_n in attachment_names:
+                a_n = attachment_names.iloc[-1]
+
             message_table.loc[ix, "ATTACHMENT"] = table_stream.loc[
                 ix, "Anhang"
             ].apply(lambda x: path_attachments.joinpath(x))  # TODO Not ideal. No separation into path and file

@@ -58,18 +58,32 @@ def create_albums():
         config.table[TableType.ALBUM]["data_table"]
     )
     collection_dct = CollectionView.view()
-    title = collection_dct["PHOTO_ALBUM"]["value"]
     n_elements = CollectionView.collection["N_ELEMENTS"]
-    return [
-        html.Div([
+    #TODO add headers
+    show_table = []
+    for n in range(n_elements):
+        show_table.append(
             html.Div(
-                title[i],
-                style={'backgroundColor': '#aaffaa', 'flex': 1, 'padding': '10px', 'border': '1px solid black'},
-                id={"type": "table_row", "index": i}
-            ),
-        ], style={'display': 'flex', 'flexDirection': 'row'}
-        ) for i in range(n_elements)
-    ]
+                [],
+                style={'display': 'flex', 'flexDirection': 'row'}, id={"type": "table_row", "index": n},
+            )
+        )
+        for k in collection_dct.keys():
+            if collection_dct[k]["mysqltype"] == "datetime":
+                show_table[-1].children.append(
+                    html.Div(
+                        collection_dct[k]["value"][n].strftime('%Y-%m-%d %X'), style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                    )
+                )
+            elif collection_dct[k]["mysqltype"] == "text":
+                show_table[-1].children.append(
+                    html.Div(
+                        collection_dct[k]["value"][n], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                    )
+                )
+            else:
+                print("???")
+    return show_table
 
 def init_Collection(data_table, filter_table=None):
     CollectionView = CollectionViewer(data_table, filter_table)

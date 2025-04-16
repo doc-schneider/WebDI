@@ -15,18 +15,18 @@ initialize_MySQL()
 # Script new photo album + entry in collection
 #
 # Raw photo table
-album_name = "Schuhkauf & Pizza & Kunstkram"
+album_name = "Wein: Redoma Reserva"
 chapters = [
-    "Schuhkauf & Pizza & Kunstkram",
+    "45 €, 2021",
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_03_22_Samstags"),
+        Path("Y:/2025/2025_04_13_Redoma Reserva"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_03_22_Samstags/PreDokumentliste.csv")
-)
+    pretable_file=Path("Y:/2025/2025_04_13_Redoma Reserva/PreDokumentliste.csv")
+)   # Path("Y:/2024/2024_12_22_Edler Rotwein/PreDokumentliste.csv")
 #
 # Add Event
 # Events from chapters
@@ -58,6 +58,8 @@ if flag_add_event:
     # photo_table.table["ID_EVENT"] = 7
 #
 # Extract album data from a new photo dataframe
+owner = "Stefan|Konstanze"
+album_description = ""
 album = photo_table.table["PHOTO_ALBUM"].unique()[0]
 d_t = photo_table.table["DATE_TIME"]
 date_from = d_t.min()
@@ -69,10 +71,10 @@ album_table = pd.DataFrame(
         "PHOTO_ALBUM": album,
         "DATE_FROM": date_from,
         "DATE_TO": date_to,
-        "DESCRIPTION": "",
-        "OWNER": "Stefan|Konstanze"
+        "DESCRIPTION": album_description,
+        "OWNER": owner
     }
-)  # "OWNER": "Stefan|Konstanze"
+)
 #
 # Insert new album
 table_insert(config.mysql["metadata"], config.mysql["conn"], "albums", album_table)

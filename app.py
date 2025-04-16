@@ -1,4 +1,5 @@
 import dash
+import pandas as pd
 from dash import Dash, html, dcc
 from flask import session
 from flask_session import Session
@@ -12,10 +13,11 @@ from DataStructures.TableTypes import TableType
 from Initialize.Initialize import initialize_MySQL
 import config
 
-load_dotenv()  # TODO To be replaced in Azure
-
 config.environment_app = "LOCAL"  # AZURE
 config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
+
+if config.environment_app == "LOCAL":
+    load_dotenv()
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -28,6 +30,14 @@ if config.environment_storage == "LOCAL":
         },
         TableType.PHOTO: {
             "storage_name": "photos",
+            "data_table": None
+        },
+        TableType.MESSAGE: {
+            "storage_name": "messages",
+            "data_table": None
+        },
+        TableType.MESSAGE_COLLECTION: {
+            "storage_name": "message_collections",
             "data_table": None
         },
         TableType.NOTE: {
@@ -74,19 +84,22 @@ for key in config.table.keys():
 
 dash_app = Dash(__name__, use_pages=True)
 
-server = dash_app.server
-server.config['SECRET_KEY'] = 'supersecretkey'
-server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
-server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
-server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
-server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
-Session(server)
+app = dash_app.server
+app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+Session(app)
 
-@server.before_request
+@app.before_request
 def ensure_session_initialized():
+    # TODO Into Initialize module
     if 'initialized' not in session:
         session['album'] = {"ID_ALBUM": 14}
         session['album_view'] = {"IX_PHOTO": [None]}
+        session['message_collection'] = {"ID_MESSAGE_COLLECTION": 1}
+        session['message_view'] = {"GRANULARITY": "W", "DATETIME_START": pd.Timestamp(2024, 12, 23)}
         session['initialized'] = True
 
 dash_app.layout = html.Div([
@@ -99,7 +112,11 @@ dash_app.layout = html.Div([
 ])
 
 if __name__ == '__main__':
-    dash_app.run(host='192.168.0.225', port=5000, debug=False)
+    if config.environment_app == "LOCAL":
+        dash_app.run(host='192.168.0.225', port=5000, debug=False)
+    elif config.environment_app == "AZURE":
+        dash_app.run(debug=False)
+
 
 
 

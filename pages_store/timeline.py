@@ -1,10 +1,10 @@
 import dash
-from dash import html, Input, Output, callback, ctx, ALL, dcc, State
+from dash import html, Input, Output, callback, ctx, dcc
 import dash_svg as svg
 import pandas as pd
 import numpy as np
 
-from Views.Timeline import TimelineViewer
+from Views_store.Timeline import TimelineViewer
 import config
 
 '''

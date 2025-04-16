@@ -4,8 +4,8 @@ from pathlib import Path
 import pandas as pd
 from azure.storage.blob import BlobClient, ContainerClient, BlobServiceClient
 from azure.core.exceptions import ResourceExistsError
-# from azure.identity import DefaultAzureCredential
-# from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential, AzureCliCredential
+from azure.keyvault.secrets import SecretClient
 
 
 class AzureFactory:
@@ -14,11 +14,12 @@ class AzureFactory:
     def connection_string(environment):
         if environment == 'LOCAL':
             key = os.getenv("AZURE_STORAGE_KEY")
-        # else:
-            # credential = DefaultAzureCredential()
-            # secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
-            # secret = secret_client.get_secret("keyStorage")
-            # key = secret.value
+        else:
+            credential = DefaultAzureCredential()
+            # credential = AzureCliCredential()
+            secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
+            secret = secret_client.get_secret("keyStorage")
+            key = secret.value
         return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=' + key + \
                ';EndpointSuffix=core.windows.net'
 

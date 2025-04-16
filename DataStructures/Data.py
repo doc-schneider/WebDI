@@ -20,7 +20,7 @@ class DataTable:
         if config.environment_storage == "LOCAL":
             table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
         elif config.environment_storage == "AZURE":
-            table = AzureFactory.read_table_from_blob("tables", table_name, config.environment_app)
+            table = AzureFactory.read_table_from_blob("tables", table_name + ".csv", config.environment_app)
             for col in table.columns:
                 if col in table_columns_names_types.keys():
                     mysqltype = table_columns_names_types[col]["mysqltype"]
@@ -78,6 +78,7 @@ class DataTable:
 
     #TODO Separate function for converting TAG column to lists?
 
+    #TODO Do exclusive right boundary
     def find_in_timeinterval(self, timeinterval):
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
         iix = (self.table["DATE_TIME"] >= timeinterval.left) & (self.table["DATE_TIME"] <= timeinterval.right)

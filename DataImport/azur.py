@@ -8,7 +8,8 @@ from DataOperations.MySQL import update_column
 import config
 
 load_dotenv()
-config.environment_storage = "LOCAL"
+config.environment_storage = "AZURE"
+config.environment_app = "LOCAL"
 initialize_MySQL()
 
 # Get meta table from Database

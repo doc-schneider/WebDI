@@ -46,16 +46,27 @@ class PhotoFactory:
 
         # Get pretable
         # - Additional columns
+        # - Replacement columns
+        # - Replacement rows
         if pretable_file:
             pretable = read_table_from_csv(
                 pretable_file
             )
             PhotoFactory.parse_datetime(pretable)
+            if "DATE_TIME" in pretable.columns:
+                # Take datetime info from pretable (i.e. for photos without exif data)
+                pretable_datetime = pretable.loc[
+                    pretable["DATE_TIME"].notna(),
+                    ["FILE_NAME", "DATE_TIME"]
+                ]
+            else:
+                pretable_datetime = None
             cols_add = list(set(pretable.columns) - set(cols))
             pretable_file_name = pretable_file.name
         else:
             cols_add = []
             pretable_file_name = None
+            pretable_datetime = None
 
         table = pd.DataFrame(
             columns=cols
@@ -80,10 +91,13 @@ class PhotoFactory:
             table = pd.concat([table, table_part], axis=0, ignore_index=True)
 
         # Get meta data (exif)
+        # - Recording time
         # TODO Process exif data in function
         for i in range(table.shape[0]):
-
-            if table.loc[i, "FILE_FORMAT"] in allow_formats_image:
+            file_name = table.loc[i, "FILE_NAME"]
+            if (pretable_datetime is not None) and (file_name in pretable_datetime["FILE_NAME"].values):
+                t = pretable_datetime.loc[pretable_datetime["FILE_NAME"] == file_name, "DATE_TIME"].values[0]
+            elif table.loc[i, "FILE_FORMAT"] in allow_formats_image:
                 exif_dct, exif_gps = PhotoFactory.get_exif_data(
                     Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]),
                     table.loc[i, "FILE_FORMAT"]
@@ -104,7 +118,6 @@ class PhotoFactory:
                 elif "recorded_date" in exif_dct.keys():  # Apple MP4
                     t = pd.Timestamp(exif_dct["recorded_date"])
                     t = t.tz_localize(None)
-            #TODO Use datetime?
             table.loc[i, "DATE_TIME"] = t
 
         table["PHOTO_ALBUM"] = album_name
@@ -112,14 +125,12 @@ class PhotoFactory:
         table.set_index("FILE_NAME", inplace=True)
         if pretable_file:
             pretable.set_index("FILE_NAME", inplace=True)
-
             # Drop entries from pretable with no entry in table
             pretable = pretable[pretable.index.isin(table.index)]
-
-            # TODO More potential columns to drop?
-            if "PATH" in pretable.columns:
-                pretable.drop(columns=["PATH"], inplace=True)
-
+            # Pretable columns to drop
+            cols_drop = ["PATH", "DATE_TIME"]
+            for c in list(set(cols_drop) & set(pretable.columns)):
+                pretable.drop(columns=c, inplace=True)
             table.loc[
                 pretable.index,
                 pretable.columns

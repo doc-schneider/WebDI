@@ -69,7 +69,6 @@ class EvernoteFactory:
 
         return note_table
 
-
         #
         # # standard + optional columns for note table
         # cols_all = column_types_table(
@@ -161,6 +160,7 @@ class EvernoteFactory:
         #     table_name=path_note
         # )
 
+    # TODO Into Helper?
     @staticmethod
     def copy_html_to_static(evernotetable, static_basepath):
         # TODO Only works for single row table
@@ -191,5 +191,10 @@ class EvernoteFactory:
                     static_basepath + static_path + evernotetable["ATTACHMENT"].values[0]
                 )
 
+class NotebookFactory:
 
+    @staticmethod
+    def table_from_folder(
+            path_notebook
+    ):
 
