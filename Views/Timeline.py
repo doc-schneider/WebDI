@@ -43,7 +43,37 @@ class TimelineViewer():
             self.table_type
         )
 
-    # TODO ..
+    def earlier(self):
+        self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
+            self.time_grid[0].left,
+            granularity=self.granularity,
+            change="earlier"
+        )
+        self.update()
+
+    def later(self):
+        self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
+            self.time_grid[0].left,
+            granularity=self.granularity,
+            change="later"
+        )
+        self.update()
+
+    def zoom_in(self):
+        self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
+            self.time_grid[0].left,
+            granularity=self.granularity,
+            change="zoomin"
+        )
+        self.update()
+
+    def zoom_out(self):
+        self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
+            self.time_grid[0].left,
+            granularity=self.granularity,
+            change="zoomout"
+        )
+        self.update()
 
     def view(self):
         # Raw content
@@ -117,6 +147,7 @@ class TimelineFactory:
             relative_delta = relativedelta(hours=1)
 
         # Grid
+        # TODO Series?
         time_grid = list()
         time_l = datetime_start
         for i in range(n_boxes):

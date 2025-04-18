@@ -38,8 +38,20 @@ layout = html.Div([
 )
 def click_timeline(be, bl, bi, bo):
     TimelineView = init_Timeline(session['message_collection'], session["message_view"])
-    # TODO : Buttons
-    # ..
+    if ctx.triggered_id == "earlier":
+        TimelineView.earlier()
+    elif ctx.triggered_id == "later":
+        TimelineView.later()
+    elif ctx.triggered_id == "zoom-in":
+        TimelineView.zoom_in()
+    elif ctx.triggered_id == "zoom-out":
+        TimelineView.zoom_out()
+    else:
+        pass  # None. Initial or refresh
+    session['message_view'] = {
+        "GRANULARITY": TimelineView.granularity,
+        "DATETIME_START": TimelineView.time_grid[0].left
+    }
     return update_timeline(TimelineView)
 
 def update_timeline(TimelineView):

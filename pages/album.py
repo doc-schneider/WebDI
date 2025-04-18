@@ -124,7 +124,7 @@ layout_photos = html.Div([
 )
 def click_photos(b1, b2, slider_value):
     AlbumView = init_Album(session['album'], session["album_view"])
-    if ctx.triggered_id == "earlier" and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)
+    if ctx.triggered_id == "earlier":  # and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)?
         AlbumView.earlier()
     elif ctx.triggered_id == "later":
         AlbumView.later()

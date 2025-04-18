@@ -15,17 +15,17 @@ initialize_MySQL()
 # Script new photo album + entry in collection
 #
 # Raw photo table
-album_name = "Wein: Redoma Reserva"
+album_name = "Sigrids Geburtstag"
 chapters = [
-    "45 €, 2021",
+    "Bei Fernando in Urdenbach",
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_04_13_Redoma Reserva"),
+        Path("Y:/2025/2025_04_Sigrid Geburtstag"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_04_13_Redoma Reserva/PreDokumentliste.csv")
+    pretable_file=Path("Y:/2025/2025_04_Sigrid Geburtstag/PreDokumentliste.csv")
 )   # Path("Y:/2024/2024_12_22_Edler Rotwein/PreDokumentliste.csv")
 #
 # Add Event
