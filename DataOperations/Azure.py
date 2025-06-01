@@ -15,8 +15,8 @@ class AzureFactory:
         if environment == 'LOCAL':
             key = os.getenv("AZURE_STORAGE_KEY")
         else:
-            credential = DefaultAzureCredential()
-            # credential = AzureCliCredential()
+            # credential = DefaultAzureCredential()
+            credential = AzureCliCredential()  # Only for local testing
             secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
             secret = secret_client.get_secret("keyStorage")
             key = secret.value
@@ -59,12 +59,16 @@ class AzureFactory:
         blob_client.upload_blob(data, overwrite=flag_overwrite)
 
     @staticmethod
-    def download_blob(container_name, blob_name, environment):
+    def download_blob(container_name, blob_name, environment, stream=None):
         container_client = ContainerClient.from_connection_string(
             conn_str=AzureFactory.connection_string(environment),
             container_name=container_name
         )
-        return container_client.download_blob(blob_name).readall()
+        if not stream:
+            return container_client.download_blob(blob_name).readall()
+        else:
+            container_client.download_blob(blob_name).readinto(stream)
+            return stream   # TODO return necessary?
 
     @staticmethod
     def read_table_from_blob(container_name, blob_name, environment):

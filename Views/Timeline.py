@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from dateutil.relativedelta import relativedelta, MO, SU
 
 from DataStructures.Data import DataTable
@@ -35,7 +36,7 @@ class TimelineViewer():
         for i in range(self.n_grid):
             t = self.datatable.find_in_timeinterval(self.time_grid[i]).table
             if t.shape[0] == 0:
-                self.datatable_show.loc[i, :] = np.nan
+                self.datatable_show.loc[i, :] = None  # np.nan
             else:
                 self.datatable_show.loc[i, :] = t.iloc[[0]].values
         self.datatable_show = DataTable(
@@ -76,8 +77,18 @@ class TimelineViewer():
         self.update()
 
     def view(self):
+        self.datatable_show.table["FILE_NAME"] = None
+        self.datatable_show.table["PATH"] = None
+        self.datatable_show.table["FILE_FORMAT"] = None
+        for i in range(len(self.datatable_show.table)):
+            if self.datatable_show.table.loc[i, "ATTACHMENT"]:
+                file_pth = Path(self.datatable_show.table.loc[i, "ATTACHMENT"])
+                self.datatable_show.table.loc[i, "FILE_NAME"] = file_pth.name
+                self.datatable_show.table.loc[i, "PATH"] = file_pth.parent
+                self.datatable_show.table.loc[i, "FILE_FORMAT"] = file_pth.suffix[1:].upper()
+
         # Raw content
-        dct = ViewFactory.view(self.datatable_show, load_media=False)
+        dct = ViewFactory.view(self.datatable_show)
 
         dct["TIME_GRID"] = pd.Series([t.left for t in self.time_grid])
 

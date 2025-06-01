@@ -1,9 +1,11 @@
 from pathlib import Path
 import pandas as pd
 import shutil
+from urllib.parse import quote
 
 from DataStructures.TableTypes import table_columns_names_types
 from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video
+import config
 
 
 class ViewFactory:
@@ -26,38 +28,27 @@ class ViewFactory:
                 }
 
         # Source specifc
-        #TODO value:type
         if load_media:
             dct["IMAGE"] = []  # TODO type / value ?
             for i in range(datatable.table.shape[0]):
-
-                if datatable.table_type.name == "PHOTO":
-                    file_format = datatable.table.loc[i, "FILE_FORMAT"]
-                    file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
-                elif datatable.table_type.name == "MESSAGE":
-                    if datatable.table.loc[i, "ATTACHMENT"]:
-                        #TODO Attachment processing into Viewer and File
-                        file_pth = Path(datatable.table.loc[i, "ATTACHMENT"])
-                        file_format = file_pth.suffix.lstrip(".").upper()
-                    else:
-                        file_format = None
-                else:
-                    print("ERROR")
-
+                file_format = datatable.table.loc[i, "FILE_FORMAT"]
                 # Extract data
-                if file_format in allow_formats_image:
+                if file_format in allow_formats_image:  # TODO in Operations/Photo
                     # Return image as base64 jpg
                     dct["IMAGE"].append(
-                        PhotoFactory.convert_image(file_pth, file_format)
+                        PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage)
                     )
                 elif file_format in allow_formats_video:
-                    # TODO Really necessary? Can change access rights instead?
-                    # TODO Can load as byte object in memory?
-                    shutil.copyfile(
-                        file_pth,
-                        "assets/" + file_pth.name
-                    )
-                    dct["IMAGE"].append("/assets/" + file_pth.name)
+                    # TODO Can load as byte object in memory
+                    if config.environment_storage == "LOCAL":
+                        file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
+                        shutil.copyfile(
+                            file_pth,
+                            "assets/" + file_pth.name
+                        )
+                        dct["IMAGE"].append("/assets/" + file_pth.name)
+                    elif config.environment_storage == "AZURE":
+                        dct["IMAGE"].append(quote(datatable.table.loc[i, "AZURE_BLOB"], safe=""))
                 else:
                     dct["IMAGE"].append(None)
 

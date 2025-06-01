@@ -8,7 +8,9 @@ from sqlalchemy.types import Text, DateTime, Integer
 # - ALBUM: Collection of albums / books / CDs .. Like a library
 class TableType(Enum):
     PHOTO = 10
+    PHOTO_SELECTION = 15
     ALBUM = 20
+    ALBUM_SELECTION = 25
     TAG = 30
     NOTE = 40
     NOTEBOOK = 50
@@ -71,6 +73,10 @@ table_columns_names_types = {
         "sqlalchemytype": Integer
     },
     "PHOTO_ALBUM": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
+    "PHOTO_ALBUM_SELECTION": {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
@@ -175,6 +181,14 @@ table_definitions = {
         "PrimaryKey": "ID_PHOTO",
         "ForeignKey": "ID_ALBUM"
     },
+    TableType.PHOTO_SELECTION: {
+        "Columns": {
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "PHOTO_ALBUM_SELECTION": table_columns_names_types["PHOTO_ALBUM_SELECTION"],
+        },
+        "PrimaryKey": "ID_PHOTO_SELECTION",
+        "ForeignKey": ["ID_PHOTO", "ID_ALBUM_SELECTION"]
+    },
     TableType.ALBUM: {
         "Columns": {
             "PHOTO_ALBUM": table_columns_names_types["PHOTO_ALBUM"],
@@ -184,6 +198,16 @@ table_definitions = {
             "OWNER": table_columns_names_types["OWNER"],
         },
         "PrimaryKey": "ID_ALBUM"
+    },
+    TableType.ALBUM_SELECTION: {
+        "Columns": {
+            "PHOTO_ALBUM_SELECTION": table_columns_names_types["PHOTO_ALBUM_SELECTION"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "OWNER": table_columns_names_types["OWNER"],
+        },
+        "PrimaryKey": "ID_ALBUM_SELECTION"
     },
     TableType.NOTE: {
         "Columns": {

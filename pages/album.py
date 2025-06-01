@@ -140,7 +140,7 @@ def update_album(AlbumView):
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
     slider_max = AlbumView.album["N_ELEMENTS"]
-    slider_value = AlbumView.ix_show[0]
+    slider_value = AlbumView.ix_show[0] + 1
     slider_marks = {int(x)+1: y for y, x in AlbumView.album["CHAPTERS"].items()}
     return [
                html.H2(AlbumView.album["ALBUM"]),
@@ -172,15 +172,26 @@ def media_type_box(media_type, content_display, i, date_time, description):
             html.Div(date_time + ": " + description)
         ]
     elif media_type in allow_formats_video:
-        return [
-            html.Video(
-                src=content_display,
-                controls=True,
-                width="100%",
-                id={"type": "box", "index": i}
-            ),
-            html.Div(date_time + ": " + description)
-]
+        if config.environment_storage == "LOCAL":
+            return [
+                html.Video(
+                    src=content_display,
+                    controls=True,
+                    width="100%",
+                    id={"type": "box", "index": i}
+                ),
+                html.Div(date_time + ": " + description)
+            ]
+        elif config.environment_storage == "AZURE":
+            return [
+                html.Video(
+                    src=f"/video?name={content_display}",
+                    controls=True,
+                    width="100%",
+                    id={"type": "box", "index": i}
+                ),
+                html.Div(date_time + ": " + description)
+            ]
 
 def init_Album(album, album_view):
     return AlbumViewer(

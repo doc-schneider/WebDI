@@ -15,18 +15,19 @@ initialize_MySQL()
 # Script new photo album + entry in collection
 #
 # Raw photo table
-album_name = "Sigrids Geburtstag"
+album_name = "ccc"
 chapters = [
-    "Bei Fernando in Urdenbach",
+    "ccc"
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_04_Sigrid Geburtstag"),
+        Path("Y:/2010/2010_11_China/China_Auswahl/    "),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_04_Sigrid Geburtstag/PreDokumentliste.csv")
-)   # Path("Y:/2024/2024_12_22_Edler Rotwein/PreDokumentliste.csv")
+    pretable_file=Path("Y:/2010/2010_11_China/China_Auswahl/PreDokumentliste.csv"),
+    timezone_default="Asia/Shanghai"
+)   # Path("Y:/2025/2025_04_27_Sonntagsradeln Hamm/PreDokumentliste.csv")
 #
 # Add Event
 # Events from chapters

@@ -1,19 +1,21 @@
 import dash
 import pandas as pd
 from dash import Dash, html, dcc
-from flask import session
+from flask import session, send_file, request
 from flask_session import Session
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
 import os
 from dotenv import load_dotenv
+import mimetypes
 
 from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType
+from DataOperations.Photo import PhotoFactory
 from Initialize.Initialize import initialize_MySQL
 import config
 
-config.environment_app = "LOCAL"  # AZURE
+config.environment_app = "LOCAL"   # "AZURE"  # LOCAL
 config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 
 if config.environment_app == "LOCAL":
@@ -85,6 +87,9 @@ for key in config.table.keys():
 dash_app = Dash(__name__, use_pages=True)
 
 app = dash_app.server
+
+# TODO On Azure: redis
+os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
 app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
@@ -96,11 +101,27 @@ Session(app)
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
-        session['album'] = {"ID_ALBUM": 14}
+        session['album'] = {"ID_ALBUM": 7}
         session['album_view'] = {"IX_PHOTO": [None]}
         session['message_collection'] = {"ID_MESSAGE_COLLECTION": 1}
         session['message_view'] = {"GRANULARITY": "W", "DATETIME_START": pd.Timestamp(2024, 12, 23)}
         session['initialized'] = True
+
+# TODO Local
+@app.route("/video")
+def stream_video():
+    name = request.args.get("name")
+    stream = PhotoFactory.stream_image(
+        pd.Series(data={'AZURE_CONTAINER': "photo", 'AZURE_BLOB': name}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
+        "AZURE"
+    )
+    mimetype, _ = mimetypes.guess_type(name)
+    if not mimetype:
+        mimetype = "application/octet-stream"  # fallback
+    # blob_client = blob_service.get_blob_client(container="photo", blob=name)
+    # stream = io.BytesIO()
+    # blob_client.download_blob().readinto(stream)
+    return send_file(stream, mimetype=mimetype)
 
 dash_app.layout = html.Div([
     html.Div([
@@ -115,7 +136,8 @@ if __name__ == '__main__':
     if config.environment_app == "LOCAL":
         dash_app.run(host='192.168.0.225', port=5000, debug=False)
     elif config.environment_app == "AZURE":
-        dash_app.run(debug=False)
+        dash_app.run(host='192.168.0.225', port=5000, debug=False)
+        #dash_app.run(debug=False)
 
 
 

@@ -8,6 +8,7 @@ import base64
 from io import BytesIO
 
 from DataOperations.Files import get_files_info, read_table_from_csv
+from DataOperations.Azure import AzureFactory
 from DataStructures.TableTypes import TableType, table_definitions, table_columns_names_types
 from DataStructures.Data import DataTable
 
@@ -99,8 +100,9 @@ class PhotoFactory:
                 t = pretable_datetime.loc[pretable_datetime["FILE_NAME"] == file_name, "DATE_TIME"].values[0]
             elif table.loc[i, "FILE_FORMAT"] in allow_formats_image:
                 exif_dct, exif_gps = PhotoFactory.get_exif_data(
-                    Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]),
-                    table.loc[i, "FILE_FORMAT"]
+                    table.loc[i],
+                    table.loc[i, "FILE_FORMAT"],
+                    environment_storage="LOCAL"
                 )
                 # Extracting local time when image was taken
                 t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
@@ -118,6 +120,8 @@ class PhotoFactory:
                 elif "recorded_date" in exif_dct.keys():  # Apple MP4
                     t = pd.Timestamp(exif_dct["recorded_date"])
                     t = t.tz_localize(None)
+                else:
+                    print("?")
             table.loc[i, "DATE_TIME"] = t
 
         table["PHOTO_ALBUM"] = album_name
@@ -152,24 +156,28 @@ class PhotoFactory:
             df[c] = pd.to_datetime(df[c], format=date_format_German)
 
     @staticmethod
-    def get_exif_data(file_location, file_format):
-        image = Image.open(file_location)
+    def get_exif_data(file_location, file_format, environment_storage):
+        image = PhotoFactory.open_image(file_location, environment_storage)
         # TODO Unify
         if file_format in allow_formats_image_JPEG:
             exif_data = image._getexif()
         elif file_format in allow_formats_image_HEVC:
             exif_data = image.getexif()
-        exif_dct = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+        if exif_data:
+            exif_dct = {TAGS.get(tag, tag): value for tag, value in exif_data.items()}
+        else:
+            exif_dct = {}
 
         exif_gps = {}
-        if file_format in allow_formats_image_JPEG:
-            gps_info = exif_dct.get('GPSInfo', {})
-            for key in gps_info.keys():
-                decoded = GPSTAGS.get(key, key)
-                exif_gps[decoded] = gps_info[key]
-        elif file_format in allow_formats_image_HEVC:
-            exif_gps = exif_dct.get('GPSInfo', {})
-            # TODO This is only an offset number
+        if exif_dct:
+            if file_format in allow_formats_image_JPEG:
+                gps_info = exif_dct.get('GPSInfo', {})
+                for key in gps_info.keys():
+                    decoded = GPSTAGS.get(key, key)
+                    exif_gps[decoded] = gps_info[key]
+            elif file_format in allow_formats_image_HEVC:
+                exif_gps = exif_dct.get('GPSInfo', {})
+                # TODO This is only an offset number
 
         return exif_dct, exif_gps
 
@@ -179,13 +187,12 @@ class PhotoFactory:
         return media_info.general_tracks[0].to_data()
 
     @staticmethod
-    def convert_image(file_location, file_format, correct_orientation=True):
+    def convert_image(file_location, file_format, environment_storage, correct_orientation=True):
         # Conversion to jpeg and base64
-        image = Image.open(file_location)
-
+        image = PhotoFactory.open_image(file_location, environment_storage)
         if correct_orientation:
             # Prevent rotated display on web page
-            exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format)
+            exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format, environment_storage)
             if "Orientation" in exif_dct.keys():
                 # 1 - Normal (no rotation)
                 # 2 - Flipped horizontally
@@ -200,5 +207,35 @@ class PhotoFactory:
 
         buffered = BytesIO()
         image.save(buffered, format="JPEG")
-        return base64.b64encode(buffered.getvalue()).decode('ascii')
+        return base64.b64encode(buffered.getvalue()).decode('ascii')  # TODO base64 not good for very large data?
 
+    @staticmethod
+    def open_image(file_location, environment_storage):
+        if environment_storage == "LOCAL":
+            image = Image.open(
+                Path(file_location["PATH"], file_location["FILE_NAME"])
+            )
+        elif environment_storage == "AZURE":
+            image = Image.open(
+                BytesIO(
+                    AzureFactory.download_blob(
+                        file_location["AZURE_CONTAINER"], file_location["AZURE_BLOB"], environment_storage
+                    )
+                )
+            )
+        return image
+
+    @staticmethod
+    def stream_image(file_location, environment_storage):
+        if environment_storage == "LOCAL":
+            # TODO
+            pass
+        elif environment_storage == "AZURE":
+            # TODO return necessary?
+            stream = BytesIO()
+            stream = AzureFactory.download_blob(
+                file_location["AZURE_CONTAINER"], file_location["AZURE_BLOB"], environment_storage,
+                stream
+            )
+            stream.seek(0)
+        return stream

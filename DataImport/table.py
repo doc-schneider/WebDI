@@ -12,11 +12,11 @@ initialize_MySQL()
 # Create table
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
-    conn, mycursor,
-    "persons",
-    table_definitions[TableType.PERSON],
-    foreign_table_name=None,
-    foreign_table_dct=None,
+    config.mysql["connector"], config.mysql["cursor"],
+    "messages",
+    table_definitions[TableType.MESSAGE],
+    foreign_table_name="message_collections",
+    foreign_table_dct=table_definitions[TableType.MESSAGE_COLLECTION],
 )
 # foreign_table_dct=table_definitions[TableType.MESSAGE_COLLECTION]
 

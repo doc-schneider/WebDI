@@ -1,10 +1,7 @@
-from pathlib import Path
-import pandas as pd
 import io
 
 from DataStructures.TableTypes import table_columns_names_types, table_definitions
-from DataOperations.MySQL import table_fetch
-from DataOperations.Azure import AzureFactory
+from DataOperations.Operations_Factory import fetch_table
 from DataOperations.Tag import TagFactory
 import config
 
@@ -17,25 +14,7 @@ class DataTable:
     #TODO Could this be a class method?
     @staticmethod
     def fetch_table(table_type, table_name):
-        if config.environment_storage == "LOCAL":
-            table = table_fetch(config.mysql["metadata"], config.mysql["conn"], table_name)
-        elif config.environment_storage == "AZURE":
-            table = AzureFactory.read_table_from_blob("tables", table_name + ".csv", config.environment_app)
-            for col in table.columns:
-                if col in table_columns_names_types.keys():
-                    mysqltype = table_columns_names_types[col]["mysqltype"]
-                    if mysqltype == "text":
-                        table[col] = table[col].astype(str)
-                        table[col].fillna("", inplace=True)
-                    elif mysqltype == "integer":
-                        pass
-                        # TODO for null case
-                    elif mysqltype == "datetime":
-                        table[col] = pd.to_datetime(table[col])
-                else:
-                    # ID
-                    # TODO for null case?
-                    pass
+        table = fetch_table(table_name)
         return DataTable(
             table,
             table_type

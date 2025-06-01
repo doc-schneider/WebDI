@@ -7,6 +7,8 @@ from DataStructures.TableTypes import TableType, table_definitions
 from DataOperations.MySQL import table_insert
 import config
 
+config.environment_storage = "LOCAL"
+
 db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
 db_engine = create_engine(db_connection_str)
 db_conn = db_engine.connect()

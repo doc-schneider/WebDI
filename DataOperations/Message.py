@@ -45,12 +45,18 @@ class MessageFactory:
             ]
             # Match names in table with real file names
             # TODO Missing videos?
+            attachment_real = list()
             for a_n in attachment_names:
-                a_n = attachment_names.iloc[-1]
-
-            message_table.loc[ix, "ATTACHMENT"] = table_stream.loc[
-                ix, "Anhang"
-            ].apply(lambda x: path_attachments.joinpath(x))  # TODO Not ideal. No separation into path and file
+                ix_at = ats["FILE_NAME"].str.contains(
+                    str(Path(a_n).with_suffix(''))
+                )
+                if ix_at.any():
+                    attachment_real.append(
+                        ats.loc[ix_at, "PATH"].values[0] / ats.loc[ix_at, "FILE_NAME"].values[0]
+                    )
+                else:
+                    attachment_real.append("")
+            message_table.loc[ix, "ATTACHMENT"] = attachment_real  # TODO Not ideal. No separation into path and file
             message_table["MESSAGE_COLLECTION"] = message_collection
 
         message_table = DataTable(message_table, TableType.MESSAGE)

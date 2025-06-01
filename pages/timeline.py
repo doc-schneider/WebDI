@@ -1,5 +1,5 @@
 import dash
-import pandas as pd
+import numpy as np
 from dash import html, Input, Output, State, callback, ctx, dcc, ALL, MATCH
 import datetime as dtm
 from flask import session
@@ -57,15 +57,51 @@ def click_timeline(be, bl, bi, bo):
 def update_timeline(TimelineView):
     boxes_dct = TimelineView.view()
     n_boxes = boxes_dct["N_BOXES"]
-    time_grid = boxes_dct["TIME_GRID"]
     return [
         html.Div([
             html.Div(
-                boxes_dct["TEXT"]["value"][i],
+                [
+                    html.Div(boxes_dct["TEXT"]["value"][i]),
+                    media_type_box(
+                        boxes_dct["FILE_FORMAT"]["value"][i],
+                        boxes_dct["IMAGE"][i],
+                        i,
+                    ),
+                    html.Div("Datum: " + boxes_dct["DATE_TIME"]["value"][i].strftime('%Y-%m-%d %X')),
+                    html.Div("Von: " + boxes_dct["SENDER"]["value"][i]),
+                    html.Div("An: " + boxes_dct["RECEIVER"]["value"][i]),
+                ],
+                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+            ) if boxes_dct["ID_MESSAGE"]["value"][i] else html.Div(
+                [],
+                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+            )
+            for i in range(n_boxes)], style={'display': 'flex', 'flexDirection': 'row'}),
+        html.Div([
+            html.Div(
+                boxes_dct["TIME_GRID"][i].strftime('%Y-%m-%d %X'),
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
             ) for i in range(n_boxes)
-        ], style={'display': 'flex', 'flexDirection': 'row'})
+        ], style={'display': 'flex', 'flexDirection': 'row'}),
     ]
+
+# TODO Into ViewFactory
+def media_type_box(media_type, content_display, i):
+    if media_type in allow_formats_image:
+        return html.Img(
+            src="data:image/jpeg;base64," + content_display,
+            width="100%",
+            id={"type": "box", "index": i}
+        )
+    elif media_type in allow_formats_video:
+        return html.Video(
+            src=content_display,
+            controls=True,
+            width="100%",
+            id={"type": "box", "index": i}
+        )
+    else:
+        return html.Div()
 
 def init_Timeline(message_collection, message_view):
     return TimelineViewer(
