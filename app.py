@@ -118,9 +118,6 @@ def stream_video():
     mimetype, _ = mimetypes.guess_type(name)
     if not mimetype:
         mimetype = "application/octet-stream"  # fallback
-    # blob_client = blob_service.get_blob_client(container="photo", blob=name)
-    # stream = io.BytesIO()
-    # blob_client.download_blob().readinto(stream)
     return send_file(stream, mimetype=mimetype)
 
 dash_app.layout = html.Div([
