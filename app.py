@@ -15,8 +15,8 @@ from DataOperations.Photo import PhotoFactory
 from Initialize.Initialize import initialize_MySQL
 import config
 
-config.environment_app = "LOCAL"   # "AZURE"  # LOCAL
-config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
+config.environment_app = "AZURE"   # "AZURE"  # LOCAL
+config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
 
 if config.environment_app == "LOCAL":
     load_dotenv()
@@ -136,8 +136,8 @@ if __name__ == '__main__':
     if config.environment_app == "LOCAL":
         dash_app.run(host='192.168.0.225', port=5000, debug=False)
     elif config.environment_app == "AZURE":
-        dash_app.run(host='192.168.0.225', port=5000, debug=False)
-        #dash_app.run(debug=False)
+        dash_app.run(debug=False)
+
 
 
 

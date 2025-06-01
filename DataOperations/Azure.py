@@ -15,8 +15,8 @@ class AzureFactory:
         if environment == 'LOCAL':
             key = os.getenv("AZURE_STORAGE_KEY")
         else:
-            # credential = DefaultAzureCredential()
-            credential = AzureCliCredential()  # Only for local testing
+            credential = DefaultAzureCredential()
+            # credential = AzureCliCredential()  # Only for local testing
             secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
             secret = secret_client.get_secret("keyStorage")
             key = secret.value
