@@ -10,8 +10,10 @@ from Views.View_Factory import ViewFactory
 granularities = ["10Y", "Y", "Q", "M", "W", "D", "6H"]
 
 class TimelineViewer():
-    def __init__(self, datatable_initial, message_collection, message_view):
+    def __init__(self, datatable_initial, message_collection, message_view, n_rows):
         self.datatable = None
+        self.n_rows = n_rows
+        self.n_dim = None
         self.datatable_show = None
         self.table_type = datatable_initial.table_type
 
@@ -29,16 +31,42 @@ class TimelineViewer():
         self.update()
 
     def update(self):
-        # TODO Marks for all Message time points
-
-        # Get the first entry for each time box (if it exists, else nan)
-        self.datatable_show = pd.DataFrame(columns=self.datatable.table.columns)
+        # Get the entries for each time box (if it exists, else None)
+        dct_table = {i: None for i in range(self.n_grid)}
         for i in range(self.n_grid):
             t = self.datatable.find_in_timeinterval(self.time_grid[i]).table
-            if t.shape[0] == 0:
-                self.datatable_show.loc[i, :] = None  # np.nan
-            else:
-                self.datatable_show.loc[i, :] = t.iloc[[0]].values
+            if t.shape[0] > 0:
+                dct_table[i] = t
+        # Size of 2-dim table to vizualize
+        r = [dct_table[i].shape[0] for i in range(self.n_grid) if dct_table[i] is not None]
+        if r:
+            self.n_dim = (
+                min(
+                    max(r),
+                    self.n_rows
+                ),
+                self.n_grid
+            )
+        else:
+            self.n_dim = (0, self.n_grid)
+        # Serial Dataframe
+        self.datatable_show = pd.DataFrame(
+            columns=self.datatable.table.columns
+        )
+        if r:
+            self.datatable_show = pd.DataFrame(
+                [[None] * len(self.datatable.table.columns) for _ in range(self.n_dim[0] * self.n_dim[1])],
+                columns=self.datatable_show.columns
+            )
+        for i in range(self.n_dim[0]):
+            for j in range(self.n_dim[1]):
+                if dct_table[j] is not None:
+                    if dct_table[j].shape[0] > i:
+                        self.datatable_show.loc[i * self.n_dim[1] + j, :] = dct_table[j].iloc[[i]].values
+                    else:
+                        pass
+                else:
+                    pass
         self.datatable_show = DataTable(
             self.datatable_show,
             self.table_type
@@ -77,6 +105,8 @@ class TimelineViewer():
         self.update()
 
     def view(self):
+
+        # TODO Move to ViewFactory?
         self.datatable_show.table["FILE_NAME"] = None
         self.datatable_show.table["PATH"] = None
         self.datatable_show.table["FILE_FORMAT"] = None
@@ -91,9 +121,7 @@ class TimelineViewer():
         dct = ViewFactory.view(self.datatable_show)
 
         dct["TIME_GRID"] = pd.Series([t.left for t in self.time_grid])
-
-        # Dimension information for viewing  # TODO Should be in pages and config
-        dct["N_BOXES"] = self.n_grid
+        dct["N_DIM"] = self.n_dim
 
         return dct
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from sqlalchemy.types import Text, DateTime, Integer
+from sqlalchemy.types import Text, DateTime, Integer, Time
 
 
 # TODO
@@ -8,6 +8,7 @@ from sqlalchemy.types import Text, DateTime, Integer
 # - ALBUM: Collection of albums / books / CDs .. Like a library
 class TableType(Enum):
     PHOTO = 10
+    FILM = 12
     PHOTO_SELECTION = 15
     ALBUM = 20
     ALBUM_SELECTION = 25
@@ -55,6 +56,14 @@ table_columns_names_types = {
     "DATE_TO": {
         "mysqltype": "datetime",
         "sqlalchemytype": DateTime
+    },
+    "TIME_FROM": {
+        "mysqltype": "time",
+        "sqlalchemytype": Time
+    },
+    "TIME_TO": {
+        "mysqltype": "time",
+        "sqlalchemytype": Time
     },
     "DESCRIPTION": {
         "mysqltype": "text",
@@ -180,6 +189,15 @@ table_definitions = {
         },
         "PrimaryKey": "ID_PHOTO",
         "ForeignKey": "ID_ALBUM"
+    },
+    TableType.FILM: {
+        "Columns": {
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "TIME_FROM": table_columns_names_types["TIME_FROM"],
+            "TIME_TO": table_columns_names_types["TIME_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+        }
     },
     TableType.PHOTO_SELECTION: {
         "Columns": {

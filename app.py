@@ -6,6 +6,7 @@ from flask_session import Session
 from sqlalchemy import create_engine, MetaData
 import mysql.connector
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 import mimetypes
 
@@ -111,16 +112,17 @@ def ensure_session_initialized():
 @app.route("/video")
 def stream_video():
     name = request.args.get("name")
-    stream = PhotoFactory.stream_image(
-        pd.Series(data={'AZURE_CONTAINER': "photo", 'AZURE_BLOB': name}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
-        "AZURE"
-    )
+    # TODO Common call, decoding in PhotoFactory
+    if config.environment_storage == "LOCAL":
+        stream = Path(name)
+    elif config.environment_storage == "AZURE":
+        stream = PhotoFactory.stream_image(
+            pd.Series(data={'AZURE_CONTAINER': "photo", 'AZURE_BLOB': name}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
+            "AZURE"
+        )
     mimetype, _ = mimetypes.guess_type(name)
     if not mimetype:
         mimetype = "application/octet-stream"  # fallback
-    # blob_client = blob_service.get_blob_client(container="photo", blob=name)
-    # stream = io.BytesIO()
-    # blob_client.download_blob().readinto(stream)
     return send_file(stream, mimetype=mimetype)
 
 dash_app.layout = html.Div([

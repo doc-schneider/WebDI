@@ -152,7 +152,7 @@ def update_album(AlbumView):
                     boxes_dct["FILE_FORMAT"]["value"][i],
                     boxes_dct["IMAGE"][i],
                     i,
-                    boxes_dct["DATE_TIME"]["value"].dt.strftime('%Y-%m-%d %X')[i],
+                    boxes_dct["DATE_TIME"]["value"].dt.strftime('%Y-%m-%d %X').fillna('')[i],
                     boxes_dct["DESCRIPTION"]["value"][i]
                 ),
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
@@ -172,26 +172,15 @@ def media_type_box(media_type, content_display, i, date_time, description):
             html.Div(date_time + ": " + description)
         ]
     elif media_type in allow_formats_video:
-        if config.environment_storage == "LOCAL":
-            return [
-                html.Video(
-                    src=content_display,
-                    controls=True,
-                    width="100%",
-                    id={"type": "box", "index": i}
-                ),
-                html.Div(date_time + ": " + description)
-            ]
-        elif config.environment_storage == "AZURE":
-            return [
-                html.Video(
-                    src=f"/video?name={content_display}",
-                    controls=True,
-                    width="100%",
-                    id={"type": "box", "index": i}
-                ),
-                html.Div(date_time + ": " + description)
-            ]
+        return [
+            html.Video(
+                src=f"/video?name={content_display}",
+                controls=True,
+                width="100%",
+                id={"type": "box", "index": i}
+            ),
+            html.Div(date_time + ": " + description)
+        ]
 
 def init_Album(album, album_view):
     return AlbumViewer(
