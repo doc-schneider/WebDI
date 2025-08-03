@@ -1,11 +1,11 @@
 import dash
 import pandas as pd
 from dash import Dash, html, dcc
+import dash_auth
 from flask import session, send_file, request
 from flask_session import Session
-from sqlalchemy import create_engine, MetaData
-import mysql.connector
 import os
+import json
 from dotenv import load_dotenv
 import mimetypes
 
@@ -20,6 +20,9 @@ config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
 
 if config.environment_app == "LOCAL":
     load_dotenv()
+
+with open("resources/auth.json", "r") as f:
+    VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -85,7 +88,7 @@ for key in config.table.keys():
     )
 
 dash_app = Dash(__name__, use_pages=True)
-
+auth = dash_auth.BasicAuth(dash_app, VALID_USERNAME_PASSWORD_PAIRS)
 app = dash_app.server
 
 # TODO On Azure: redis

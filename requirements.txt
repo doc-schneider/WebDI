@@ -6,7 +6,8 @@ mysql-connector-python
 sqlalchemy
 openpyxl
 dash
-dash-svg
+dash-auth
+# dash-svg
 flask-session
 dotenv
 azure-core
