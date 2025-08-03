@@ -17,7 +17,7 @@ class DataTable:
         table = fetch_table(table_name)
         return DataTable(
             table,
-            table_type
+            table_type,
         )
 
     # TODO Into Files module?

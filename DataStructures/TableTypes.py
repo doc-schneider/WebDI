@@ -188,7 +188,8 @@ table_definitions = {
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },
         "PrimaryKey": "ID_PHOTO",
-        "ForeignKey": "ID_ALBUM"
+        "ForeignKey": "ID_ALBUM",
+        "ParentTableType": TableType.ALBUM
     },
     TableType.FILM: {
         "Columns": {
@@ -238,7 +239,8 @@ table_definitions = {
             "NOTEBOOK": table_columns_names_types["NOTEBOOK"],
         },
         "PrimaryKey": "ID_NOTE",
-        "ForeignKey": "ID_NOTEBOOK"
+        "ForeignKey": "ID_NOTEBOOK",
+        "ParentTableType": TableType.NOTEBOOK
     },
     TableType.NOTEBOOK: {
         "Columns": {
@@ -284,7 +286,8 @@ table_definitions = {
             "MESSAGE_COLLECTION": table_columns_names_types["MESSAGE_COLLECTION"],
         },
         "PrimaryKey": "ID_MESSAGE",
-        "ForeignKey": "ID_MESSAGE_COLLECTION"
+        "ForeignKey": "ID_MESSAGE_COLLECTION",
+        "ParentTableType": TableType.MESSAGE_COLLECTION
     },
     TableType.MESSAGE_COLLECTION: {
         "Columns": {

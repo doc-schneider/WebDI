@@ -10,22 +10,15 @@ from Views.View_Factory import ViewFactory
 granularities = ["10Y", "Y", "Q", "M", "W", "D", "6H"]
 
 class TimelineViewer():
-    def __init__(self, datatable_initial, message_collection, message_view, n_rows):
-        self.datatable = None
+    def __init__(self, datatable_initial, timeline_view, n_rows):
+        self.datatable = datatable_initial
+        self.datatable.sort()
+        self.table_type = datatable_initial.table_type
         self.n_rows = n_rows
         self.n_dim = None
         self.datatable_show = None
-        self.table_type = datatable_initial.table_type
-
-        # Which out of the total collection?
-        id_collection = message_collection['ID_MESSAGE_COLLECTION']
-        self.datatable = datatable_initial.match_foreignkey(id_collection)
-        self.datatable.sort()
-
-        # TODO Pre-processing ATTACHMENT
-
         self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
-            pd.Timestamp(message_view["DATETIME_START"]), granularity=message_view["GRANULARITY"], change=None,
+            pd.Timestamp(timeline_view["DATETIME_START"]), granularity=timeline_view["GRANULARITY"], change=None,
         )
 
         self.update()
@@ -106,7 +99,8 @@ class TimelineViewer():
 
     def view(self):
 
-        # TODO Move to ViewFactory?
+        # TODO Pre-processing ATTACHMENT
+        # - Move to ViewFactory?
         self.datatable_show.table["FILE_NAME"] = None
         self.datatable_show.table["PATH"] = None
         self.datatable_show.table["FILE_FORMAT"] = None
@@ -120,10 +114,27 @@ class TimelineViewer():
         # Raw content
         dct = ViewFactory.view(self.datatable_show)
 
-        dct["TIME_GRID"] = pd.Series([t.left for t in self.time_grid])
-        dct["N_DIM"] = self.n_dim
+        boxes = {}
+        boxes["IMAGE"] = dct["IMAGE"]
+        boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
 
-        return dct
+        # Transform Type specific to timeline
+        boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
+        if self.table_type.name == "MESSAGE":
+            boxes["ID"] = dct["ID_MESSAGE"]["value"]
+            boxes['TEXT'] = dct['TEXT']["value"]
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
+            boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
+        elif self.table_type.name == "NOTE":
+            boxes["ID"] = dct["ID_NOTE"]["value"]
+            boxes['TEXT'] = dct['TITLE']["value"]
+            # TODO As title for page: Notebook, Notebook Collection
+
+        boxes["TIME_GRID"] = pd.Series([t.left for t in self.time_grid])
+        boxes["N_DIM"] = self.n_dim
+
+        return boxes
 
 # Timeline utilities
 class TimelineFactory:

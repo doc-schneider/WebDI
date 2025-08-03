@@ -13,7 +13,7 @@ import config
 config.environment_storage = "LOCAL"
 initialize_MySQL()
 
-flag_add_photos = True
+flag_add_photos = False
 flag_add_event = False
 
 if flag_add_photos:
@@ -26,18 +26,18 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Sonntagsradeln Richtung Grafenberg"
+album_name = "Samstags: WeChat bei Breuninger"
 chapters = [
-    "Schöne Häuser im Mörsenbroicher Weg, Komische Kunst bei der sog Großen"
+    "Breuninger, Demo-Spinner"
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_07_20_Sonntagsradeln Richtung Grafenberg"),
+        Path("W:/Fotos/2025/2025_08_02_WeChat"),
     ],
     album_name,
     chapters,
-    pretable_file=None,
-)   # Path("Y:/2025/2025_07_04_Frankreichfest/PreDokumentliste.csv")
+    pretable_file=Path("W:/Fotos/2025/2025_08_02_WeChat/PreDokumentliste.csv"),
+)   # Path("Y:/2025/2025_07_27_Radeln Flingern/PreDokumentliste.csv")
 
 if flag_add_photos:
     # Only keep new entries
@@ -76,7 +76,7 @@ if flag_add_event:
 
 # Extract album data from a new photo dataframe
 if not flag_add_photos:
-    owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
+    owner = "Stefan"  # "Stefan"  "Stefan|Konstanze"
     album_description = ""
     album = photo_table.table["PHOTO_ALBUM"].unique()[0]
     d_t = photo_table.table["DATE_TIME"]

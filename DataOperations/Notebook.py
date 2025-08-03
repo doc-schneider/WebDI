@@ -36,6 +36,7 @@ class NotebookFactory:
                 table["PATH"].append(path_notebook.parent)
                 tag = None
 
+                # TODO "updated"?
                 for child in note:
                     if child.tag == "title":
                         table["TITLE"].append(child.text)

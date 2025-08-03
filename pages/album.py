@@ -44,7 +44,7 @@ def click_main(b1, b2, n_clicks_list_table):
             config.table[TableType.ALBUM]["data_table"]
         )
         id_album = CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
-        session['album']["ID_ALBUM"] = id_album
+        session['ALBUM']["ID_ALBUM"] = id_album
         session['album_view'] = {"IX_PHOTO": [None]}
         return layout_photos
     else:   # Initial & button
@@ -123,7 +123,7 @@ layout_photos = html.Div([
     Input('album-slider', 'value'),
 )
 def click_photos(b1, b2, slider_value):
-    AlbumView = init_Album(session['album'], session["album_view"])
+    AlbumView = init_Album(session['ALBUM'], session["album_view"])
     if ctx.triggered_id == "earlier":  # and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)?
         AlbumView.earlier()
     elif ctx.triggered_id == "later":

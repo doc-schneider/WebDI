@@ -107,13 +107,16 @@ class PhotoFactory:
                     environment_storage="LOCAL"
                 )
                 # Extracting local time when image was taken
-                t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
-                t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
-                if not exif_gps:
-                    # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
-                    t = t.tz_localize("CET", ambiguous=True)
-                    t = t.tz_convert(timezone_default)
-                    t = t.tz_localize(None)
+                if any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
+                    t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
+                    t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
+                    if not exif_gps:
+                        # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
+                        t = t.tz_localize("CET", ambiguous=True)
+                        t = t.tz_convert(timezone_default)
+                        t = t.tz_localize(None)
+                else:
+                    print("?")
             elif table.loc[i, "FILE_FORMAT"] in allow_formats_video:
                 exif_dct = PhotoFactory.get_meta_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
                 if "comapplequicktimemake" in exif_dct.keys():  # Apple MOV

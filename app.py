@@ -1,11 +1,11 @@
 import dash
 import pandas as pd
 from dash import Dash, html, dcc
+import dash_auth
 from flask import session, send_file, request
 from flask_session import Session
-from sqlalchemy import create_engine, MetaData
-import mysql.connector
 import os
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 import mimetypes
@@ -21,6 +21,9 @@ config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 
 if config.environment_app == "LOCAL":
     load_dotenv()
+
+with open("resources/auth.json", "r") as f:
+    VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -86,10 +89,10 @@ for key in config.table.keys():
     )
 
 dash_app = Dash(__name__, use_pages=True)
-
+auth = dash_auth.BasicAuth(dash_app, VALID_USERNAME_PASSWORD_PAIRS)
 app = dash_app.server
 
-# TODO On Azure: redis
+# TODO On Azure: redis, sqlite?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
@@ -102,13 +105,14 @@ Session(app)
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
-        session['album'] = {"ID_ALBUM": 7}
+        session['ALBUM'] = {"ID_ALBUM": 7}
+        session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
+        session['NOTEBOOK'] = {"ID_NOTEBOOK": 2}
         session['album_view'] = {"IX_PHOTO": [None]}
-        session['message_collection'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['message_view'] = {"GRANULARITY": "W", "DATETIME_START": pd.Timestamp(2024, 12, 23)}
+        session['timeline_content'] = TableType.NOTE.name  # TableType.NOTE.name   # TableType.MESSAGE.name
+        session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
         session['initialized'] = True
 
-# TODO Local
 @app.route("/video")
 def stream_video():
     name = request.args.get("name")

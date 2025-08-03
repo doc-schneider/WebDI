@@ -1,10 +1,8 @@
 import dash
-import numpy as np
 from dash import html, Input, Output, State, callback, ctx, dcc, ALL, MATCH
-import datetime as dtm
 from flask import session
 
-from DataStructures.TableTypes import TableType
+from DataStructures.TableTypes import TableType, table_definitions
 from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Timeline import TimelineViewer
 import config
@@ -48,8 +46,8 @@ layout = html.Div([
 )
 def click_timeline(be, bl, bi, bo, n_rows):
     TimelineView = init_Timeline(
-        session['message_collection'],
-        session["message_view"],
+        session['timeline_content'],
+        session["timeline_view"],
         n_rows
     )
     if ctx.triggered_id == "earlier":
@@ -62,7 +60,7 @@ def click_timeline(be, bl, bi, bo, n_rows):
         TimelineView.zoom_out()
     else:
         pass  # None. Initial or refresh
-    session['message_view'] = {
+    session['timeline_view'] = {
         "GRANULARITY": TimelineView.granularity,
         "DATETIME_START": TimelineView.time_grid[0].left
     }
@@ -87,23 +85,21 @@ def update_timeline(TimelineView):
         html.Div([
             html.Div(
                 [
-                    html.Div(boxes_dct["TEXT"]["value"][i]),
+                    html.Div(boxes_dct["TEXT"][i]),
                     media_type_box(
-                        boxes_dct["FILE_FORMAT"]["value"][i],
+                        boxes_dct["FILE_FORMAT"][i],
                         boxes_dct["IMAGE"][i],
                         i,
                     ),
-                    html.Div("Datum: " + boxes_dct["DATE_TIME"]["value"][i].strftime('%Y-%m-%d %X')),
-                    html.Div("Von: " + boxes_dct["SENDER"]["value"][i]),
-                    html.Div("An: " + boxes_dct["RECEIVER"]["value"][i]),
-                ],
+                    html.Div("Datum: " + boxes_dct["DATE_TIME"][i].strftime('%Y-%m-%d %X'))
+                ] + additional_items(boxes_dct, i, 'TEXT_ADDITIONAL'),
                 style={'flex': 1, 'padding': '10px',
                        'borderLeft': '2px solid black',
                        'borderRight': '2px solid black',
                        'borderTop': '1px solid black',
                        'borderBottom': '1px solid black',
                        }
-            ) if boxes_dct["ID_MESSAGE"]["value"][i] else html.Div(
+            ) if boxes_dct["ID"][i] else html.Div(
                 [],
                 style={'flex': 1, 'padding': '10px',
                        'borderLeft': '2px solid black',
@@ -133,10 +129,23 @@ def media_type_box(media_type, content_display, i):
     else:
         return html.Div()
 
-def init_Timeline(message_collection, message_view, n_rows):
+def additional_items(boxes_dct, i, item):
+    if item in boxes_dct.keys():
+        return [
+            txt_add[i] for _, txt_add in boxes_dct[item].items()
+        ]
+    else:
+        return []
+
+def init_Timeline(timeline_content, timeline_view, n_rows):
+    # TODO Move to Timeline (?)
+    data_table = config.table[TableType[timeline_content]]["data_table"]
+    parent_table_type = table_definitions[TableType[timeline_content]]["ParentTableType"]
+    parent_id = session[parent_table_type.name][
+        table_definitions[TableType[parent_table_type.name]]["PrimaryKey"]
+    ]
     return TimelineViewer(
-        config.table[TableType.MESSAGE]["data_table"],
-        message_collection,
-        message_view,
+        data_table.match_foreignkey(parent_id),
+        timeline_view,
         n_rows
     )
