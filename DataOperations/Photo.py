@@ -107,10 +107,11 @@ class PhotoFactory:
                     environment_storage="LOCAL"
                 )
                 # Extracting local time when image was taken
+                # TODO There can be a difference between the two DateTime: Clarify
                 if any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
                     t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
                     t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
-                    if not exif_gps:
+                    if not exif_gps:  # TODO There are old photos with correct timestamp nevertheless
                         # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
                         t = t.tz_localize("CET", ambiguous=True)
                         t = t.tz_convert(timezone_default)

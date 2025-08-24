@@ -10,11 +10,15 @@ from Views.View_Factory import ViewFactory
 granularities = ["10Y", "Y", "Q", "M", "W", "D", "6H"]
 
 class TimelineViewer():
-    def __init__(self, datatable_initial, timeline_view, n_rows):
+    def __init__(self, datatable_initial, timeline_view):
         self.datatable = datatable_initial
-        self.datatable.sort()
         self.table_type = datatable_initial.table_type
-        self.n_rows = n_rows
+        if self.table_type.name == "ALBUM":
+            self.time_column = "DATE_FROM"
+        else:
+            self.time_column = "DATE_TIME"
+        self.datatable.sort(self.time_column)
+        self.n_rows = timeline_view["n_rows"]
         self.n_dim = None
         self.datatable_show = None
         self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
@@ -27,7 +31,7 @@ class TimelineViewer():
         # Get the entries for each time box (if it exists, else None)
         dct_table = {i: None for i in range(self.n_grid)}
         for i in range(self.n_grid):
-            t = self.datatable.find_in_timeinterval(self.time_grid[i]).table
+            t = self.datatable.find_in_timeinterval(self.time_grid[i], self.time_column).table
             if t.shape[0] > 0:
                 dct_table[i] = t
         # Size of 2-dim table to vizualize
@@ -104,12 +108,13 @@ class TimelineViewer():
         self.datatable_show.table["FILE_NAME"] = None
         self.datatable_show.table["PATH"] = None
         self.datatable_show.table["FILE_FORMAT"] = None
-        for i in range(len(self.datatable_show.table)):
-            if self.datatable_show.table.loc[i, "ATTACHMENT"]:
-                file_pth = Path(self.datatable_show.table.loc[i, "ATTACHMENT"])
-                self.datatable_show.table.loc[i, "FILE_NAME"] = file_pth.name
-                self.datatable_show.table.loc[i, "PATH"] = file_pth.parent
-                self.datatable_show.table.loc[i, "FILE_FORMAT"] = file_pth.suffix[1:].upper()
+        if "ATTACHMENT" in self.datatable_show.table.columns:
+            for i in range(len(self.datatable_show.table)):
+                if self.datatable_show.table.loc[i, "ATTACHMENT"]:
+                    file_pth = Path(self.datatable_show.table.loc[i, "ATTACHMENT"])
+                    self.datatable_show.table.loc[i, "FILE_NAME"] = file_pth.name
+                    self.datatable_show.table.loc[i, "PATH"] = file_pth.parent
+                    self.datatable_show.table.loc[i, "FILE_FORMAT"] = file_pth.suffix[1:].upper()
 
         # Raw content
         dct = ViewFactory.view(self.datatable_show)
@@ -119,19 +124,26 @@ class TimelineViewer():
         boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
 
         # Transform Type specific to timeline
-        boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
         if self.table_type.name == "MESSAGE":
+            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
             boxes["ID"] = dct["ID_MESSAGE"]["value"]
             boxes['TEXT'] = dct['TEXT']["value"]
             boxes['TEXT_ADDITIONAL'] = {}
             boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
             boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
         elif self.table_type.name == "NOTE":
+            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
             boxes["ID"] = dct["ID_NOTE"]["value"]
             boxes['TEXT'] = dct['TITLE']["value"]
             # TODO As title for page: Notebook, Notebook Collection
+        elif self.table_type.name == "ALBUM":
+            boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
+            boxes["ID"] = dct["ID_ALBUM"]["value"]
+            boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
 
-        boxes["TIME_GRID"] = pd.Series([t.left for t in self.time_grid])
+        boxes["TIME_GRID"] = pd.Series([t for t in self.time_grid])  # pd.Series([t.left for t in self.time_grid])
         boxes["N_DIM"] = self.n_dim
 
         return boxes

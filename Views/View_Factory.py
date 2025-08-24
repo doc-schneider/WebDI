@@ -51,3 +51,5 @@ class ViewFactory:
             dct["IMAGE"] = pd.Series(dct["IMAGE"])
 
         return dct
+
+

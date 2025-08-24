@@ -8,13 +8,11 @@ from DataStructures.TableTypes import TableType, table_definitions
 from Views.Content import ContentViewer
 import config
 
-#TODO Fix
-table_type = TableType.PHOTO
 
 dash.register_page(__name__)
 
 layout = html.Div([
-    html.H1('Content'),
+    html.H1('Inhalt'),
     html.Hr(),
     html.Div(id='content')
 ])
@@ -42,16 +40,16 @@ layout = html.Div([
 #             html.Div(content_dct["DESCRIPTION"][0])
 #         ])
 
-def init_Content(id):
-    primary_key = table_definitions[table_type]["PrimaryKey"]
-    # TODO Row selection shoudl be in Viewer
-    return ContentViewer(
-        DataTable(
-            config.table[table_type]["data_table"].table.loc[
-                config.table[table_type]["data_table"].table[primary_key] == id[primary_key],
-                :
-            ].reset_index(drop=True),
-            table_type
-        )
-    )
+# def init_Content(id):
+#     primary_key = table_definitions[table_type]["PrimaryKey"]
+#     # TODO Row selection shoudl be in Viewer
+#     return ContentViewer(
+#         DataTable(
+#             config.table[table_type]["data_table"].table.loc[
+#                 config.table[table_type]["data_table"].table[primary_key] == id[primary_key],
+#                 :
+#             ].reset_index(drop=True),
+#             table_type
+#         )
+#     )
 

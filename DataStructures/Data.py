@@ -58,9 +58,9 @@ class DataTable:
     #TODO Separate function for converting TAG column to lists?
 
     #TODO Do exclusive right boundary
-    def find_in_timeinterval(self, timeinterval):
+    def find_in_timeinterval(self, timeinterval, column="DATE_TIME"):
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
-        iix = (self.table["DATE_TIME"] >= timeinterval.left) & (self.table["DATE_TIME"] <= timeinterval.right)
+        iix = (self.table[column] >= timeinterval.left) & (self.table[column] <= timeinterval.right)
         return DataTable(self.table[iix].reset_index(drop=True), self.table_type)
 
     # Return record belonging to a specific foreignkey value

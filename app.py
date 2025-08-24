@@ -22,8 +22,8 @@ config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 if config.environment_app == "LOCAL":
     load_dotenv()
 
-with open("resources/auth.json", "r") as f:
-    VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
+# with open("resources/auth.json", "r") as f:
+#     VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -89,7 +89,7 @@ for key in config.table.keys():
     )
 
 dash_app = Dash(__name__, use_pages=True)
-auth = dash_auth.BasicAuth(dash_app, VALID_USERNAME_PASSWORD_PAIRS)
+# auth = dash_auth.BasicAuth(dash_app, VALID_USERNAME_PASSWORD_PAIRS)
 app = dash_app.server
 
 # TODO On Azure: redis, sqlite?
@@ -109,8 +109,12 @@ def ensure_session_initialized():
         session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
         session['NOTEBOOK'] = {"ID_NOTEBOOK": 2}
         session['album_view'] = {"IX_PHOTO": [None]}
-        session['timeline_content'] = TableType.NOTE.name  # TableType.NOTE.name   # TableType.MESSAGE.name
-        session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
+        session['timeline_simple_content'] = TableType.MESSAGE.name  # TableType.NOTE.name   # TableType.MESSAGE.name
+        session['timeline_simple_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
+        session['timeline_content'] = TableType.ALBUM.name
+        session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
+        session['content_content'] = None
+        session['content_view'] = {}
         session['initialized'] = True
 
 @app.route("/video")
@@ -130,6 +134,7 @@ def stream_video():
     return send_file(stream, mimetype=mimetype)
 
 dash_app.layout = html.Div([
+    dcc.Location(id="url-redirect"),
     html.Div([
         html.Div(
             dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
@@ -137,6 +142,8 @@ dash_app.layout = html.Div([
     ]),
     dash.page_container,
 ])
+
+import Views.Callbacks
 
 if __name__ == '__main__':
     if config.environment_app == "LOCAL":
