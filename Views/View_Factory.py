@@ -42,11 +42,7 @@ class ViewFactory:
                     # TODO Can load as byte object in memory
                     if config.environment_storage == "LOCAL":
                         file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
-                        shutil.copyfile(
-                            file_pth,
-                            "assets/" + file_pth.name
-                        )
-                        dct["IMAGE"].append("/assets/" + file_pth.name)
+                        dct["IMAGE"].append(quote(str(file_pth), safe=""))
                     elif config.environment_storage == "AZURE":
                         dct["IMAGE"].append(quote(datatable.table.loc[i, "AZURE_BLOB"], safe=""))
                 else:
@@ -55,3 +51,5 @@ class ViewFactory:
             dct["IMAGE"] = pd.Series(dct["IMAGE"])
 
         return dct
+
+

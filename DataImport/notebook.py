@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, MetaData
 from pathlib import Path
 import pandas as pd
 
-from DataOperations.Notebook import EvernoteFactory
+from DataOperations.Notebook import NotebookFactory
 from DataStructures.TableTypes import TableType, table_definitions
 from DataOperations.MySQL import table_insert
 from Initialize.Initialize import initialize_MySQL
@@ -15,8 +15,8 @@ initialize_MySQL()
 # Script new notebook + entry in collection
 #
 # Raw table
-note_table = EvernoteFactory().table_from_folder(
-    Path("W:/Tagebücher/Evernote/Tagebuch & wissenschaftliche Ideen/Diary/Diary.enex")
+note_table = NotebookFactory().table_from_folder(
+    Path("W:/Biographie/Stefan/Logs&Blogs/Evernote/Biography/Mama/Mama.enex")
 )
 #
 # Extract notebook data from a new photo dataframe
@@ -29,7 +29,7 @@ notebook_table = pd.DataFrame(
     index=[0],
     data={
         cols[0]: notebook,
-        cols[1]: "Tagebuch & wissenschaftliche Ideen",
+        cols[1]: "Biography",
         cols[2]: "Evernote",
         cols[3]: date_from,
         cols[4]: date_to,
@@ -37,11 +37,11 @@ notebook_table = pd.DataFrame(
 )
 #
 # Insert new album
-table_insert(metadata, db_conn, "notebooks", notebook_table)
+table_insert(config.mysql["metadata"], config.mysql["conn"], "notebooks", notebook_table)
 #
 # Get the foreign key for the notes table
 note_table.add_foreignkey("NOTEBOOK", "notebooks")
 #
 # Insert the new notes
-table_insert(metadata, db_conn, "notes", note_table.table)
+table_insert(config.mysql["metadata"], config.mysql["conn"], "notes", note_table.table)
 

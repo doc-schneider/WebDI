@@ -18,6 +18,82 @@ dash.register_page(__name__)
 layout = html.Div([
     html.Br(),
     html.Div([
+        html.Button('Alben', id='button_go_albums', n_clicks=0),
+        html.Button('Fotos', id='button_go_photos', n_clicks=0),
+    ], style={'display': 'flex', 'justify-content': 'center'}
+    ),
+    html.Br(),
+    html.Div(id="album-main"),
+    html.Br(),
+])
+
+@callback(
+    Output('album-main', 'children'),
+    Input('button_go_albums', "n_clicks"),
+    Input('button_go_photos', "n_clicks"),
+    Input({"type": "table_row", "index": ALL}, "n_clicks"),
+)
+def click_main(b1, b2, n_clicks_list_table):
+    clicked = ctx.triggered_id
+    if ctx.triggered_id == "button_go_photos":
+        return layout_photos
+    elif any(c is not None for c in n_clicks_list_table):
+        ix = clicked["index"]
+        CollectionView = init_Collection(
+            config.table[TableType.ALBUM]["data_table"]
+        )
+        id_album = CollectionView.datatable.table.loc[ix, "ID_ALBUM"]
+        session['ALBUM']["ID_ALBUM"] = id_album
+        session['album_view'] = {"IX_PHOTO": [None]}
+        return layout_photos
+    else:   # Initial & button
+        return create_albums()
+
+# Album collection
+# TODO Separate layout?
+
+def create_albums():
+    CollectionView = init_Collection(
+        config.table[TableType.ALBUM]["data_table"]
+    )
+    collection_dct = CollectionView.view()
+    n_elements = CollectionView.collection["N_ELEMENTS"]
+    #TODO add headers
+    show_table = []
+    for n in range(n_elements):
+        show_table.append(
+            html.Div(
+                [],
+                style={'display': 'flex', 'flexDirection': 'row'}, id={"type": "table_row", "index": n},
+            )
+        )
+        for k in collection_dct.keys():
+            if collection_dct[k]["mysqltype"] == "datetime":
+                show_table[-1].children.append(
+                    html.Div(
+                        collection_dct[k]["value"][n].strftime('%Y-%m-%d %X'), style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                    )
+                )
+            elif collection_dct[k]["mysqltype"] == "text":
+                show_table[-1].children.append(
+                    html.Div(
+                        collection_dct[k]["value"][n], style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                    )
+                )
+            else:
+                print("???")
+    return show_table
+
+def init_Collection(data_table, filter_table=None):
+    CollectionView = CollectionViewer(data_table, filter_table)
+    CollectionView.sort()
+    return CollectionView
+
+# Photos
+
+layout_photos = html.Div([
+    html.Br(),
+    html.Div([
         html.Button('früher', id='earlier', n_clicks=0),
         html.Button('später', id='later', n_clicks=0),
     ], style={'display': 'flex', 'justify-content': 'center'}
@@ -102,7 +178,6 @@ def media_type_box(media_type, content_display, i, date_time, description):
             ),
             html.Div(date_time + ": " + description)
         ]
-# id={"type": "album_box", "index": i}
 
 def init_Album(album, album_view):
     return AlbumViewer(

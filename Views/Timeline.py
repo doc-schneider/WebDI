@@ -10,35 +10,60 @@ from Views.View_Factory import ViewFactory
 granularities = ["10Y", "Y", "Q", "M", "W", "D", "6H"]
 
 class TimelineViewer():
-    def __init__(self, datatable_initial, message_collection, message_view):
-        self.datatable = None
-        self.datatable_show = None
+    def __init__(self, datatable_initial, timeline_view):
+        self.datatable = datatable_initial
         self.table_type = datatable_initial.table_type
-
-        # Which out of the total collection?
-        id_collection = message_collection['ID_MESSAGE_COLLECTION']
-        self.datatable = datatable_initial.match_foreignkey(id_collection)
-        self.datatable.sort()
-
-        # TODO Pre-processing ATTACHMENT
-
+        if self.table_type.name == "ALBUM":
+            self.time_column = "DATE_FROM"
+        else:
+            self.time_column = "DATE_TIME"
+        self.datatable.sort(self.time_column)
+        self.n_rows = timeline_view["n_rows"]
+        self.n_dim = None
+        self.datatable_show = None
         self.granularity, self.time_grid, self.n_grid = TimelineFactory.timegrid(
-            pd.Timestamp(message_view["DATETIME_START"]), granularity=message_view["GRANULARITY"], change=None,
+            pd.Timestamp(timeline_view["DATETIME_START"]), granularity=timeline_view["GRANULARITY"], change=None,
         )
 
         self.update()
 
     def update(self):
-        # TODO Marks for all Message time points
-
-        # Get the first entry for each time box (if it exists, else nan)
-        self.datatable_show = pd.DataFrame(columns=self.datatable.table.columns)
+        # Get the entries for each time box (if it exists, else None)
+        dct_table = {i: None for i in range(self.n_grid)}
         for i in range(self.n_grid):
-            t = self.datatable.find_in_timeinterval(self.time_grid[i]).table
-            if t.shape[0] == 0:
-                self.datatable_show.loc[i, :] = None  # np.nan
-            else:
-                self.datatable_show.loc[i, :] = t.iloc[[0]].values
+            t = self.datatable.find_in_timeinterval(self.time_grid[i], self.time_column).table
+            if t.shape[0] > 0:
+                dct_table[i] = t
+        # Size of 2-dim table to vizualize
+        r = [dct_table[i].shape[0] for i in range(self.n_grid) if dct_table[i] is not None]
+        if r:
+            self.n_dim = (
+                min(
+                    max(r),
+                    self.n_rows
+                ),
+                self.n_grid
+            )
+        else:
+            self.n_dim = (0, self.n_grid)
+        # Serial Dataframe
+        self.datatable_show = pd.DataFrame(
+            columns=self.datatable.table.columns
+        )
+        if r:
+            self.datatable_show = pd.DataFrame(
+                [[None] * len(self.datatable.table.columns) for _ in range(self.n_dim[0] * self.n_dim[1])],
+                columns=self.datatable_show.columns
+            )
+        for i in range(self.n_dim[0]):
+            for j in range(self.n_dim[1]):
+                if dct_table[j] is not None:
+                    if dct_table[j].shape[0] > i:
+                        self.datatable_show.loc[i * self.n_dim[1] + j, :] = dct_table[j].iloc[[i]].values
+                    else:
+                        pass
+                else:
+                    pass
         self.datatable_show = DataTable(
             self.datatable_show,
             self.table_type
@@ -77,25 +102,51 @@ class TimelineViewer():
         self.update()
 
     def view(self):
+
+        # TODO Pre-processing ATTACHMENT
+        # - Move to ViewFactory?
         self.datatable_show.table["FILE_NAME"] = None
         self.datatable_show.table["PATH"] = None
         self.datatable_show.table["FILE_FORMAT"] = None
-        for i in range(len(self.datatable_show.table)):
-            if self.datatable_show.table.loc[i, "ATTACHMENT"]:
-                file_pth = Path(self.datatable_show.table.loc[i, "ATTACHMENT"])
-                self.datatable_show.table.loc[i, "FILE_NAME"] = file_pth.name
-                self.datatable_show.table.loc[i, "PATH"] = file_pth.parent
-                self.datatable_show.table.loc[i, "FILE_FORMAT"] = file_pth.suffix[1:].upper()
+        if "ATTACHMENT" in self.datatable_show.table.columns:
+            for i in range(len(self.datatable_show.table)):
+                if self.datatable_show.table.loc[i, "ATTACHMENT"]:
+                    file_pth = Path(self.datatable_show.table.loc[i, "ATTACHMENT"])
+                    self.datatable_show.table.loc[i, "FILE_NAME"] = file_pth.name
+                    self.datatable_show.table.loc[i, "PATH"] = file_pth.parent
+                    self.datatable_show.table.loc[i, "FILE_FORMAT"] = file_pth.suffix[1:].upper()
 
         # Raw content
         dct = ViewFactory.view(self.datatable_show)
 
-        dct["TIME_GRID"] = pd.Series([t.left for t in self.time_grid])
+        boxes = {}
+        boxes["IMAGE"] = dct["IMAGE"]
+        boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
 
-        # Dimension information for viewing  # TODO Should be in pages and config
-        dct["N_BOXES"] = self.n_grid
+        # Transform Type specific to timeline
+        if self.table_type.name == "MESSAGE":
+            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
+            boxes["ID"] = dct["ID_MESSAGE"]["value"]
+            boxes['TEXT'] = dct['TEXT']["value"]
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
+            boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
+        elif self.table_type.name == "NOTE":
+            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
+            boxes["ID"] = dct["ID_NOTE"]["value"]
+            boxes['TEXT'] = dct['TITLE']["value"]
+            # TODO As title for page: Notebook, Notebook Collection
+        elif self.table_type.name == "ALBUM":
+            boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
+            boxes["ID"] = dct["ID_ALBUM"]["value"]
+            boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
 
-        return dct
+        boxes["TIME_GRID"] = pd.Series([t for t in self.time_grid])  # pd.Series([t.left for t in self.time_grid])
+        boxes["N_DIM"] = self.n_dim
+
+        return boxes
 
 # Timeline utilities
 class TimelineFactory:

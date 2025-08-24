@@ -4,8 +4,12 @@ from dash import Dash, html, dcc
 import dash_auth
 from flask import session, send_file, request
 from flask_session import Session
+from sqlalchemy import create_engine, MetaData
+import mysql.connector
 import os
 import json
+import json
+from pathlib import Path
 from dotenv import load_dotenv
 import mimetypes
 
@@ -91,7 +95,7 @@ dash_app = Dash(__name__, use_pages=True)
 auth = dash_auth.BasicAuth(dash_app, VALID_USERNAME_PASSWORD_PAIRS)
 app = dash_app.server
 
-# TODO On Azure: redis
+# TODO On Azure: redis, sqlite?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
@@ -104,26 +108,36 @@ Session(app)
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
-        session['album'] = {"ID_ALBUM": 7}
+        session['ALBUM'] = {"ID_ALBUM": 7}
+        session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
+        session['NOTEBOOK'] = {"ID_NOTEBOOK": 2}
         session['album_view'] = {"IX_PHOTO": [None]}
-        session['message_collection'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['message_view'] = {"GRANULARITY": "W", "DATETIME_START": pd.Timestamp(2024, 12, 23)}
+        session['timeline_simple_content'] = TableType.MESSAGE.name  # TableType.NOTE.name   # TableType.MESSAGE.name
+        session['timeline_simple_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
+        session['timeline_content'] = TableType.ALBUM.name
+        session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
+        session['content_content'] = None
+        session['content_view'] = {}
         session['initialized'] = True
 
-# TODO Local
 @app.route("/video")
 def stream_video():
     name = request.args.get("name")
-    stream = PhotoFactory.stream_image(
-        pd.Series(data={'AZURE_CONTAINER': "photo", 'AZURE_BLOB': name}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
-        "AZURE"
-    )
+    # TODO Common call, decoding in PhotoFactory
+    if config.environment_storage == "LOCAL":
+        stream = Path(name)
+    elif config.environment_storage == "AZURE":
+        stream = PhotoFactory.stream_image(
+            pd.Series(data={'AZURE_CONTAINER': "photo", 'AZURE_BLOB': name}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
+            "AZURE"
+        )
     mimetype, _ = mimetypes.guess_type(name)
     if not mimetype:
         mimetype = "application/octet-stream"  # fallback
     return send_file(stream, mimetype=mimetype)
 
 dash_app.layout = html.Div([
+    dcc.Location(id="url-redirect"),
     html.Div([
         html.Div(
             dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
@@ -131,6 +145,8 @@ dash_app.layout = html.Div([
     ]),
     dash.page_container,
 ])
+
+import Views.Callbacks
 
 if __name__ == '__main__':
     if config.environment_app == "LOCAL":

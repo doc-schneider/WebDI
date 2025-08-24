@@ -17,7 +17,7 @@ class DataTable:
         table = fetch_table(table_name)
         return DataTable(
             table,
-            table_type
+            table_type,
         )
 
     # TODO Into Files module?
@@ -58,9 +58,9 @@ class DataTable:
     #TODO Separate function for converting TAG column to lists?
 
     #TODO Do exclusive right boundary
-    def find_in_timeinterval(self, timeinterval):
+    def find_in_timeinterval(self, timeinterval, column="DATE_TIME"):
         # Returns sub-table of all documents whose DATE_TIME overlaps a requested time interval
-        iix = (self.table["DATE_TIME"] >= timeinterval.left) & (self.table["DATE_TIME"] <= timeinterval.right)
+        iix = (self.table[column] >= timeinterval.left) & (self.table[column] <= timeinterval.right)
         return DataTable(self.table[iix].reset_index(drop=True), self.table_type)
 
     # Return record belonging to a specific foreignkey value
@@ -74,14 +74,20 @@ class DataTable:
         )
 
     # Add column foreignkey. Get values from foreign table
-    def add_foreignkey(self, foreign_column, foreign_table_name):
+    # TODO Proper handling of multiple instances of album name
+    def add_foreignkey(self, foreign_column, foreign_table_name, multiple="last"):
         foreign_key = table_definitions[self.table_type]["ForeignKey"]
         foreign_table = self.fetch_table(None, foreign_table_name)
-        self.table = self.table.merge(
-            foreign_table.table[[foreign_column, foreign_key]],
-            on=foreign_column,
-            how="left"
-        )
+        foreign_id = foreign_table.table.loc[
+            foreign_table.table[foreign_column] == self.table[foreign_column].values[0],
+            foreign_key
+        ]
+        if multiple == "last":
+            foreign_id = foreign_id.max()
+        else:
+            foreign_id = "error"
+            print("error")
+        self.table[foreign_key] = foreign_id
 
     # TODO These should possibly located in MySQL. In memory / DataFrame should store them as Path etc
     #

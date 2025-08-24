@@ -3,8 +3,9 @@ from pathlib import Path
 import pandas as pd
 
 from DataStructures.TableTypes import TableType, table_definitions
+from DataStructures.Data import DataTable
 from DataOperations.Photo import PhotoFactory
-from DataOperations.MySQL import table_insert
+from DataOperations.MySQL import table_insert, table_insert_mysql
 from Initialize.Initialize import initialize_MySQL
 import config
 
@@ -12,26 +13,41 @@ import config
 config.environment_storage = "LOCAL"
 initialize_MySQL()
 
-# Script new photo album + entry in collection
-#
+flag_add_photos = False
+flag_add_event = False
+
+if flag_add_photos:
+    id_album = 163
+
+    photo_table_old = DataTable.fetch_table(
+        TableType.PHOTO,
+        "photos"
+    )
+    photo_table_old = photo_table_old.match_foreignkey(id_album)
+
 # Raw photo table
-album_name = "ccc"
+album_name = "Sonntagsradeln Eller"
 chapters = [
-    "ccc"
+    "Um die Ecke, aber doch weit weg von Luxus-Düsseldorf"
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2010/2010_11_China/China_Auswahl/    "),
+        Path("Y:/2025/2025_08_24_Sonntagsradeln Eller"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2010/2010_11_China/China_Auswahl/PreDokumentliste.csv"),
-    timezone_default="Asia/Shanghai"
-)   # Path("Y:/2025/2025_04_27_Sonntagsradeln Hamm/PreDokumentliste.csv")
-#
+    pretable_file=Path("Y:/2025/2025_08_24_Sonntagsradeln Eller/PreDokumentliste.csv"),
+)   # Path("Y:/2025/2025_07_27_Radeln Flingern/PreDokumentliste.csv")
+
+if flag_add_photos:
+    # Only keep new entries
+    photo_table.table = photo_table.table[~photo_table.table["FILE_NAME"].isin(photo_table_old.table["FILE_NAME"])]
+    photo_table.table["ID_ALBUM"] = id_album
+    # TODO New DATE_FROM/TO for album
+    # TODO Album name copy
+
 # Add Event
 # Events from chapters
-flag_add_event = False
 if flag_add_event:
     photo_table.table["EVENT"] = photo_table.table["CHAPTER"]
     events_dct = {c: {"EVENT": c,
@@ -57,32 +73,35 @@ if flag_add_event:
         table_insert_mysql(conn, mycursor, "events", event_table)
     # plain
     # photo_table.table["ID_EVENT"] = 7
-#
+
 # Extract album data from a new photo dataframe
-owner = "Stefan|Konstanze"
-album_description = ""
-album = photo_table.table["PHOTO_ALBUM"].unique()[0]
-d_t = photo_table.table["DATE_TIME"]
-date_from = d_t.min()
-date_to = d_t.max()
-cols = list(table_definitions[TableType.ALBUM]["Columns"].keys())
-album_table = pd.DataFrame(
-    index=[0],
-    data={
-        "PHOTO_ALBUM": album,
-        "DATE_FROM": date_from,
-        "DATE_TO": date_to,
-        "DESCRIPTION": album_description,
-        "OWNER": owner
-    }
-)
-#
-# Insert new album
-table_insert(config.mysql["metadata"], config.mysql["conn"], "albums", album_table)
-#
-# Get the foreign key for the photo table
-photo_table.add_foreignkey("PHOTO_ALBUM", "albums")
-#
+# TODO from - to not quite right for non CET time ?
+if not flag_add_photos:
+    owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
+    album_description = ""
+    album = photo_table.table["PHOTO_ALBUM"].unique()[0]
+    d_t = photo_table.table["DATE_TIME"]
+    date_from = d_t.min()
+    date_to = d_t.max()
+    cols = list(table_definitions[TableType.ALBUM]["Columns"].keys())
+    album_table = pd.DataFrame(
+        index=[0],
+        data={
+            "PHOTO_ALBUM": album,
+            "DATE_FROM": date_from,
+            "DATE_TO": date_to,
+            "DESCRIPTION": album_description,
+            "OWNER": owner
+        }
+    )
+    #
+    # Insert new album
+    table_insert(config.mysql["metadata"], config.mysql["conn"], "albums", album_table)
+    #
+    # Get the foreign key for the photo table
+    # TODO Multiple albums having the same name
+    photo_table.add_foreignkey("PHOTO_ALBUM", "albums")
+
 # Insert the new photos
 table_insert(config.mysql["metadata"], config.mysql["conn"], "photos", photo_table.table)
 
