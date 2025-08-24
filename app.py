@@ -4,10 +4,7 @@ from dash import Dash, html, dcc
 import dash_auth
 from flask import session, send_file, request
 from flask_session import Session
-from sqlalchemy import create_engine, MetaData
-import mysql.connector
 import os
-import json
 import json
 from pathlib import Path
 from dotenv import load_dotenv
