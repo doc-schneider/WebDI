@@ -20,12 +20,12 @@ class DataTable:
             table_type,
         )
 
-    # TODO Into Files module?
-    # TODO Too complicated. Do direct creation, not buffer
+    # TODO Files module: Write to local drive?
+    # TODO  sep=";" cental defintion?
     def write_table_to_csv(self):
         csv_buffer = io.StringIO()
         self.table.to_csv(csv_buffer, index=False, sep=";")
-        csv_buffer.seek(0)
+        csv_buffer.seek(0)  # TODO ?
         return csv_buffer
 
     def sort(self, column="DATE_TIME"):

@@ -15,7 +15,7 @@ def fetch_table(table_name):
             if col in table_columns_names_types.keys():
                 mysqltype = table_columns_names_types[col]["mysqltype"]
                 if mysqltype == "text":
-                    table[col] = table[col].astype(str)
+                    table[col] = table[col].astype("string")
                     table[col].fillna("", inplace=True)
                 elif mysqltype == "integer":
                     pass
