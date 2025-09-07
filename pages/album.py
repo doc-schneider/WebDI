@@ -5,6 +5,7 @@ from flask import session
 from DataStructures.TableTypes import TableType
 from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Album import AlbumViewer
+from Views.View_Factory import ViewFactory
 from Views.Collection import CollectionViewer
 import config
 
@@ -71,38 +72,17 @@ def update_album(AlbumView):
            ] + [
         html.Div([
             html.Div(
-                media_type_box(
+                ViewFactory.media_type_box(
                     boxes_dct["FILE_FORMAT"]["value"][i],
                     boxes_dct["IMAGE"][i],
-                    i,
                     boxes_dct["DATE_TIME"]["value"].dt.strftime('%Y-%m-%d %X').fillna('')[i],
                     boxes_dct["DESCRIPTION"]["value"][i]
                 ),
-                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'}
+                style={'flex': 1, 'padding': '10px', 'border': '1px solid black'},
+                id={"type": "album_box", "index": i}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
     ], slider_max, slider_value, slider_marks
-
-def media_type_box(media_type, content_display, i, date_time, description):
-    # TODO Link back to main code
-    if media_type in allow_formats_image:
-        return [
-            html.Img(
-                src="data:image/jpeg;base64," + content_display,
-                width="100%",
-            ),
-            html.Div(date_time + ": " + description)
-        ]
-    elif media_type in allow_formats_video:
-        return [
-            html.Video(
-                src=f"/video?name={content_display}",
-                controls=True,
-                width="100%",
-            ),
-            html.Div(date_time + ": " + description)
-        ]
-# id={"type": "album_box", "index": i}
 
 def init_Album(album, album_view):
     return AlbumViewer(

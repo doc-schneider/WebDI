@@ -26,17 +26,17 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Zurheide: Alter Riesling"
+album_name = "Freitags frei"
 chapters = [
-    "30 Euro, aber leider verdorben bzw korkig"
+    "Lorettostraße & Oberkassel"
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("W:/Fotos/2025/2025_08_27_Riesling Reserve"),
+        Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("W:/Fotos/2025/2025_08_27_Riesling Reserve/PreDokumentliste.csv"),
+    pretable_file=Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug/PreDokumentliste.csv"),
 )   # Path("Y:/2025/2025_07_27_Radeln Flingern/PreDokumentliste.csv")
 
 if flag_add_photos:
