@@ -68,7 +68,7 @@ class AzureFactory:
             return container_client.download_blob(blob_name).readall()
         else:
             container_client.download_blob(blob_name).readinto(stream)
-            return stream   # TODO return necessary?
+            return stream   # TODO return not necessary (?)
 
     @staticmethod
     def read_table_from_blob(container_name, blob_name, environment):
@@ -78,7 +78,21 @@ class AzureFactory:
                     container_name, blob_name, environment
                 )
             ), sep=";"
-        )
+        )  # TODO StringIO? sep shouldnt be necessary?
+
+    # @staticmethod
+    # def read_csv_from_blob(container_name, blob_name, environment):
+    #     csv_data = AzureFactory.download_blob(
+    #         container_name, blob_name, environment
+    #     ).decode("utf-8")
+    #     return pd.read_csv(
+    #         io.StringIO(csv_data)
+    #     )
+
+    @staticmethod
+    def write_table_to_blob(container_name, blob_name, table):
+        csv_buffer = table.write_table_to_csv()
+        AzureFactory.upload_blob(container_name, blob_name, csv_buffer.getvalue())
 
     @staticmethod
     def convert_path_to_blob(path_str):

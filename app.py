@@ -113,8 +113,8 @@ def ensure_session_initialized():
         session['timeline_simple_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
         session['timeline_content'] = TableType.ALBUM.name
         session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        session['content_content'] = None
-        session['content_view'] = {}
+        session['content_content'] = TableType.PHOTO.name
+        session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
 
 @app.route("/video")

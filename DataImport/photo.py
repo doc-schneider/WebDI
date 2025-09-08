@@ -26,17 +26,17 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Sonntagsradeln Eller"
+album_name = "Freitags frei"
 chapters = [
-    "Um die Ecke, aber doch weit weg von Luxus-Düsseldorf"
+    "Lorettostraße & Oberkassel"
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_08_24_Sonntagsradeln Eller"),
+        Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_08_24_Sonntagsradeln Eller/PreDokumentliste.csv"),
+    pretable_file=Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug/PreDokumentliste.csv"),
 )   # Path("Y:/2025/2025_07_27_Radeln Flingern/PreDokumentliste.csv")
 
 if flag_add_photos:
@@ -77,7 +77,7 @@ if flag_add_event:
 # Extract album data from a new photo dataframe
 # TODO from - to not quite right for non CET time ?
 if not flag_add_photos:
-    owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
+    owner = "Stefan"  # "Stefan"  "Stefan|Konstanze"
     album_description = ""
     album = photo_table.table["PHOTO_ALBUM"].unique()[0]
     d_t = photo_table.table["DATE_TIME"]

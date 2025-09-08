@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
-import shutil
 from urllib.parse import quote
+from dash import html
 
 from DataStructures.TableTypes import table_columns_names_types
 from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video
@@ -52,4 +52,23 @@ class ViewFactory:
 
         return dct
 
-
+    # TODO Only media here, move datetime, description
+    @staticmethod
+    def media_type_box(media_type, content_display, date_time, description):
+        if media_type in allow_formats_image:
+            return [
+                html.Img(
+                    src="data:image/jpeg;base64," + content_display,
+                    style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                ),
+                html.Div(date_time + ": " + description)
+            ]
+        elif media_type in allow_formats_video:
+            return [
+                html.Video(
+                    src=f"/video?name={content_display}",
+                    controls=True,
+                    style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                ),
+                html.Div(date_time + ": " + description)
+        ]
