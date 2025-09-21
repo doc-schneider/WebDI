@@ -26,17 +26,17 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Freitags frei"
+album_name = "Stichwahl Düsseldorf 2025"
 chapters = [
-    "Lorettostraße & Oberkassel"
+    "Oberbürgermeister",
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug"),
+        Path("W:/Fotos/2025/2025_09_19_Stichwahl Düsseldorf"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug/PreDokumentliste.csv"),
+    pretable_file=Path("W:/Fotos/2025/2025_09_19_Stichwahl Düsseldorf/PreDokumentliste.csv"),
 )   # Path("Y:/2025/2025_07_27_Radeln Flingern/PreDokumentliste.csv")
 
 if flag_add_photos:
@@ -100,7 +100,7 @@ if not flag_add_photos:
     #
     # Get the foreign key for the photo table
     # TODO Multiple albums having the same name
-    photo_table.add_foreignkey("PHOTO_ALBUM", "albums")
+    photo_table.add_foreignkey("PHOTO_ALBUM", "albums", TableType.ALBUM)
 
 # Insert the new photos
 table_insert(config.mysql["metadata"], config.mysql["conn"], "photos", photo_table.table)

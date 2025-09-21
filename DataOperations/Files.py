@@ -33,7 +33,7 @@ def get_files_info(
     for f in files:
         info["PATH"].append(pfad)
         info["FILE_NAME"].append(f.name)
-        info["FILE_FORMAT"].append(f.suffix[1:].upper())  #  Removes dot . from string.
+        info["FILE_FORMAT"].append(f.suffix[1:].upper())  # Removes dot . from string.
         # st_ctime : creation time (of file on computer)
         # st_mtime : last content modification time
         # TODO Has this timestamp any use? Modification time seems to be sometimes right

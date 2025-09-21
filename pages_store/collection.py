@@ -1,7 +1,7 @@
 import dash
-from dash import html, Input, Output, State, ctx, ALL, callback, dcc
+from dash import html, Input, Output, ctx, ALL, callback, dcc
 
-from Views.Collection import CollectionViewer
+from Views_store.Collection import CollectionViewer
 from DataStructures.TableTypes import TableType
 import config
 

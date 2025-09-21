@@ -8,6 +8,7 @@ from sqlalchemy.types import Text, DateTime, Integer, Time
 # - ALBUM: Collection of albums / books / CDs .. Like a library
 class TableType(Enum):
     PHOTO = 10
+    PHOTO_PAGE = 11
     FILM = 12
     PHOTO_SELECTION = 15
     ALBUM = 20
@@ -172,7 +173,7 @@ table_columns_names_types = {
 }
 
 # TODO AZURE columns
-# TODO More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album, copy of a document)
+# TODO More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album)
 #
 # Tables & Types
 table_definitions = {
@@ -188,6 +189,21 @@ table_definitions = {
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },
         "PrimaryKey": "ID_PHOTO",
+        "ForeignKey": ["ID_ALBUM", "ID_PHOTO_PAGE"],
+        "ParentTableType": TableType.ALBUM
+    },
+    TableType.PHOTO_PAGE: {
+        "Columns": {
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "PHOTO_ALBUM": table_columns_names_types["PHOTO_ALBUM"],
+            "CHAPTER": table_columns_names_types["CHAPTER"],
+        },
+        "PrimaryKey": "ID_PHOTO_PAGE",
         "ForeignKey": "ID_ALBUM",
         "ParentTableType": TableType.ALBUM
     },

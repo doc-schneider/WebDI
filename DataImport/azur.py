@@ -14,7 +14,7 @@ initialize_MySQL()
 
 # Upload photo album
 #
-ID_ALBUM = 180
+ID_ALBUM = 195
 #
 # Get meta table from Database
 config.environment_storage = "LOCAL"
@@ -30,13 +30,13 @@ album_table_azure = DataTable.fetch_table(
     "albums.csv"
 )
 # Append
-# album_table = DataTable(
-#     pd.concat([album_table_mysql.table, album_table_azure.table], ignore_index=True),
-#     TableType.ALBUM,
-# )
+album_table = DataTable(
+    pd.concat([album_table_mysql.table, album_table_azure.table], ignore_index=True),
+    TableType.ALBUM,
+)
 # Upload to blob
-# AzureFactory.write_table_to_blob("tables", "albums.csv", album_table)
-#
+AzureFactory.write_table_to_blob("tables", "albums.csv", album_table)
+
 # Get file table and upload
 #
 config.environment_storage = "LOCAL"

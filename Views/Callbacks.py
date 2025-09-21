@@ -28,8 +28,16 @@ def click_box(n_clicks_list_album, n_clicks_list_timeline):
             session['timeline_content'],
             session["timeline_view"],
         )
-        id_album = TimelineView.datatable_show.table.loc[ix, "ID_ALBUM"]
-        session['ALBUM']["ID_ALBUM"] = id_album
-        session['album_view'] = {"IX_PHOTO": [None]}
-        return "/album"
+        if TimelineView.datatable_show.table_type.name == TableType.ALBUM.name:
+            id_album = TimelineView.datatable_show.table.loc[ix, "ID_ALBUM"]
+            session['ALBUM']["ID_ALBUM"] = id_album
+            session['album_view'] = {"IX_PHOTO": [None]}
+            return "/album"
+        elif TimelineView.datatable_show.table_type.name == TableType.MESSAGE.name:
+            session["content_content"] = TableType.MESSAGE.name
+            id_message = TimelineView.datatable_show.table.loc[ix, "ID_MESSAGE"]
+            session['content_view']["ID_MESSAGE"] = id_message
+            return "/content"
+
+
 

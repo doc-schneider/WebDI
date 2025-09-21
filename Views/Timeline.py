@@ -15,7 +15,7 @@ class TimelineViewer():
         self.table_type = datatable_initial.table_type
         if self.table_type.name == "ALBUM":
             self.time_column = "DATE_FROM"
-        else:
+        else:  # MESSAGE
             self.time_column = "DATE_TIME"
         self.datatable.sort(self.time_column)
         self.n_rows = timeline_view["n_rows"]
@@ -36,7 +36,7 @@ class TimelineViewer():
                 dct_table[i] = t
         # Size of 2-dim table to vizualize
         r = [dct_table[i].shape[0] for i in range(self.n_grid) if dct_table[i] is not None]
-        if r:
+        if r:  # Any content at all?
             self.n_dim = (
                 min(
                     max(r),
@@ -46,7 +46,7 @@ class TimelineViewer():
             )
         else:
             self.n_dim = (0, self.n_grid)
-        # Serial Dataframe
+        # Serial Dataframe, going line-wise left-right
         self.datatable_show = pd.DataFrame(
             columns=self.datatable.table.columns
         )
@@ -103,47 +103,40 @@ class TimelineViewer():
 
     def view(self):
 
-        # TODO Pre-processing ATTACHMENT
-        # - Move to ViewFactory?
-        self.datatable_show.table["FILE_NAME"] = None
-        self.datatable_show.table["PATH"] = None
-        self.datatable_show.table["FILE_FORMAT"] = None
-        if "ATTACHMENT" in self.datatable_show.table.columns:
-            for i in range(len(self.datatable_show.table)):
-                if self.datatable_show.table.loc[i, "ATTACHMENT"]:
-                    file_pth = Path(self.datatable_show.table.loc[i, "ATTACHMENT"])
-                    self.datatable_show.table.loc[i, "FILE_NAME"] = file_pth.name
-                    self.datatable_show.table.loc[i, "PATH"] = file_pth.parent
-                    self.datatable_show.table.loc[i, "FILE_FORMAT"] = file_pth.suffix[1:].upper()
+        # # Get FILE information from ATTACHMENT if present
+        # if self.table_type.name in ["MESSAGE"]:
+        #     resolve_attachment = True
+        # else:
+        #     resolve_attachment = False
 
         # Raw content
-        dct = ViewFactory.view(self.datatable_show)
+        boxes = ViewFactory.view(self.datatable_show)
 
-        boxes = {}
-        boxes["IMAGE"] = dct["IMAGE"]
-        boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
+        # boxes = {}
+        # boxes["IMAGE"] = dct["IMAGE"]
+        # boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
+        #
+        # # Transform Type specific to timeline
+        # if self.table_type.name == "MESSAGE":
+        #     boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
+        #     boxes["ID"] = dct["ID_MESSAGE"]["value"]
+        #     boxes['TEXT'] = dct['TEXT']["value"]
+        #     boxes['TEXT_ADDITIONAL'] = {}
+        #     boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
+        #     boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
+        # elif self.table_type.name == "NOTE":
+        #     boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
+        #     boxes["ID"] = dct["ID_NOTE"]["value"]
+        #     boxes['TEXT'] = dct['TITLE']["value"]
+        #     # TODO As title for page: Notebook, Notebook Collection
+        # elif self.table_type.name == "ALBUM":
+        #     boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
+        #     boxes["ID"] = dct["ID_ALBUM"]["value"]
+        #     boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
+        #     boxes['TEXT_ADDITIONAL'] = {}
+        #     boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
 
-        # Transform Type specific to timeline
-        if self.table_type.name == "MESSAGE":
-            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-            boxes["ID"] = dct["ID_MESSAGE"]["value"]
-            boxes['TEXT'] = dct['TEXT']["value"]
-            boxes['TEXT_ADDITIONAL'] = {}
-            boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
-            boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
-        elif self.table_type.name == "NOTE":
-            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-            boxes["ID"] = dct["ID_NOTE"]["value"]
-            boxes['TEXT'] = dct['TITLE']["value"]
-            # TODO As title for page: Notebook, Notebook Collection
-        elif self.table_type.name == "ALBUM":
-            boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
-            boxes["ID"] = dct["ID_ALBUM"]["value"]
-            boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
-            boxes['TEXT_ADDITIONAL'] = {}
-            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
-
-        boxes["TIME_GRID"] = pd.Series([t for t in self.time_grid])  # pd.Series([t.left for t in self.time_grid])
+        boxes["TIME_GRID"] = pd.Series([t for t in self.time_grid])
         boxes["N_DIM"] = self.n_dim
 
         return boxes
@@ -156,7 +149,8 @@ class TimelineFactory:
     # - If no "change" is indicated it returns number of boxes and box boundaries
     @staticmethod
     def timegrid(datetime_start, granularity, change=None):
-        #TODO  50 Y granulairty, fine granularity
+        # TODO Some kind of error with Yearly / zoom (beginning of year)?
+        # TODO  50 Y granulairty, fine granularity
 
         # New granularity
         if change == "zoomin":

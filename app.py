@@ -101,6 +101,7 @@ app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser
 app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
 Session(app)
 
+# TODO Into View Factory?
 @app.before_request
 def ensure_session_initialized():
     # TODO Into Initialize module
@@ -109,14 +110,15 @@ def ensure_session_initialized():
         session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
         session['NOTEBOOK'] = {"ID_NOTEBOOK": 2}
         session['album_view'] = {"IX_PHOTO": [None]}
-        session['timeline_simple_content'] = TableType.MESSAGE.name  # TableType.NOTE.name   # TableType.MESSAGE.name
-        session['timeline_simple_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
+        # session['timeline_content'] = TableType.MESSAGE.name  # TableType.NOTE.name
+        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
         session['timeline_content'] = TableType.ALBUM.name
         session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
         session['content_content'] = TableType.PHOTO.name
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
 
+# TODO Into View Factory?
 @app.route("/video")
 def stream_video():
     name = request.args.get("name")

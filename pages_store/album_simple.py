@@ -1,11 +1,11 @@
 import dash
-from dash import html, Input, Output, State, callback, ctx, dcc, ALL, MATCH
+from dash import html, Input, Output, callback, ctx, dcc, ALL
 from flask import session
 
 from DataStructures.TableTypes import TableType
 from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Album import AlbumViewer
-from Views.Collection import CollectionViewer
+from Views_store.Collection import CollectionViewer
 import config
 
 '''

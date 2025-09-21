@@ -1,7 +1,7 @@
 import dash
 from dash import html, Input, Output, callback, dcc, ALL, State, ctx
 
-from Views.Table import TableViewer
+from Views_store.Table import TableViewer
 from DataStructures.TableTypes import TableType
 import config
 
