@@ -13,7 +13,7 @@ config.environment_storage = "LOCAL"
 initialize_MySQL()
 
 
-# Remove photo records wiht wroong ID_ALBUM
+# Remove photo records wiht wrong ID_ALBUM
 #
 album_table = DataTable.fetch_table(TableType.ALBUM, "albums")
 photo_table = DataTable.fetch_table(TableType.PHOTO, "photos")
@@ -41,10 +41,11 @@ for a_n in album_names:
                         config.mysql["connector"], config.mysql["cursor"],
                         "photos", "ID_PHOTO", int(id)
                     )
-
-
+# Delete Table
+#
 
 # Create table
+#
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
     config.mysql["connector"], config.mysql["cursor"],
@@ -56,16 +57,21 @@ create_table_mysql(
 # foreign_table_dct=table_definitions[TableType.MESSAGE_COLLECTION]
 
 # Add foreign key column
+#
 foreign_table = "events"
 foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
 add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
-table_name = "photos"
-column_name = "ATTACHMENT"
+table_name = "notebooks"
+column_name = "PATH"
 add_columns(
     config.mysql["connector"], config.mysql["cursor"],
-    table_name, {column_name: table_columns_names_types[column_name]["mysqltype"]}
+    table_name, {
+        "FILE_NAME": table_columns_names_types["FILE_NAME"]["mysqltype"],
+        "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"]["mysqltype"],
+        "PATH": table_columns_names_types["PATH"]["mysqltype"]
+    }
 )
 
 # Delete column
@@ -86,6 +92,7 @@ update_column()
 #config.mysql["connector"].commit()
 
 # Fetch table subset (where)
+#
 table_name = "albums"
 column_name = "ID_ALBUM"
 value = 6

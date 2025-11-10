@@ -1,17 +1,27 @@
 from pathlib import Path
 import pandas as pd
 from urllib.parse import quote
-from dash import html
+from dash import html, dcc
 
-from DataStructures.TableTypes import table_columns_names_types
+from DataStructures.TableTypes import table_columns_names_types, table_definitions
 from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video
-import config
+import config  # TODO Not in this this module
 
 
 # TODO  Work directly with copy of config.table?
 class ViewFactory:
+
+    # Filter table for specification of a parent id if specified in session
     @staticmethod
-    def view(datatable, load_media=True, resolve_attachment=False):
+    def filter_table(datatable, session):
+        table_type = datatable.table_type
+        if "ParentTableType" in table_definitions[table_type]:
+            parent_table_type = table_definitions[table_type]["ParentTableType"]
+            datatable = datatable.filter(session[parent_table_type.name])
+        return datatable
+
+    @staticmethod
+    def view(datatable, load_media=True):
         # Adding FILE information if not present
         if datatable.table_type.name in ["MESSAGE", "ALBUM"]:
             datatable.table["FILE_NAME"] = None
@@ -50,26 +60,25 @@ class ViewFactory:
                 }
 
         # Source specifc
-        if load_media:  # TODO Still needed?
-            dct["IMAGE"] = []  # TODO type / value ?
-            for i in range(datatable.table.shape[0]):
-                file_format = datatable.table.loc[i, "FILE_FORMAT"]
-                # Extract data
-                if file_format in allow_formats_image:  # TODO in Operations/Photo
-                    # Return image as base64 jpg
-                    dct["IMAGE"].append(
-                        PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage)
-                    )
-                elif file_format in allow_formats_video:
-                    # TODO Can load as byte object in memory
-                    if config.environment_storage == "LOCAL":
-                        file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
-                        dct["IMAGE"].append(quote(str(file_pth), safe=""))
-                    elif config.environment_storage == "AZURE":
-                        dct["IMAGE"].append(quote(datatable.table.loc[i, "AZURE_BLOB"], safe=""))
-                else:
-                    dct["IMAGE"].append(None)
-            dct["IMAGE"] = pd.Series(dct["IMAGE"])
+        dct["IMAGE"] = []  # TODO type / value ?
+        for i in range(datatable.table.shape[0]):
+            file_format = datatable.table.loc[i, "FILE_FORMAT"]
+            # Extract data
+            if load_media and file_format in allow_formats_image:  # TODO in Operations/Photo
+                # Return image as base64 jpg
+                dct["IMAGE"].append(
+                    PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage)
+                )
+            elif load_media and file_format in allow_formats_video:
+                # TODO Can load as byte object in memory
+                if config.environment_storage == "LOCAL":
+                    file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
+                    dct["IMAGE"].append(quote(str(file_pth), safe=""))
+                elif config.environment_storage == "AZURE":
+                    dct["IMAGE"].append(quote(datatable.table.loc[i, "AZURE_BLOB"], safe=""))
+            else:
+                dct["IMAGE"].append(None)
+        dct["IMAGE"] = pd.Series(dct["IMAGE"])
 
         boxes = {}
         boxes["IMAGE"] = dct["IMAGE"]
@@ -88,6 +97,8 @@ class ViewFactory:
             boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
             boxes["ID"] = dct["ID_NOTE"]["value"]
             boxes['TEXT'] = dct['TITLE']["value"]
+            if "TEXT" in dct.keys():
+                boxes['MARKDOWN'] = dct["TEXT"]["value"]
             # TODO As title for page: Notebook, Notebook Collection
         elif datatable.table_type.name == "PHOTO":
             # Album View
@@ -131,8 +142,11 @@ class ViewFactory:
     @staticmethod
     def additional_items(boxes_dct, i, item):
         if item in boxes_dct.keys():
-            return [
-                html.Div(txt_add[i]) for _, txt_add in boxes_dct[item].items()
-            ]
+            if item == "MARKDOWN":
+                return [html.Div(dcc.Markdown(boxes_dct[item][i]))]
+            else:
+                return [
+                    html.Div(txt_add[i]) for _, txt_add in boxes_dct[item].items()
+                ]
         else:
             return []

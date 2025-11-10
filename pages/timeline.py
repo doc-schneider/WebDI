@@ -5,7 +5,7 @@ from flask import session
 
 from Views.View_Factory import ViewFactory
 from Views.Timeline import TimelineViewer
-from DataStructures.TableTypes import TableType
+from DataStructures.TableTypes import TableType, table_definitions
 import config
 
 # Definition of layout on page
@@ -156,7 +156,10 @@ def update_timeline(TimelineView):
     ], style={"display": "flex", "flex-direction": "column", "gap": "5px"})]
 
 def init_Timeline(timeline_content, timeline_view):
-    data_table = config.table[TableType[timeline_content]]["data_table"]
+    data_table = ViewFactory.filter_table(
+        config.table[TableType[timeline_content]]["data_table"],
+        session
+    )
     return TimelineViewer(
         data_table,
         timeline_view,

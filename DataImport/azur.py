@@ -12,6 +12,19 @@ load_dotenv()
 config.environment_app = "LOCAL"
 initialize_MySQL()
 
+# Upload Message Collection
+#
+ID_MESSAGE_COLLECTION = 1
+#
+# Get message table and upload
+#
+config.environment_storage = "LOCAL"
+message_table_mysql = DataTable.fetch_table(
+    TableType.MESSAGE,
+    "messages"
+).filter({"ID_MESSAGE_COLLECTION": ID_MESSAGE_COLLECTION})
+
+
 # Upload photo album
 #
 ID_ALBUM = 195
@@ -36,7 +49,7 @@ album_table = DataTable(
 )
 # Upload to blob
 AzureFactory.write_table_to_blob("tables", "albums.csv", album_table)
-
+#
 # Get file table and upload
 #
 config.environment_storage = "LOCAL"

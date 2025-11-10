@@ -3,7 +3,6 @@ import io
 from DataStructures.TableTypes import table_columns_names_types, table_definitions, TableType
 from DataOperations.Operations_Factory import fetch_table
 from DataOperations.Tag import TagFactory
-import config
 
 
 class DataTable:

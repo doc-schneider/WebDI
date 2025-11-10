@@ -38,6 +38,11 @@ def click_box(n_clicks_list_album, n_clicks_list_timeline):
             id_message = TimelineView.datatable_show.table.loc[ix, "ID_MESSAGE"]
             session['content_view']["ID_MESSAGE"] = id_message
             return "/content"
+        elif TimelineView.datatable_show.table_type.name == TableType.NOTE.name:
+            session["content_content"] = TableType.NOTE.name
+            id_message = TimelineView.datatable_show.table.loc[ix, "ID_NOTE"]
+            session['content_view']["ID_NOTE"] = id_message
+            return "/content"
 
 
 

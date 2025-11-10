@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-from pathlib import Path
 from dateutil.relativedelta import relativedelta, MO, SU
 
 from DataStructures.Data import DataTable
@@ -15,8 +13,13 @@ class TimelineViewer():
         self.table_type = datatable_initial.table_type
         if self.table_type.name == "ALBUM":
             self.time_column = "DATE_FROM"
-        else:  # MESSAGE
+        else:  # MESSAGE, NOTE
             self.time_column = "DATE_TIME"
+        if self.table_type.name == "NOTE":
+            self.load_media = False
+        else:
+            self.load_media = True
+        self.datatable.sort(self.time_column)
         self.datatable.sort(self.time_column)
         self.n_rows = timeline_view["n_rows"]
         self.n_dim = None
@@ -102,39 +105,8 @@ class TimelineViewer():
         self.update()
 
     def view(self):
-
-        # # Get FILE information from ATTACHMENT if present
-        # if self.table_type.name in ["MESSAGE"]:
-        #     resolve_attachment = True
-        # else:
-        #     resolve_attachment = False
-
         # Raw content
-        boxes = ViewFactory.view(self.datatable_show)
-
-        # boxes = {}
-        # boxes["IMAGE"] = dct["IMAGE"]
-        # boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
-        #
-        # # Transform Type specific to timeline
-        # if self.table_type.name == "MESSAGE":
-        #     boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-        #     boxes["ID"] = dct["ID_MESSAGE"]["value"]
-        #     boxes['TEXT'] = dct['TEXT']["value"]
-        #     boxes['TEXT_ADDITIONAL'] = {}
-        #     boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
-        #     boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
-        # elif self.table_type.name == "NOTE":
-        #     boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-        #     boxes["ID"] = dct["ID_NOTE"]["value"]
-        #     boxes['TEXT'] = dct['TITLE']["value"]
-        #     # TODO As title for page: Notebook, Notebook Collection
-        # elif self.table_type.name == "ALBUM":
-        #     boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
-        #     boxes["ID"] = dct["ID_ALBUM"]["value"]
-        #     boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
-        #     boxes['TEXT_ADDITIONAL'] = {}
-        #     boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
+        boxes = ViewFactory.view(self.datatable_show, self.load_media)
 
         boxes["TIME_GRID"] = pd.Series([t for t in self.time_grid])
         boxes["N_DIM"] = self.n_dim
