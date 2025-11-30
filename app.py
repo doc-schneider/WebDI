@@ -112,10 +112,10 @@ def ensure_session_initialized():
         session['album_view'] = {"IX_PHOTO": [None]}
         # session['timeline_content'] = TableType.MESSAGE.name
         # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
-        # session['timeline_content'] = TableType.ALBUM.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        session['timeline_content'] = TableType.NOTE.name
+        session['timeline_content'] = TableType.ALBUM.name
         session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
+        # session['timeline_content'] = TableType.NOTE.name
+        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
         session['content_content'] = TableType.PHOTO.name
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True

@@ -44,7 +44,7 @@ layout = html.Div([
     Input('later', "n_clicks"),
     Input('album-slider', 'value')
 )
-def click_photos(b1, b2, slider_value):
+def select_photos(b1, b2, slider_value):
     AlbumView = init_Album(session['ALBUM'], session["album_view"])
     if ctx.triggered_id == "earlier":  # and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)?
         AlbumView.earlier()

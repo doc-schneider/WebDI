@@ -93,6 +93,7 @@ class PhotoFactory:
 
         # Get meta data (exif)
         # - Recording time
+        # TODO Into Helper
         # TODO Process exif data in function
         for i in range(table.shape[0]):
             file_name = table.loc[i, "FILE_NAME"]

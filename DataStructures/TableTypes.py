@@ -9,10 +9,11 @@ from sqlalchemy.types import Text, DateTime, Integer, Time
 class TableType(Enum):
     PHOTO = 10
     PHOTO_PAGE = 11
-    FILM = 12
-    PHOTO_SELECTION = 15
+    PHOTO_SELECTION = 12
     ALBUM = 20
-    ALBUM_SELECTION = 25
+    ALBUM_SELECTION = 21
+    FILM_CONTENT = 24
+    FILM = 25
     TAG = 30
     NOTE = 40
     NOTEBOOK = 50
@@ -207,15 +208,6 @@ table_definitions = {
         "ForeignKey": "ID_ALBUM",
         "ParentTableType": TableType.ALBUM
     },
-    TableType.FILM: {
-        "Columns": {
-            "DATE_FROM": table_columns_names_types["DATE_FROM"],
-            "DATE_TO": table_columns_names_types["DATE_TO"],
-            "TIME_FROM": table_columns_names_types["TIME_FROM"],
-            "TIME_TO": table_columns_names_types["TIME_TO"],
-            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
-        }
-    },
     TableType.PHOTO_SELECTION: {
         "Columns": {
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
@@ -243,6 +235,33 @@ table_definitions = {
             "OWNER": table_columns_names_types["OWNER"],
         },
         "PrimaryKey": "ID_ALBUM_SELECTION"
+    },
+    TableType.FILM_CONTENT: {
+        "Columns": {
+            "CHAPTER": table_columns_names_types["CHAPTER"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "TIME_FROM": table_columns_names_types["TIME_FROM"],
+            "TIME_TO": table_columns_names_types["TIME_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "TITLE": table_columns_names_types["TITLE"]
+        },
+        "PrimaryKey": "ID_FILM_CONTENT",
+        "ForeignKey": "ID_FILM",
+        "ParentTableType": TableType.FILM
+    },
+    TableType.FILM: {
+        "Columns": {
+            "TITLE": table_columns_names_types["TITLE"],
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "OWNER": table_columns_names_types["OWNER"],
+        },
+        "PrimaryKey": "ID_FILM"
     },
     TableType.NOTE: {
         "Columns": {
