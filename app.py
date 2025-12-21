@@ -22,8 +22,9 @@ config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
 if config.environment_app == "LOCAL":
     load_dotenv()
 
-with open("resources/auth.json", "r") as f:
-    VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
+VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
+# with open("resources/auth.json", "r") as f:
+#     VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
 
 if config.environment_storage == "LOCAL":
     # MySQL
