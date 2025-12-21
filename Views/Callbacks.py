@@ -2,6 +2,7 @@ from dash import Input, Output, callback, ctx, dcc, ALL
 from flask import session
 
 from DataStructures.TableTypes import TableType
+from pages.table import init_Table
 from pages.timeline import init_Timeline
 from pages.album import init_Album
 
@@ -12,10 +13,11 @@ from pages.album import init_Album
     [
         Input({"type": "album_box", "index": ALL}, "n_clicks"),
         Input({"type": "box-timeline", "index": ALL}, "n_clicks"),
+        Input({"type": "box-table", "index": ALL}, "n_clicks"),
     ],
     prevent_initial_call=True
 )
-def click_box(n_clicks_list_album, n_clicks_list_timeline):
+def click_box(n_clicks_list_album, n_clicks_list_timeline, n_clicks_list_table):
     if any(c is not None for c in n_clicks_list_album):
         ix = ctx.triggered_id["index"]
         session["content_content"] = TableType.PHOTO.name
@@ -43,6 +45,15 @@ def click_box(n_clicks_list_album, n_clicks_list_timeline):
             id_message = TimelineView.datatable_show.table.loc[ix, "ID_NOTE"]
             session['content_view']["ID_NOTE"] = id_message
             return "/content"
+    elif any(c is not None for c in n_clicks_list_table):
+        ix = ctx.triggered_id["index"]
+        TableView = init_Table(session['table_content'])
+        # TODO General Table content
+        id_film = TableView.datatable.table.loc[ix, "ID_FILM"]
+        session["content_content"] = session['table_content']
+        session['FILM']["ID_FILM"] = id_film
+        session['content_view'] = {"ID_FILM": id_film}
+        return "/content"
 
 
 

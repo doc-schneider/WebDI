@@ -1,4 +1,6 @@
 from pathlib import Path
+
+import pandas
 import pandas as pd
 from urllib.parse import quote
 from dash import html, dcc
@@ -85,7 +87,7 @@ class ViewFactory:
         boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
 
         # Convert to format for viewing boxes
-        # TODO Distinguish Timeline and other viewing formats
+        # TODO Distinguish Timeline and other viewing formats?
         if datatable.table_type.name == "MESSAGE":
             boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
             boxes["ID"] = dct["ID_MESSAGE"]["value"]
@@ -112,7 +114,14 @@ class ViewFactory:
             boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
             boxes['TEXT_ADDITIONAL'] = {}
             boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
-
+        elif datatable.table_type.name == "FILM":
+            boxes['TEXT'] = dct['TITLE']["value"]
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
+            # TODO More,
+        elif datatable.table_type.name == "FILM_CONTENT":
+            pass
+            # TODO Anything here?
         return boxes
 
     @staticmethod
@@ -143,7 +152,13 @@ class ViewFactory:
     def additional_items(boxes_dct, i, item):
         if item in boxes_dct.keys():
             if item == "MARKDOWN":
-                return [html.Div(dcc.Markdown(boxes_dct[item][i]))]
+                return [
+                    html.Div(dcc.Markdown(boxes_dct[item][i]))
+                ]
+            elif item == "DATE_TIME":
+                return [
+                    html.Div(boxes_dct[item].dt.strftime('%Y-%m-%d %X').fillna('')[i])
+                ]
             else:
                 return [
                     html.Div(txt_add[i]) for _, txt_add in boxes_dct[item].items()

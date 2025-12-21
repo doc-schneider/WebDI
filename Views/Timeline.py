@@ -1,5 +1,5 @@
 import pandas as pd
-from dateutil.relativedelta import relativedelta, MO, SU
+from dateutil.relativedelta import relativedelta, MO
 
 from DataStructures.Data import DataTable
 from Views.View_Factory import ViewFactory

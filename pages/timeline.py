@@ -73,87 +73,94 @@ def update_timeline(TimelineView):
     n_rows, n_cols = boxes_dct["N_DIM"]
 
     # Find Start Time of first row items
-    boxes_dct["grid_location"] = pd.Series([None] * n_cols)
-    for i in range(n_cols):
-        if boxes_dct["ID"][i]:
-            boxes_dct["grid_location"][i] = int(
-                100 * (boxes_dct["DATE_TIME"][i] - boxes_dct["TIME_GRID"][i].left) / boxes_dct["TIME_GRID"][i].length
-            )
+    if n_rows > 0:  # Any entry at all?
+        boxes_dct["grid_location"] = pd.Series([None] * n_cols)
+        for i in range(n_cols):
+            if boxes_dct["ID"][i]:
+                boxes_dct["grid_location"][i] = int(
+                    100 * (boxes_dct["DATE_TIME"][i] - boxes_dct["TIME_GRID"][i].left) / boxes_dct["TIME_GRID"][i].length
+                )
+        return layout_time_grid(
+            boxes_dct, n_cols
+        ) + [
+            html.Div([
+                html.Div(
+                    style={
+                        'flex': 1,
+                        "position": "relative",
+                        "height": "50px",
+                        'padding': '5px',
+                    },
+                    children=[
+                        html.Div(
+                            style={
+                                "position": "absolute",
+                                "top": "0",
+                                "left": "{}%".format(boxes_dct["grid_location"][i]),
+                                "height": "100%",        # volle Höhe des Containers
+                                "width": "2px",          # Liniendicke
+                                "backgroundColor": "red"
+                            }
+                        )
+                    ]
+                ) if boxes_dct["ID"][i] else html.Div(
+                    style={
+                        'flex': 1,
+                        "position": "relative",
+                        "height": "50px",
+                        'padding': '5px',
+                    }
+                ) for i in range(n_cols)
+            ], style={'display': 'flex', 'flexDirection': 'row'})
+        ] + [html.Div([
+            html.Div([
+                html.Div(
+                    ViewFactory.media_type_box(
+                        boxes_dct["FILE_FORMAT"][i],
+                        boxes_dct["IMAGE"][i]
+                    ) +
+                    [
+                        html.Div(boxes_dct["TEXT"][i]),
+                        html.Div("Datum: " + boxes_dct["DATE_TIME"][i].strftime('%Y-%m-%d %X'))
+                    ] + ViewFactory.additional_items(boxes_dct, i, 'TEXT_ADDITIONAL'),
+                    style={'flex': 1, 'padding': '5px',
+                           'borderLeft': '1px solid black',
+                           'borderRight': '1px solid black',
+                           'borderTop': '1px solid black',
+                           'borderBottom': '1px solid black',
+                           "background-color": "gainsboro"
+                           },
+                    id={"type": "box-timeline", "index": i}
+                ) if boxes_dct["ID"][i] else html.Div(
+                    [],
+                    style={'flex': 1, 'padding': '5px',
+                           'borderLeft': '1px solid black',
+                           'borderRight': '1px solid black',
+                           'borderTop': '1px solid black',
+                           'borderBottom': '1px solid black',
+                           }
+                ) for i in range(r * n_cols, (r + 1) * n_cols)
+            ], style={'display': 'flex', 'flexDirection': 'row', "gap": "5px"}) for r in range(n_rows)
+        ], style={"display": "flex", "flex-direction": "column", "gap": "5px"})]
+    else:
+        return layout_time_grid(boxes_dct, n_cols)
 
+def layout_time_grid(boxes_dct, n_cols):
     return [
-               html.Div([
-                   html.Div(
-                       boxes_dct["TIME_GRID"][i].left.strftime('%Y-%m-%d %X'),
-                       style={'flex': 1,
-                              'padding': '5px',
-                              'borderLeft': '1px solid red',
-                              'borderRight': '1px solid red',
-                              'borderTop': '1px solid black',
-                              'borderBottom': '1px solid red',
-                              "background-color": "gainsboro"
-                              }
-                   ) for i in range(n_cols)
-               ], style={'display': 'flex', 'flexDirection': 'row'})
-           ] + [
         html.Div([
             html.Div(
-                style={
-                    'flex': 1,
-                    "position": "relative",
-                    "height": "50px",
-                    'padding': '5px',
-                },
-                children=[
-                    html.Div(
-                        style={
-                            "position": "absolute",
-                            "top": "0",
-                            "left": "{}%".format(boxes_dct["grid_location"][i]),
-                            "height": "100%",        # volle Höhe des Containers
-                            "width": "2px",          # Liniendicke
-                            "backgroundColor": "red"
-                        }
-                    )
-                ]
-            ) if boxes_dct["ID"][i] else html.Div(
-                style={
-                    'flex': 1,
-                    "position": "relative",
-                    "height": "50px",
-                    'padding': '5px',
-                }
+                boxes_dct["TIME_GRID"][i].left.strftime('%Y-%m-%d %X'),
+                style={'flex': 1,
+                       'padding': '5px',
+                       'borderLeft': '1px solid red',
+                       'borderRight': '1px solid red',
+                       'borderTop': '1px solid black',
+                       'borderBottom': '1px solid red',
+                       "background-color": "gainsboro"
+                       }
             ) for i in range(n_cols)
         ], style={'display': 'flex', 'flexDirection': 'row'})
-    ] + [html.Div([
-        html.Div([
-            html.Div(
-                ViewFactory.media_type_box(
-                    boxes_dct["FILE_FORMAT"][i],
-                    boxes_dct["IMAGE"][i]
-                ) +
-                [
-                    html.Div(boxes_dct["TEXT"][i]),
-                    html.Div("Datum: " + boxes_dct["DATE_TIME"][i].strftime('%Y-%m-%d %X'))
-                ] + ViewFactory.additional_items(boxes_dct, i, 'TEXT_ADDITIONAL'),
-                style={'flex': 1, 'padding': '5px',
-                       'borderLeft': '1px solid black',
-                       'borderRight': '1px solid black',
-                       'borderTop': '1px solid black',
-                       'borderBottom': '1px solid black',
-                       "background-color": "gainsboro"
-                       },
-                id={"type": "box-timeline", "index": i}
-            ) if boxes_dct["ID"][i] else html.Div(
-                [],
-                style={'flex': 1, 'padding': '5px',
-                       'borderLeft': '1px solid black',
-                       'borderRight': '1px solid black',
-                       'borderTop': '1px solid black',
-                       'borderBottom': '1px solid black',
-                       }
-            ) for i in range(r * n_cols, (r + 1) * n_cols)
-        ], style={'display': 'flex', 'flexDirection': 'row', "gap": "5px"}) for r in range(n_rows)
-    ], style={"display": "flex", "flex-direction": "column", "gap": "5px"})]
+    ]
 
 def init_Timeline(timeline_content, timeline_view):
     data_table = ViewFactory.filter_table(

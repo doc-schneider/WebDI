@@ -92,46 +92,7 @@ class PhotoFactory:
             table = pd.concat([table, table_part], axis=0, ignore_index=True)
 
         # Get meta data (exif)
-        # - Recording time
-        # TODO Into Helper
-        # TODO Process exif data in function
-        for i in range(table.shape[0]):
-            file_name = table.loc[i, "FILE_NAME"]
-            if (pretable_datetime is not None) and (file_name in pretable_datetime["FILE_NAME"].values):
-                t = pd.Timestamp(
-                    pretable_datetime.loc[pretable_datetime["FILE_NAME"] == file_name, "DATE_TIME"].values[0]
-                )
-            elif table.loc[i, "FILE_FORMAT"] in allow_formats_image:
-                exif_dct, exif_gps = PhotoFactory.get_exif_data(
-                    table.loc[i],
-                    table.loc[i, "FILE_FORMAT"],
-                    environment_storage="LOCAL"
-                )
-                # Extracting local time when image was taken
-                # TODO There can be a difference between the two DateTime: Clarify
-                if any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
-                    t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
-                    t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
-                    if not exif_gps:  # TODO There are old photos with correct timestamp nevertheless
-                        # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
-                        t = t.tz_localize("CET", ambiguous=True)
-                        t = t.tz_convert(timezone_default)
-                        t = t.tz_localize(None)
-                else:
-                    print("?")
-            elif table.loc[i, "FILE_FORMAT"] in allow_formats_video:
-                exif_dct = PhotoFactory.get_meta_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
-                if "comapplequicktimemake" in exif_dct.keys():  # Apple MOV
-                    t = pd.Timestamp(exif_dct["comapplequicktimecreationdate"])  ## includes local tz
-                elif "recorded_date" in exif_dct.keys():  # Apple MP4
-                    t = pd.Timestamp(exif_dct["recorded_date"])
-                elif "encoded_date" in exif_dct.keys():  # Old Panasonic camera
-                    t = pd.Timestamp(exif_dct["encoded_date"])
-                    t = t.tz_convert(timezone_default)
-                else:
-                    print("?")
-                t = t.tz_localize(None)
-            table.loc[i, "DATE_TIME"] = t
+        PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime)
 
         table["PHOTO_ALBUM"] = album_name
 
@@ -163,6 +124,50 @@ class PhotoFactory:
         cols = [k for k, v in table_columns_names_types.items() if v["mysqltype"]=="datetime" and k in df.columns]
         for c in cols:
             df[c] = pd.to_datetime(df[c], format=date_format_German)
+
+    @staticmethod
+    def get_creation_time(table, timezone_default="CET", pretable_datetime=None):
+        # Get meta data (exif)
+        # - Recording time
+        for i in range(table.shape[0]):
+            file_name = table.loc[i, "FILE_NAME"]
+            if (pretable_datetime is not None) and (file_name in pretable_datetime["FILE_NAME"].values):
+                t = pd.Timestamp(
+                    pretable_datetime.loc[pretable_datetime["FILE_NAME"] == file_name, "DATE_TIME"].values[0]
+                )
+            elif table.loc[i, "FILE_FORMAT"] in allow_formats_image:
+                exif_dct, exif_gps = PhotoFactory.get_exif_data(
+                    table.loc[i],
+                    table.loc[i, "FILE_FORMAT"],
+                    environment_storage="LOCAL"
+                )
+                # Extracting local time when image was taken
+                # TODO There can be a difference between the two DateTime: Clarify
+                if any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
+                    t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
+                    t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
+                    # TODO There are old photos with correct timestamp nevertheless
+                    # TODO Apple photos on flights do not have GPS <- Doesn't matter here
+                    if not exif_gps:
+                        # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
+                        t = t.tz_localize("CET", ambiguous=True)
+                        t = t.tz_convert(timezone_default)
+                        t = t.tz_localize(None)
+                else:
+                    print("?")
+            elif table.loc[i, "FILE_FORMAT"] in allow_formats_video:
+                exif_dct = PhotoFactory.get_meta_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
+                if "comapplequicktimemake" in exif_dct.keys():  # Apple MOV
+                    t = pd.Timestamp(exif_dct["comapplequicktimecreationdate"])  ## includes local tz
+                elif "recorded_date" in exif_dct.keys():  # Apple MP4
+                    t = pd.Timestamp(exif_dct["recorded_date"])
+                elif "encoded_date" in exif_dct.keys():  # Old Panasonic camera
+                    t = pd.Timestamp(exif_dct["encoded_date"])
+                    t = t.tz_convert(timezone_default)
+                else:
+                    print("?")
+                t = t.tz_localize(None)
+            table.loc[i, "DATE_TIME"] = t
 
     @staticmethod
     def get_exif_data(file_location, file_format, environment_storage):
