@@ -1,8 +1,8 @@
 import dash
 import pandas as pd
 from dash import Dash, html, dcc
-import dash_auth
-from flask import session, send_file, request
+import bcrypt
+from flask import session, send_file, request, redirect
 from flask_session import Session
 import os
 import json
@@ -22,8 +22,7 @@ config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 if config.environment_app == "LOCAL":
     load_dotenv()
 
-# with open("resources/auth.json", "r") as f:
-#     VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
+# VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -97,20 +96,25 @@ for key in config.table.keys():
     )
 
 dash_app = Dash(__name__, use_pages=True)
-# auth = dash_auth.BasicAuth(dash_app, VALID_USERNAME_PASSWORD_PAIRS)
-app = dash_app.server
+server = dash_app.server
 
 # TODO On Azure: redis, sqlite?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
-app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
-app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
-app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
-app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
-Session(app)
+server.config['SECRET_KEY'] = 'supersecretkey'
+server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+Session(server)
+
+# @server.before_request
+# def protect_dash():
+#     if request.path.startswith("/") and not request.path.startswith("/login"):
+#         if "user" not in session:
+#             return redirect("/login")
 
 # TODO Into View Factory?
-@app.before_request
+@server.before_request
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
@@ -130,8 +134,32 @@ def ensure_session_initialized():
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
 
+# @server.route("/login", methods=["GET", "POST"])
+# def login():
+#     if request.method == "POST":
+#         username = request.form["username"]
+#         password = request.form["password"]
+#
+#         stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
+#         if stored_hash and bcrypt.checkpw(
+#             password.encode("utf-8"),
+#             stored_hash.encode("utf-8")
+#         ):
+#             session["user"] = username
+#             return redirect("/")
+#         else:
+#             return "Login fehlgeschlagen", 401
+#
+#     return """
+#     <form method="post">
+#       <input name="username" placeholder="Username">
+#       <input name="password" type="password" placeholder="Password">
+#       <button type="submit">Login</button>
+#     </form>
+#     """
+
 # TODO Into View Factory?
-@app.route("/video")
+@server.route("/video")
 def stream_video():
     name = request.args.get("name")
     # TODO Common call, decoding in PhotoFactory
