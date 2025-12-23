@@ -88,18 +88,18 @@ for key in config.table.keys():
     )
 
 dash_app = Dash(__name__, use_pages=True)
-server = dash_app.server
+app = dash_app.server
 
 # TODO On Azure: redis, sqlite?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
-server.config['SECRET_KEY'] = 'supersecretkey'
-server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
-server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
-server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
-server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
-Session(server)
+app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+Session(app)
 
-@server.before_request
+@app.before_request
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
@@ -115,13 +115,13 @@ def ensure_session_initialized():
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
 
-@server.before_request
+@app.before_request
 def protect_dash():
     if request.path.startswith("/") and not request.path.startswith("/login"):
         if "user" not in session:
             return redirect("/login")
 
-@server.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
@@ -145,7 +145,7 @@ def login():
     </form>
     """
 
-@server.route("/video")
+@app.route("/video")
 def stream_video():
     name = request.args.get("name")
     # TODO Common call, decoding in PhotoFactory
