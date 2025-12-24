@@ -1,5 +1,6 @@
 import dash
 import pandas as pd
+from datetime import datetime, timedelta
 from dash import Dash, html, dcc
 import bcrypt
 from flask import session, send_file, request, redirect
@@ -19,10 +20,16 @@ import config
 config.environment_app = "AZURE"   # "AZURE"  # LOCAL
 config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
 
+FAILED_LOGINS = {}
+MAX_ATTEMPTS = 3
+LOCK_TIME = timedelta(hours=24)
+
 if config.environment_app == "LOCAL":
     load_dotenv()
-
-VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
+    with open("resources/auth_hash.json", "r") as f:
+        VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
+elif config.environment_app == "AZURE":
+        VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -99,6 +106,13 @@ app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser
 app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
 Session(app)
 
+if config.environment_app == "AZURE":
+    @app.before_request
+    def protect_dash():
+        if request.path.startswith("/") and not request.path.startswith("/login"):
+            if "user" not in session:
+                return redirect("/login")
+
 @app.before_request
 def ensure_session_initialized():
     # TODO Into Initialize module
@@ -115,35 +129,56 @@ def ensure_session_initialized():
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
 
-@app.before_request
-def protect_dash():
-    if request.path.startswith("/") and not request.path.startswith("/login"):
-        if "user" not in session:
-            return redirect("/login")
+if config.environment_app == "AZURE":
+    def is_locked(username):
+        entry = FAILED_LOGINS.get(username)
+        if not entry:
+            return False
+        locked_until = entry.get("locked_until")
+        if locked_until and locked_until > datetime.utcnow():
+            return True
+        return False
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+    def register_failed_attempt(username):
+        entry = FAILED_LOGINS.setdefault(
+            username,
+            {"count": 0, "locked_until": None}
+        )
+        entry["count"] += 1
+        if entry["count"] >= MAX_ATTEMPTS:
+            entry["locked_until"] = datetime.utcnow() + LOCK_TIME
 
-        stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
-        if stored_hash and bcrypt.checkpw(
-            password.encode("utf-8"),
-            stored_hash.encode("utf-8")
-        ):
-            session["user"] = username
-            return redirect("/")
-        else:
+    def reset_attempts(username):
+        FAILED_LOGINS.pop(username, None)
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+
+            if is_locked(username):
+                return "Account für 24 Stunden gesperrt", 403
+
+            stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
+            if stored_hash and bcrypt.checkpw(
+                password.encode("utf-8"),
+                stored_hash.encode("utf-8")
+            ):
+                reset_attempts(username)
+                session["user"] = username
+                return redirect("/")
+
+            register_failed_attempt(username)
             return "Login fehlgeschlagen", 401
 
-    return """
-    <form method="post">
-      <input name="username" placeholder="Username">
-      <input name="password" type="password" placeholder="Password">
-      <button type="submit">Login</button>
-    </form>
-    """
+        return """
+        <form method="post">
+          <input name="username" placeholder="Username">
+          <input name="password" type="password" placeholder="Password">
+          <button type="submit">Login</button>
+        </form>
+        """
 
 @app.route("/video")
 def stream_video():
