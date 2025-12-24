@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-from sqlalchemy import create_engine, MetaData
-import mysql.connector
 
 from Initialize.Initialize import initialize_MySQL
 from DataStructures.TableTypes import TableType, table_definitions, table_columns_names_types
@@ -13,7 +10,7 @@ config.environment_storage = "LOCAL"
 initialize_MySQL()
 
 
-# Remove photo records wiht wroong ID_ALBUM
+# Remove photo records wiht wrong ID_ALBUM
 #
 album_table = DataTable.fetch_table(TableType.ALBUM, "albums")
 photo_table = DataTable.fetch_table(TableType.PHOTO, "photos")
@@ -41,31 +38,33 @@ for a_n in album_names:
                         config.mysql["connector"], config.mysql["cursor"],
                         "photos", "ID_PHOTO", int(id)
                     )
-
-
+# Delete Table
+#
 
 # Create table
+#
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
     config.mysql["connector"], config.mysql["cursor"],
-    "messages",
-    table_definitions[TableType.MESSAGE],
-    foreign_table_name="message_collections",
-    foreign_table_dct=table_definitions[TableType.MESSAGE_COLLECTION],
+    "film_contents",
+    table_definitions[TableType.FILM_CONTENT],
+    foreign_table_name="films",
+    foreign_table_dct=table_definitions[TableType.FILM],
 )
-# foreign_table_dct=table_definitions[TableType.MESSAGE_COLLECTION]
 
 # Add foreign key column
+#
 foreign_table = "events"
 foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
 add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
-table_name = "photos"
-column_name = "ATTACHMENT"
+table_name = "film_contents"
 add_columns(
     config.mysql["connector"], config.mysql["cursor"],
-    table_name, {column_name: table_columns_names_types[column_name]["mysqltype"]}
+    table_name, {
+        "TITLE": table_columns_names_types["TITLE"]["mysqltype"],
+    }
 )
 
 # Delete column
@@ -86,6 +85,7 @@ update_column()
 #config.mysql["connector"].commit()
 
 # Fetch table subset (where)
+#
 table_name = "albums"
 column_name = "ID_ALBUM"
 value = 6

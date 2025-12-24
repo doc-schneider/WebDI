@@ -44,6 +44,14 @@ if config.environment_storage == "LOCAL":
             "storage_name": "photos",
             "data_table": None
         },
+        TableType.FILM: {
+            "storage_name": "films",
+            "data_table": None
+        },
+        TableType.FILM_CONTENT: {
+            "storage_name": "film_contents",
+            "data_table": None
+        },
         TableType.MESSAGE: {
             "storage_name": "messages",
             "data_table": None
@@ -113,18 +121,30 @@ if config.environment_app == "AZURE":
             if "user" not in session:
                 return redirect("/login")
 
+if config.environment_app == "AZURE":
+    @app.before_request
+    def protect_dash():
+        if request.path.startswith("/") and not request.path.startswith("/login"):
+            if "user" not in session:
+                return redirect("/login")
+
+# TODO Into View Factory?
 @app.before_request
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
         session['ALBUM'] = {"ID_ALBUM": 7}
+        session['FILM'] = {"ID_FILM": 1}
         session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['NOTEBOOK'] = {"ID_NOTEBOOK": 2}
+        session['NOTEBOOK'] = {"ID_NOTEBOOK": 1}
+        session['table_content'] = TableType.FILM.name
         session['album_view'] = {"IX_PHOTO": [None]}
-        session['timeline_simple_content'] = TableType.MESSAGE.name  # TableType.NOTE.name   # TableType.MESSAGE.name
-        session['timeline_simple_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
+        # session['timeline_content'] = TableType.MESSAGE.name
+        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
         session['timeline_content'] = TableType.ALBUM.name
         session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
+        # session['timeline_content'] = TableType.NOTE.name
+        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
         session['content_content'] = TableType.PHOTO.name
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
@@ -180,6 +200,58 @@ if config.environment_app == "AZURE":
         </form>
         """
 
+if config.environment_app == "AZURE":
+    def is_locked(username):
+        entry = FAILED_LOGINS.get(username)
+        if not entry:
+            return False
+        locked_until = entry.get("locked_until")
+        if locked_until and locked_until > datetime.utcnow():
+            return True
+        return False
+
+    def register_failed_attempt(username):
+        entry = FAILED_LOGINS.setdefault(
+            username,
+            {"count": 0, "locked_until": None}
+        )
+        entry["count"] += 1
+        if entry["count"] >= MAX_ATTEMPTS:
+            entry["locked_until"] = datetime.utcnow() + LOCK_TIME
+
+    def reset_attempts(username):
+        FAILED_LOGINS.pop(username, None)
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+
+            if is_locked(username):
+                return "Account für 24 Stunden gesperrt", 403
+
+            stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
+            if stored_hash and bcrypt.checkpw(
+                password.encode("utf-8"),
+                stored_hash.encode("utf-8")
+            ):
+                reset_attempts(username)
+                session["user"] = username
+                return redirect("/")
+
+            register_failed_attempt(username)
+            return "Login fehlgeschlagen", 401
+
+        return """
+        <form method="post">
+          <input name="username" placeholder="Username">
+          <input name="password" type="password" placeholder="Password">
+          <button type="submit">Login</button>
+        </form>
+        """
+
+# TODO Into View Factory?
 @app.route("/video")
 def stream_video():
     name = request.args.get("name")

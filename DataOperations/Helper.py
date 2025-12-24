@@ -22,7 +22,7 @@ def parse_datetime(df):
     for c in cols:
         df[c] = pd.to_datetime(df[c], format=date_format_German)
 
-# File creation time
+# TODO Remove (in Photo)
 def get_creation_time(table, timezone_default="CET"):
     for i in range(table.shape[0]):
         # Get meta data (exif)

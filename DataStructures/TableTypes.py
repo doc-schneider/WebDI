@@ -8,10 +8,12 @@ from sqlalchemy.types import Text, DateTime, Integer, Time
 # - ALBUM: Collection of albums / books / CDs .. Like a library
 class TableType(Enum):
     PHOTO = 10
-    FILM = 12
-    PHOTO_SELECTION = 15
+    PHOTO_PAGE = 11
+    PHOTO_SELECTION = 12
     ALBUM = 20
-    ALBUM_SELECTION = 25
+    ALBUM_SELECTION = 21
+    FILM_CONTENT = 24
+    FILM = 25
     TAG = 30
     NOTE = 40
     NOTEBOOK = 50
@@ -172,7 +174,7 @@ table_columns_names_types = {
 }
 
 # TODO AZURE columns
-# TODO More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album, copy of a document)
+# TODO More columns for ALBUM: eg COLLECTION (eg Stefan's albums), TYPE (classical album)
 #
 # Tables & Types
 table_definitions = {
@@ -188,17 +190,23 @@ table_definitions = {
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },
         "PrimaryKey": "ID_PHOTO",
-        "ForeignKey": "ID_ALBUM",
+        "ForeignKey": ["ID_ALBUM", "ID_PHOTO_PAGE"],
         "ParentTableType": TableType.ALBUM
     },
-    TableType.FILM: {
+    TableType.PHOTO_PAGE: {
         "Columns": {
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
-            "TIME_FROM": table_columns_names_types["TIME_FROM"],
-            "TIME_TO": table_columns_names_types["TIME_TO"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
-        }
+            "PHOTO_ALBUM": table_columns_names_types["PHOTO_ALBUM"],
+            "CHAPTER": table_columns_names_types["CHAPTER"],
+        },
+        "PrimaryKey": "ID_PHOTO_PAGE",
+        "ForeignKey": "ID_ALBUM",
+        "ParentTableType": TableType.ALBUM
     },
     TableType.PHOTO_SELECTION: {
         "Columns": {
@@ -227,6 +235,33 @@ table_definitions = {
             "OWNER": table_columns_names_types["OWNER"],
         },
         "PrimaryKey": "ID_ALBUM_SELECTION"
+    },
+    TableType.FILM_CONTENT: {
+        "Columns": {
+            "CHAPTER": table_columns_names_types["CHAPTER"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "TIME_FROM": table_columns_names_types["TIME_FROM"],
+            "TIME_TO": table_columns_names_types["TIME_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "TITLE": table_columns_names_types["TITLE"]
+        },
+        "PrimaryKey": "ID_FILM_CONTENT",
+        "ForeignKey": "ID_FILM",
+        "ParentTableType": TableType.FILM
+    },
+    TableType.FILM: {
+        "Columns": {
+            "TITLE": table_columns_names_types["TITLE"],
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "OWNER": table_columns_names_types["OWNER"],
+        },
+        "PrimaryKey": "ID_FILM"
     },
     TableType.NOTE: {
         "Columns": {

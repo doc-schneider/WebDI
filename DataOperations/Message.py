@@ -3,8 +3,8 @@ import pandas as pd
 from pathlib import Path
 
 from DataStructures.Data import DataTable
-from DataOperations.Files import read_table_from_csv, get_files_info
-from DataStructures.TableTypes import TableType, table_definitions, table_columns_names_types
+from DataOperations.Files import get_files_info
+from DataStructures.TableTypes import TableType, table_definitions
 
 
 sender_receiver_default = "Stefan Schneider"
@@ -15,6 +15,7 @@ class MessageFactory:
     def table_from_folder(
             path_message_stream,
             message_collection,
+            attachments_folder=None,
             format_stream="iMazing"
     ):
         # Create table from standard columns
@@ -36,7 +37,7 @@ class MessageFactory:
             message_table.loc[message_table["TEXT"].isnull(), "TEXT"] = ""  # TODO Postprocessing by Data class
 
             # Attachments
-            path_attachments = path_message_stream.parent / Path("Anhänge")  # TODO Parameter
+            path_attachments = path_message_stream.parent / Path(attachments_folder)
             ats = get_files_info(path_attachments)
             message_table["ATTACHMENT"] = ""
             ix = ~table_stream["Anhang"].isnull()

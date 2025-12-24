@@ -16,7 +16,7 @@ class AlbumViewer():
 
         # Which album out of the total collection?
         id_album = album['ID_ALBUM']
-        self.datatable = datatable_initial.match_foreignkey(id_album)
+        self.datatable = datatable_initial.match_foreignkey(id_album, "ID_ALBUM")
         self.datatable.sort()
         # Structure of the album
         chapters = self.datatable.table["CHAPTER"].unique()
@@ -80,10 +80,10 @@ class AlbumViewer():
 
     def view(self):
         # Raw content
-        dct = ViewFactory.view(self.datatable_show)
+        boxes = ViewFactory.view(self.datatable_show)
 
         # Dimension information for viewing  # TODO Should be in pages and config
-        dct["N_BOXES"] = len(dct["FILE_NAME"]["value"])
-        dct["N_DIM"] = (n_rows, n_cols)
+        boxes["N_BOXES"] = len(boxes["FILE_NAME"])
+        boxes["N_DIM"] = (n_rows, n_cols)
 
-        return dct
+        return boxes

@@ -10,6 +10,7 @@ bcrypt
 # dash-svg
 flask-session
 dotenv
+bcrypt
 azure-core
 azure-storage-blob
 azure-identity

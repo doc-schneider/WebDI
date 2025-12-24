@@ -26,18 +26,18 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Freitags frei"
+album_name = "Sonntags Radeln Altstadt & Hofgarten"
 chapters = [
-    "Lorettostraße & Oberkassel"
+    "Immer noch voll mit Holländern",
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug"),
+        Path("Y:/2025/2025_12_21_Sonntags Radeln"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("W:/Fotos/2025/2025_09_05_Freitags frei Ausflug/PreDokumentliste.csv"),
-)   # Path("Y:/2025/2025_07_27_Radeln Flingern/PreDokumentliste.csv")
+    pretable_file=Path("Y:/2025/2025_12_21_Sonntags Radeln/PreDokumentliste.csv"),
+)   # Path("Y:/2025/2025_12_03_Weihnachtsmarkt Bärbel/PreDokumentliste.csv")
 
 if flag_add_photos:
     # Only keep new entries
@@ -77,7 +77,7 @@ if flag_add_event:
 # Extract album data from a new photo dataframe
 # TODO from - to not quite right for non CET time ?
 if not flag_add_photos:
-    owner = "Stefan"  # "Stefan"  "Stefan|Konstanze"
+    owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
     album_description = ""
     album = photo_table.table["PHOTO_ALBUM"].unique()[0]
     d_t = photo_table.table["DATE_TIME"]
@@ -99,8 +99,7 @@ if not flag_add_photos:
     table_insert(config.mysql["metadata"], config.mysql["conn"], "albums", album_table)
     #
     # Get the foreign key for the photo table
-    # TODO Multiple albums having the same name
-    photo_table.add_foreignkey("PHOTO_ALBUM", "albums")
+    photo_table.add_foreignkey("PHOTO_ALBUM", "albums", TableType.ALBUM)
 
 # Insert the new photos
 table_insert(config.mysql["metadata"], config.mysql["conn"], "photos", photo_table.table)

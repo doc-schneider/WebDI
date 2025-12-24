@@ -17,7 +17,7 @@ class NotebookFactory:
     @staticmethod
     def table_from_folder(
             path_notebook,
-            notebook_type = "Evernote",
+            notebook_type="Evernote",
             cols_add=["TAG"],
             timezone_default="CET",
     ):
@@ -88,37 +88,26 @@ class NotebookFactory:
 
         return note_table
 
-
-    # TODO Into Helper?
     @staticmethod
-    def copy_html_to_static(evernotetable, static_basepath):
-        # TODO Only works for single row table
-        # html & _files
-        # Target location: sub static base path
-        evernotetable['STATIC_LOCATION'] = None  # Static paths for the documents.
-        # Original location.
-        p = evernotetable["PATH"].values[0]
-        if p is not None:
-            # Pure Evernote path = Notebook structure
-            # Copy location in static path.
-            static_path = p[p.find("Evernote"):]
-            d = evernotetable["DOCUMENT_NAME"].values[0]
-            # Need to remove file name invalid symbols from title
-            for invalid in [":", "?"]:
-                d = d.replace(invalid, "")
-            evernotetable['STATIC_LOCATION'] = static_path + d
-            # Create directory
-            os.makedirs(static_basepath + static_path, exist_ok=True)
-            # Overwrites existing
-            copyfile(
-                p + d,
-                static_basepath + static_path + d
-            )
-            if evernotetable["ATTACHMENT"].values[0] is not None:
-                copy_tree(
-                    p + evernotetable["ATTACHMENT"].values[0],
-                    static_basepath + static_path + evernotetable["ATTACHMENT"].values[0]
-                )
+    def find_element_enex(path_notebook, element_match, element_return):
+        tree = ET.parse(path_notebook)
+        root = tree.getroot()
+        tag_match, value_match = next(iter(element_match.items()))
+        # Alle <note>-Elemente durchlaufen
+        for note in root.findall(".//note"):
+            tag_text = note.find(tag_match)
+            tag_return = note.find(element_return)
+            # prüfen, ob der Titel passt
+            if tag_text is not None and tag_text.text == value_match:
+                return tag_return.text
 
+    @staticmethod
+    def enex_to_markdown(enex_str):
+        root = ET.fromstring(enex_str[7:])  # TODO Is the 7 fix?
+        # Alle <div>-Elemente innerhalb von <en-note> finden
+        div_elements = root.findall(".//div")
+        # Alle <div>-Texte extrahieren
+        lines = [div.text.strip() for div in div_elements]
+        return "\n".join(lines)
 
-
+    # TODO: base 64 from enex

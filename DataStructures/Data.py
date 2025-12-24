@@ -3,7 +3,6 @@ import io
 from DataStructures.TableTypes import table_columns_names_types, table_definitions
 from DataOperations.Operations_Factory import fetch_table
 from DataOperations.Tag import TagFactory
-import config
 
 
 class DataTable:
@@ -29,7 +28,10 @@ class DataTable:
         return csv_buffer
 
     def sort(self, column="DATE_TIME"):
-        self.table.sort_values(column, ignore_index=True, inplace=True)
+        # Second sort with unique ID required since Timestamp can be not unique
+        self.table.sort_values(by=[
+            column, table_definitions[self.table_type]["PrimaryKey"]
+        ], ignore_index=True, inplace=True)
 
     def filter(self, filter_table=[{}]):
         if filter_table:
@@ -64,8 +66,9 @@ class DataTable:
         return DataTable(self.table[iix].reset_index(drop=True), self.table_type)
 
     # Return record belonging to a specific foreignkey value
-    def match_foreignkey(self, foreignkey_value):
-        foreignkey = table_definitions[self.table_type]["ForeignKey"]
+    def match_foreignkey(self, foreignkey_value, foreignkey=None):
+        if not foreignkey:  # In case ForeignKey is a list it needs to be specified
+            foreignkey = table_definitions[self.table_type]["ForeignKey"]
         return DataTable(
             self.table.loc[
                 self.table[foreignkey] == foreignkey_value, :
@@ -75,9 +78,9 @@ class DataTable:
 
     # Add column foreignkey. Get values from foreign table
     # TODO Proper handling of multiple instances of album name
-    def add_foreignkey(self, foreign_column, foreign_table_name, multiple="last"):
-        foreign_key = table_definitions[self.table_type]["ForeignKey"]
-        foreign_table = self.fetch_table(None, foreign_table_name)
+    def add_foreignkey(self, foreign_column, foreign_table_name, foreign_table_type, multiple="last"):
+        foreign_table = self.fetch_table(foreign_table_type, foreign_table_name)
+        foreign_key = table_definitions[foreign_table_type]["PrimaryKey"]
         foreign_id = foreign_table.table.loc[
             foreign_table.table[foreign_column] == self.table[foreign_column].values[0],
             foreign_key

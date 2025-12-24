@@ -1,12 +1,10 @@
 import dash
-from dash import html, Input, Output, State, callback, ctx, dcc, ALL, MATCH
+from dash import html, Input, Output, callback, ctx, dcc
 from flask import session
 
 from DataStructures.TableTypes import TableType
-from DataOperations.Photo import allow_formats_image, allow_formats_video
 from Views.Album import AlbumViewer
 from Views.View_Factory import ViewFactory
-from Views.Collection import CollectionViewer
 import config
 
 '''
@@ -46,7 +44,7 @@ layout = html.Div([
     Input('later', "n_clicks"),
     Input('album-slider', 'value')
 )
-def click_photos(b1, b2, slider_value):
+def select_photos(b1, b2, slider_value):
     AlbumView = init_Album(session['ALBUM'], session["album_view"])
     if ctx.triggered_id == "earlier":  # and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)?
         AlbumView.earlier()
@@ -68,16 +66,18 @@ def update_album(AlbumView):
     slider_marks = {int(x)+1: y for y, x in AlbumView.album["CHAPTERS"].items()}
     return [
                html.H2(AlbumView.album["ALBUM"]),
-               html.H3(boxes_dct["CHAPTER"]["value"][0])
+               html.H3(boxes_dct["CHAPTER"][0])
            ] + [
         html.Div([
             html.Div(
                 ViewFactory.media_type_box(
-                    boxes_dct["FILE_FORMAT"]["value"][i],
-                    boxes_dct["IMAGE"][i],
-                    boxes_dct["DATE_TIME"]["value"].dt.strftime('%Y-%m-%d %X').fillna('')[i],
-                    boxes_dct["DESCRIPTION"]["value"][i]
-                ),
+                    boxes_dct["FILE_FORMAT"][i],
+                    boxes_dct["IMAGE"][i]
+                ) + [
+                    html.Div(
+                        boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X').fillna('')[i] + ": " + boxes_dct["TEXT"][i]
+                    )
+                ],
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'},
                 id={"type": "album_box", "index": i}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])

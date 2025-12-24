@@ -23,12 +23,13 @@ config.mysql = {
 # Script new message stream + entry in collection
 #
 message_collection = "iPhone Nachrichten Stefan Konstanze"
-path_message_stream = Path("W:/Biographie/Stefan/iPhone/2025-01-01/Nachrichten - Konstanze Walther.csv")
+path_message_stream = Path("W:/Biographie/Stefan/iPhone/Nachrichten/Konstanze Walther/Nachrichten - Konstanze Walther.csv")
 #
 # Raw table
 message_table = MessageFactory().table_from_folder(
     path_message_stream,
-    message_collection=message_collection
+    message_collection=message_collection,
+    attachments_folder="Messages - Konstanze Walther"
 )
 #
 # Create Message Collection table
@@ -49,7 +50,7 @@ collection_table["DESCRIPTION"] = ""
 table_insert(metadata, db_conn, "message_collections", collection_table)
 #
 # Get the foreign key
-message_table.add_foreignkey("MESSAGE_COLLECTION", "message_collections")
+message_table.add_foreignkey("MESSAGE_COLLECTION", "message_collections", TableType.MESSAGE_COLLECTION)
 #
 # Insert the new messages
 table_insert(metadata, db_conn, "messages", message_table.table)
