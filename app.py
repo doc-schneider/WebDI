@@ -1,5 +1,6 @@
 import dash
 import pandas as pd
+from datetime import datetime, timedelta
 from dash import Dash, html, dcc
 import bcrypt
 from flask import session, send_file, request, redirect
@@ -19,11 +20,16 @@ import config
 config.environment_app = "LOCAL"   # "AZURE"  # LOCAL
 config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 
+FAILED_LOGINS = {}
+MAX_ATTEMPTS = 3
+LOCK_TIME = timedelta(hours=24)
+
 if config.environment_app == "LOCAL":
     load_dotenv()
-
-with open("resources/auth_hash.json", "r") as f:
-    VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
+    with open("resources/auth_hash.json", "r") as f:
+        VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
+elif config.environment_app == "AZURE":
+        VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
 
 if config.environment_storage == "LOCAL":
     # MySQL
@@ -97,25 +103,26 @@ for key in config.table.keys():
     )
 
 dash_app = Dash(__name__, use_pages=True)
-server = dash_app.server
+app = dash_app.server
 
 # TODO On Azure: redis, sqlite?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
-server.config['SECRET_KEY'] = 'supersecretkey'
-server.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
-server.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
-server.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
-server.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
-Session(server)
+app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Directory to store session files
+app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
+app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+Session(app)
 
-# @server.before_request
-# def protect_dash():
-#     if request.path.startswith("/") and not request.path.startswith("/login"):
-#         if "user" not in session:
-#             return redirect("/login")
+if config.environment_app == "AZURE":
+    @app.before_request
+    def protect_dash():
+        if request.path.startswith("/") and not request.path.startswith("/login"):
+            if "user" not in session:
+                return redirect("/login")
 
 # TODO Into View Factory?
-@server.before_request
+@app.before_request
 def ensure_session_initialized():
     # TODO Into Initialize module
     if 'initialized' not in session:
@@ -135,32 +142,59 @@ def ensure_session_initialized():
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
 
-# @server.route("/login", methods=["GET", "POST"])
-# def login():
-#     if request.method == "POST":
-#         username = request.form["username"]
-#         password = request.form["password"]
-#
-#         stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
-#         if stored_hash and bcrypt.checkpw(
-#             password.encode("utf-8"),
-#             stored_hash.encode("utf-8")
-#         ):
-#             session["user"] = username
-#             return redirect("/")
-#         else:
-#             return "Login fehlgeschlagen", 401
-#
-#     return """
-#     <form method="post">
-#       <input name="username" placeholder="Username">
-#       <input name="password" type="password" placeholder="Password">
-#       <button type="submit">Login</button>
-#     </form>
-#     """
+if config.environment_app == "AZURE":
+    def is_locked(username):
+        entry = FAILED_LOGINS.get(username)
+        if not entry:
+            return False
+        locked_until = entry.get("locked_until")
+        if locked_until and locked_until > datetime.utcnow():
+            return True
+        return False
+
+    def register_failed_attempt(username):
+        entry = FAILED_LOGINS.setdefault(
+            username,
+            {"count": 0, "locked_until": None}
+        )
+        entry["count"] += 1
+        if entry["count"] >= MAX_ATTEMPTS:
+            entry["locked_until"] = datetime.utcnow() + LOCK_TIME
+
+    def reset_attempts(username):
+        FAILED_LOGINS.pop(username, None)
+
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form["username"]
+            password = request.form["password"]
+
+            if is_locked(username):
+                return "Account für 24 Stunden gesperrt", 403
+
+            stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
+            if stored_hash and bcrypt.checkpw(
+                password.encode("utf-8"),
+                stored_hash.encode("utf-8")
+            ):
+                reset_attempts(username)
+                session["user"] = username
+                return redirect("/")
+
+            register_failed_attempt(username)
+            return "Login fehlgeschlagen", 401
+
+        return """
+        <form method="post">
+          <input name="username" placeholder="Username">
+          <input name="password" type="password" placeholder="Password">
+          <button type="submit">Login</button>
+        </form>
+        """
 
 # TODO Into View Factory?
-@server.route("/video")
+@app.route("/video")
 def stream_video():
     name = request.args.get("name")
     # TODO Common call, decoding in PhotoFactory
