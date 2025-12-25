@@ -120,13 +120,6 @@ if config.environment_app == "AZURE":
             if "user" not in session:
                 return redirect("/login")
 
-if config.environment_app == "AZURE":
-    @app.before_request
-    def protect_dash():
-        if request.path.startswith("/") and not request.path.startswith("/login"):
-            if "user" not in session:
-                return redirect("/login")
-
 # TODO Into View Factory?
 @app.before_request
 def ensure_session_initialized():
@@ -147,57 +140,6 @@ def ensure_session_initialized():
         session['content_content'] = TableType.PHOTO.name
         session['content_view'] = {"ID_PHOTO": 313}
         session['initialized'] = True
-
-if config.environment_app == "AZURE":
-    def is_locked(username):
-        entry = FAILED_LOGINS.get(username)
-        if not entry:
-            return False
-        locked_until = entry.get("locked_until")
-        if locked_until and locked_until > datetime.utcnow():
-            return True
-        return False
-
-    def register_failed_attempt(username):
-        entry = FAILED_LOGINS.setdefault(
-            username,
-            {"count": 0, "locked_until": None}
-        )
-        entry["count"] += 1
-        if entry["count"] >= MAX_ATTEMPTS:
-            entry["locked_until"] = datetime.utcnow() + LOCK_TIME
-
-    def reset_attempts(username):
-        FAILED_LOGINS.pop(username, None)
-
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if request.method == "POST":
-            username = request.form["username"]
-            password = request.form["password"]
-
-            if is_locked(username):
-                return "Account für 24 Stunden gesperrt", 403
-
-            stored_hash = VALID_USERNAME_PASSWORD_PAIRS.get(username)
-            if stored_hash and bcrypt.checkpw(
-                password.encode("utf-8"),
-                stored_hash.encode("utf-8")
-            ):
-                reset_attempts(username)
-                session["user"] = username
-                return redirect("/")
-
-            register_failed_attempt(username)
-            return "Login fehlgeschlagen", 401
-
-        return """
-        <form method="post">
-          <input name="username" placeholder="Username">
-          <input name="password" type="password" placeholder="Password">
-          <button type="submit">Login</button>
-        </form>
-        """
 
 if config.environment_app == "AZURE":
     def is_locked(username):
