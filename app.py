@@ -105,7 +105,6 @@ for key in config.table.keys():
 dash_app = Dash(__name__, use_pages=True)
 app = dash_app.server
 
-# TODO On Azure: redis, sqlite?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
