@@ -95,6 +95,14 @@ elif config.environment_storage == "AZURE":
             "storage_name": "photos.csv",
             "data_table": None
         },
+        TableType.FILM: {
+            "storage_name": "films.csv",
+            "data_table": None
+        },
+        TableType.FILM_CONTENT: {
+            "storage_name": "film_contents.csv",
+            "data_table": None
+        },
     }
 for key in config.table.keys():
     config.table[key]["data_table"] = DataTable.fetch_table(
