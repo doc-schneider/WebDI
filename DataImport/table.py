@@ -59,11 +59,11 @@ foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
 add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
-table_name = "film_contents"
+table_name = "films"
 add_columns(
     config.mysql["connector"], config.mysql["cursor"],
     table_name, {
-        "TITLE": table_columns_names_types["TITLE"]["mysqltype"],
+        "AZURE_BLOB": table_columns_names_types["AZURE_BLOB"]["mysqltype"],
     }
 )
 

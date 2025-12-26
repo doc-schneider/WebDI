@@ -37,13 +37,14 @@ class AzureFactory:
             print("Container already exists.")
 
     @staticmethod
-    def upload_from_table_to_blob(container_name, path_discard, table):
+    def upload_from_table_to_blob(container_name, path_blob, table):
         # Uploads content of local directory to analogous blob-container structure based on information in Data table.
         PATH_AZURE_BLOB = list()
         for i in range(len(table.table)):
             file_name = table.table.loc[i, 'FILE_NAME']
             path_name = AzureFactory.convert_path_to_blob(table.table['PATH'].iloc[i])
-            blob_name = path_name.replace(path_discard, '') + "/" + file_name
+            # blob_name = path_name.replace(path_discard, '') + "/" + file_name
+            blob_name = path_blob + "/" + file_name
             with open(Path(path_name, file_name), "rb") as data:
                 AzureFactory.upload_blob(container_name, blob_name, data)
             # Add Azure path to table

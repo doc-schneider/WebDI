@@ -26,17 +26,17 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Sonntags Radeln Altstadt & Hofgarten"
+album_name = "Weihnachten 2025"
 chapters = [
-    "Immer noch voll mit Holländern",
+    "Treffen in Unterbilk und Kaiserswerth",
 ]
 photo_table = PhotoFactory().table_from_folder(
     [
-        Path("Y:/2025/2025_12_21_Sonntags Radeln"),
+        Path("Y:/2025/2025_12_Weihnachten"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_12_21_Sonntags Radeln/PreDokumentliste.csv"),
+    pretable_file=Path("Y:/2025/2025_12_Weihnachten/PreDokumentliste.csv"),
 )   # Path("Y:/2025/2025_12_03_Weihnachtsmarkt Bärbel/PreDokumentliste.csv")
 
 if flag_add_photos:
