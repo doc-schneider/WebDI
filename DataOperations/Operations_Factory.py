@@ -22,9 +22,7 @@ def fetch_table(table_name):
                     # TODO for null case?
                     pass
                 elif mysqltype == "datetime":
-                    # TODO Anything?
-                    pass
-                    # table[col] = pd.to_datetime(table[col])
+                    table[col] = pd.to_datetime(table[col])
             else:
                 # ID
                 # TODO for null case?
