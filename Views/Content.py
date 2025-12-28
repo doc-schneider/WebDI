@@ -44,17 +44,14 @@ class ContentViewer():
             self.datatable_show.table["TEXT"] = NotebookFactory.enex_to_markdown(enex_str)
         elif self.table_type.name == "FILM":
             if self.datatable_additional:
+                # Formatting for table
                 self.table_film_content = self.datatable_additional.table[
                     ["CHAPTER", "DATE_FROM", "DATE_TO", "TIME_FROM", "TIME_TO", "DESCRIPTION"]
                 ].rename(columns={"CHAPTER": "Kapitel", "DATE_FROM": "Datum Beginn", "DATE_TO": "Datum Ende",
                                   "TIME_FROM": "Start", "TIME_TO": "Stopp", "DESCRIPTION": "Beschreibung"})
-                # TODO Formatting into DataTabel or so
-                self.table_film_content["Datum Beginn"] = self.table_film_content["Datum Beginn"].apply(
-                    lambda x: x.strftime(date_format_German)
-                )
-                self.table_film_content["Datum Ende"] = self.table_film_content["Datum Ende"].apply(
-                    lambda x: x.strftime(date_format_German)
-                )
+                # TODO Formatting should not be here?
+                self.table_film_content["Datum Beginn"] = self.table_film_content["Datum Beginn"].dt.strftime(date_format_German).fillna('')
+                self.table_film_content["Datum Ende"] = self.table_film_content["Datum Ende"].dt.strftime(date_format_German).fillna('')
                 self.table_film_content["Start"] = self.table_film_content["Start"].apply(lambda t: t.strftime(time_format_German))
                 self.table_film_content["Stopp"] = self.table_film_content["Stopp"].apply(lambda t: t.strftime(time_format_German))
             else:

@@ -12,6 +12,48 @@ load_dotenv()
 config.environment_app = "LOCAL"
 initialize_MySQL()
 
+# New Container
+#
+# container_name = "film"
+# AzureFactory.create_container(container_name, config.environment_app)
+
+
+# Upload films
+#
+config.environment_storage = "LOCAL"
+film_table_mysql = DataTable.fetch_table(
+    TableType.FILM,
+    "films"
+)
+film_content_table_mysql = DataTable.fetch_table(
+    TableType.FILM_CONTENT,
+    "film_contents"
+)
+# TODO Filter
+#
+# Upload films files
+PATH_AZURE_BLOB = AzureFactory.upload_from_table_to_blob("film", "Papa_VHS", film_table_mysql)
+# Add Blob information
+film_table_mysql.table["AZURE_BLOB"] = PATH_AZURE_BLOB
+film_table_mysql.table["AZURE_CONTAINER"] = "film"
+#
+# Upload tables to blob
+AzureFactory.write_table_to_blob("tables", "films.csv", film_table_mysql)
+AzureFactory.write_table_to_blob("tables", "film_contents.csv", film_content_table_mysql)
+#
+# Write blob  names to MySQL table
+value_dct = dict(zip(film_table_mysql.table["ID_FILM"], PATH_AZURE_BLOB))
+update_column(
+    config.mysql["connector"], config.mysql["cursor"],
+    "films", "AZURE_BLOB", "ID_FILM", value_dct
+)
+value_dct = dict(zip(film_table_mysql.table["ID_FILM"], ["film"] * film_table_mysql.table.shape[0]))
+update_column(
+    config.mysql["connector"], config.mysql["cursor"],
+    "films", "AZURE_CONTAINER", "ID_FILM", value_dct
+)
+
+
 # Upload Message Collection
 #
 ID_MESSAGE_COLLECTION = 1

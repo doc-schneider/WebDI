@@ -13,6 +13,7 @@ import config  # TODO Not in this this module
 # TODO  Work directly with copy of config.table?
 class ViewFactory:
 
+    # TODO into Data?
     # Filter table for specification of a parent id if specified in session
     @staticmethod
     def filter_table(datatable, session):
