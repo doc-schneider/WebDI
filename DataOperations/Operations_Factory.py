@@ -19,10 +19,12 @@ def fetch_table(table_name):
                     table[col] = table[col].astype("string")
                     table[col].fillna("", inplace=True)
                 elif mysqltype == "integer":
+                    # TODO for null case?
                     pass
-                    # TODO for null case
                 elif mysqltype == "datetime":
-                    table[col] = pd.to_datetime(table[col])
+                    # TODO Anything?
+                    pass
+                    # table[col] = pd.to_datetime(table[col])
             else:
                 # ID
                 # TODO for null case?
