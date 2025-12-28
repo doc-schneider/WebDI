@@ -23,6 +23,9 @@ def fetch_table(table_name):
                     pass
                 elif mysqltype == "datetime":
                     table[col] = pd.to_datetime(table[col])
+                elif mysqltype == "time":
+                    # TODO use Helper function
+                    table[col] = pd.to_timedelta(table[col])
             else:
                 # ID
                 # TODO for null case?
