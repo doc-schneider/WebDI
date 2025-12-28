@@ -22,10 +22,11 @@ def fetch_table(table_name):
                     # TODO for null case?
                     pass
                 elif mysqltype == "datetime":
+                    # TODO use Helper function. German format in Azure?
                     table[col] = pd.to_datetime(table[col])
                 elif mysqltype == "time":
                     # TODO use Helper function
-                    table[col] = pd.to_timedelta(table[col])
+                    table[col] = pd.to_datetime(table[col], format="%H:%M:%S", errors="coerce").dt.time
             else:
                 # ID
                 # TODO for null case?
