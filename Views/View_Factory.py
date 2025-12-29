@@ -70,7 +70,7 @@ class ViewFactory:
             if load_media and file_format in allow_formats_image:  # TODO in Operations/Photo
                 # Return image as base64 jpg
                 dct["IMAGE"].append(
-                    PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage)
+                    PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage, config.environment_app)
                 )
             elif load_media and file_format in allow_formats_video:
                 # TODO Can load as byte object in memory
@@ -78,7 +78,8 @@ class ViewFactory:
                     file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
                     dct["IMAGE"].append(quote(str(file_pth), safe=""))
                 elif config.environment_storage == "AZURE":
-                    dct["IMAGE"].append(quote(datatable.table.loc[i, "AZURE_BLOB"], safe=""))
+                    config.AZURE_CONTAINER = datatable.table.loc[i, "AZURE_CONTAINER"]
+                    dct["IMAGE"].append(datatable.table.loc[i, "AZURE_BLOB"])
             else:
                 dct["IMAGE"].append(None)
         dct["IMAGE"] = pd.Series(dct["IMAGE"])
@@ -136,13 +137,24 @@ class ViewFactory:
                     )
                 ]
             elif media_type in allow_formats_video:
-                return [
-                    html.Video(
-                        src=f"/video?name={content_display}",
-                        controls=True,
-                        style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
-                    )
-            ]
+                if config.environment_storage == "LOCAL":
+                    return [
+                        html.Video(
+                            src=f"/video?name={content_display}",
+                            controls=True,
+                            style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                        )
+                    ]
+                elif config.environment_storage == "AZURE":
+                    container = quote(config.AZURE_CONTAINER, safe="")
+                    blob = quote(content_display, safe="")
+                    return [
+                        html.Video(
+                            src=f"/video?container={container}&blob={blob}",
+                            controls=True,
+                            style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                        )
+                    ]
         else:
             return [
                 html.Div()

@@ -203,16 +203,19 @@ if config.environment_app == "AZURE":
 # TODO Into View Factory?
 @app.route("/video")
 def stream_video():
-    name = request.args.get("name")
     # TODO Common call, decoding in PhotoFactory
     if config.environment_storage == "LOCAL":
+        name = request.args.get("name")
         stream = Path(name)
+        mimetype, _ = mimetypes.guess_type(name)
     elif config.environment_storage == "AZURE":
+        container = request.args.get("container")
+        blob = request.args.get("blob")
         stream = PhotoFactory.stream_image(
-            pd.Series(data={'AZURE_CONTAINER': "photo", 'AZURE_BLOB': name}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
-            "AZURE"
+            pd.Series(data={'AZURE_CONTAINER': container, 'AZURE_BLOB': blob}, index=['AZURE_CONTAINER', 'AZURE_BLOB']),
+            config.environment_storage, config.environment_app
         )
-    mimetype, _ = mimetypes.guess_type(name)
+        mimetype, _ = mimetypes.guess_type(blob)
     if not mimetype:
         mimetype = "application/octet-stream"  # fallback
     return send_file(stream, mimetype=mimetype)
