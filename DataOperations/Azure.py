@@ -2,16 +2,16 @@ import os
 import io
 from pathlib import Path
 import pandas as pd
-from azure.storage.blob import BlobClient, ContainerClient, BlobServiceClient
+from datetime import datetime, timedelta
+from azure.storage.blob import ContainerClient, BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential, AzureCliCredential
 from azure.keyvault.secrets import SecretClient
 
 
 class AzureFactory:
-
     @staticmethod
-    def connection_string(environment):
+    def get_storage_key(environment):
         if environment == 'LOCAL':
             key = os.getenv("AZURE_STORAGE_KEY")
         else:
@@ -20,6 +20,11 @@ class AzureFactory:
             secret_client = SecretClient(vault_url="https://docschneider-keyvault.vault.azure.net/", credential=credential)
             secret = secret_client.get_secret("keyStorage")
             key = secret.value
+        return key
+
+    @staticmethod
+    def connection_string(environment):
+        key = AzureFactory.get_storage_key(environment)
         return 'DefaultEndpointsProtocol=https;AccountName=docschneiderstorage;AccountKey=' + key + \
                ';EndpointSuffix=core.windows.net'
 
@@ -35,6 +40,19 @@ class AzureFactory:
             new_container = blob_service_client.create_container(container_name)
         except ResourceExistsError:
             print("Container already exists.")
+
+    @staticmethod
+    def create_blob_sas(container_name, blob_name, environment):
+        key = AzureFactory.get_storage_key(environment)
+        sas = generate_blob_sas(
+                account_name="docschneiderstorage",
+                container_name=container_name,
+                blob_name=blob_name,
+                account_key=key,
+                permission=BlobSasPermissions(read=True),
+                expiry=datetime.utcnow() + timedelta(hours=3),
+        )
+        return sas
 
     @staticmethod
     def upload_from_table_to_blob(container_name, path_blob, table):

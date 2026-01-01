@@ -139,7 +139,8 @@ class PhotoFactory:
                 exif_dct, exif_gps = PhotoFactory.get_exif_data(
                     table.loc[i],
                     table.loc[i, "FILE_FORMAT"],
-                    environment_storage="LOCAL"
+                    environment_storage="LOCAL",
+                    environment_app="LOCAL",
                 )
                 # Extracting local time when image was taken
                 # TODO There can be a difference between the two DateTime: Clarify

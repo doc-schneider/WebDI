@@ -7,6 +7,7 @@ from dash import html, dcc
 
 from DataStructures.TableTypes import table_columns_names_types, table_definitions
 from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video
+from DataOperations.Azure import AzureFactory
 import config  # TODO Not in this this module
 
 
@@ -146,12 +147,18 @@ class ViewFactory:
                         )
                     ]
                 elif config.environment_storage == "AZURE":
-                    container = quote(config.AZURE_CONTAINER, safe="")
-                    blob = quote(content_display, safe="")
+                    container = config.AZURE_CONTAINER
+                    blob = content_display
+                    sas = AzureFactory.create_blob_sas(container, blob, config.environment_app)
+                    container = quote(container, safe="")
+                    blob = quote(blob, safe="")
+                    # video_url = f"/video?container={container}&blob={blob}"
+                    video_url = f"https://docschneiderstorage.blob.core.windows.net/{container}/{blob}?{sas}"
                     return [
                         html.Video(
-                            src=f"/video?container={container}&blob={blob}",
+                            src=video_url,
                             controls=True,
+                            preload="metadata",
                             style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
                         )
                     ]
