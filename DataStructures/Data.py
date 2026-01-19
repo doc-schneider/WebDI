@@ -1,4 +1,5 @@
 import io
+import pandas as pd
 
 from DataStructures.TableTypes import table_columns_names_types, table_definitions
 from DataOperations.Operations_Factory import fetch_table
@@ -93,8 +94,7 @@ class DataTable:
         self.table[foreign_key] = foreign_id
 
     # TODO These should possibly located in MySQL. In memory / DataFrame should store them as Path etc
-    #
-    # Can't I upload "null" to MySql ?
+    # TODO Try use nan or nAT only
     def replace_nan(self):
         for col in self.table.columns:
             mysqltype = table_columns_names_types[col]["mysqltype"]
@@ -104,8 +104,8 @@ class DataTable:
                 #TODO Not so reasonable. However, nan is not accepted by MySQL?
                 self.table[col].fillna(0, inplace=True)
             elif mysqltype == "datetime":
-                pass
-                # TODO ?
+                # TODO NaT is not mapped as null to MySQl. Use None?
+                self.table[col] = pd.to_datetime(self.table[col], errors="coerce")
     #
     def format_path(self, cols=["PATH"]):
         # type = str
@@ -115,7 +115,8 @@ class DataTable:
     def format_documentgroup(self):
         # Column DOCUMENT_GROUP
         # - type = int
-        self.table["DOCUMENT_GROUP"] = self.table["DOCUMENT_GROUP"].astype(int)
+        if "DOCUMENT_GROUP" in self.table.columns:
+            self.table["DOCUMENT_GROUP"] = self.table["DOCUMENT_GROUP"].astype(int)
         # TODO Roll out DESCRIPTION ect?
 
 

@@ -83,6 +83,10 @@ table_columns_names_types = {
         "mysqltype": "integer",
         "sqlalchemytype": Integer
     },
+    "PAGE_NUMBER": {
+        "mysqltype": "integer",
+        "sqlalchemytype": Integer
+    },
     "PHOTO_ALBUM": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -198,6 +202,7 @@ table_definitions = {
             "FILE_NAME": table_columns_names_types["FILE_NAME"],
             "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
             "PATH": table_columns_names_types["PATH"],
+            "PAGE_NUMBER": table_columns_names_types["PAGE_NUMBER"],
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],

@@ -26,17 +26,18 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Silvester 2025"
+album_name = "Augenärztin"
 chapters = [
-    "Bensberg",
+    "Verbesserte Kurzsichtgkeit durch Alter & Toxoplasmose",
 ]
 photo_table = PhotoFactory().table_from_folder(
+    TableType.PHOTO,
     [
-        Path("Y:/2025/2025_12_Silvester"),
+        Path("Y:/2026/2026_01_19_Augenärztin"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_12_Silvester/PreDokumentliste.csv"),
+    pretable_file=Path("Y:/2026/2026_01_19_Augenärztin/PreDokumentliste.csv"),
 )   # Path("Y:/2025/2025_12_03_Weihnachtsmarkt Bärbel/PreDokumentliste.csv")
 
 if flag_add_photos:

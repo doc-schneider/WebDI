@@ -46,10 +46,10 @@ for a_n in album_names:
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
     config.mysql["connector"], config.mysql["cursor"],
-    "film_contents",
-    table_definitions[TableType.FILM_CONTENT],
-    foreign_table_name="films",
-    foreign_table_dct=table_definitions[TableType.FILM],
+    "photo_pages",
+    table_definitions[TableType.PHOTO_PAGE],
+    foreign_table_name="albums",
+    foreign_table_dct=table_definitions[TableType.ALBUM],
 )
 
 # Add foreign key column
@@ -59,11 +59,11 @@ foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
 add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
-table_name = "films"
+table_name = "photo_pages"
 add_columns(
     config.mysql["connector"], config.mysql["cursor"],
     table_name, {
-        "AZURE_BLOB": table_columns_names_types["AZURE_BLOB"]["mysqltype"],
+        "PAGE_NUMBER": table_columns_names_types["PAGE_NUMBER"]["mysqltype"],
     }
 )
 

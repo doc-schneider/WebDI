@@ -22,37 +22,6 @@ def parse_datetime(df):
     for c in cols:
         df[c] = pd.to_datetime(df[c], format=date_format_German)
 
-# TODO Remove (in Photo)
-def get_creation_time(table, timezone_default="CET"):
-    for i in range(table.shape[0]):
-        # Get meta data (exif)
-        # TODO Process exif data in function
-        if table.loc[i, "FILE_FORMAT"] in allow_formats_image:
-            exif_dct, exif_gps = PhotoFactory.get_exif_data(
-                Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]),
-                table.loc[i, "FILE_FORMAT"]
-            )
-            # Extracting local time when image was taken
-            t = pd.to_datetime(exif_dct["DateTime"], format="%Y:%m:%d %H:%M:%S")
-            if not exif_gps:
-                # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
-                t = t.tz_localize("CET")
-                t = t.tz_convert(timezone_default)
-                t = t.tz_localize(None)
-        elif table.loc[i, "FILE_FORMAT"] in allow_formats_video:
-            exif_dct = PhotoFactory.get_meta_data(Path(table.loc[i, "PATH"], table.loc[i, "FILE_NAME"]))
-            if "comapplequicktimemake" in exif_dct.keys():  # Apple MOV
-                t = pd.Timestamp(exif_dct["comapplequicktimecreationdate"])  # includes local tz
-                t = t.tz_localize(None)
-            elif "recorded_date" in exif_dct.keys():  # Apple MP4
-                t = pd.Timestamp(exif_dct["recorded_date"])
-                t = t.tz_localize(None)
-        elif table.loc[i, "FILE_FORMAT"] in allow_formats_document + allow_formats_html:
-            t = table.loc[i, "TIME_MODIFIED"].floor("S")
-        #TODO Use timezone?
-        #TODO Use datetime?
-        table.loc[i, "DATE_TIME"] = t
-
 def get_pretable(pretable_file, cols):
     # Additional columns
     if pretable_file:

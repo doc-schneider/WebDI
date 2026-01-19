@@ -14,7 +14,8 @@ import mimetypes
 from DataStructures.Data import DataTable
 from DataStructures.TableTypes import TableType
 from DataOperations.Photo import PhotoFactory
-from Initialize.Initialize import initialize_MySQL
+from Initialize.Initialize import initialize_MySQL, register_session_init
+from Views.View_Factory import video_bp
 import config
 
 config.environment_app = "LOCAL"   # "AZURE"  # LOCAL
@@ -31,6 +32,7 @@ if config.environment_app == "LOCAL":
 elif config.environment_app == "AZURE":
         VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
 
+# TODO Into Initialize
 if config.environment_storage == "LOCAL":
     # MySQL
     initialize_MySQL()
@@ -113,7 +115,7 @@ for key in config.table.keys():
 dash_app = Dash(__name__, use_pages=True)
 app = dash_app.server
 
-# TODO On Azure: redis, sqlite?
+# TODO On Azure: sqlite, redis?
 os.makedirs(os.path.join(os.getcwd(), 'sessions'), exist_ok=True)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SESSION_TYPE'] = 'filesystem'  # Use the filesystem for sessions
@@ -122,33 +124,14 @@ app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser
 app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
 Session(app)
 
+register_session_init(app)
+
 if config.environment_app == "AZURE":
     @app.before_request
     def protect_dash():
         if request.path.startswith("/") and not request.path.startswith("/login"):
             if "user" not in session:
                 return redirect("/login")
-
-# TODO Into View Factory?
-@app.before_request
-def ensure_session_initialized():
-    # TODO Into Initialize module
-    if 'initialized' not in session:
-        session['ALBUM'] = {"ID_ALBUM": 7}
-        session['FILM'] = {"ID_FILM": 1}
-        session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['NOTEBOOK'] = {"ID_NOTEBOOK": 1}
-        session['table_content'] = TableType.FILM.name
-        session['album_view'] = {"IX_PHOTO": [None]}
-        # session['timeline_content'] = TableType.MESSAGE.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
-        session['timeline_content'] = TableType.ALBUM.name
-        session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        # session['timeline_content'] = TableType.NOTE.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        session['content_content'] = TableType.PHOTO.name
-        session['content_view'] = {"ID_PHOTO": 313}
-        session['initialized'] = True
 
 if config.environment_app == "AZURE":
     def is_locked(username):
@@ -201,7 +184,7 @@ if config.environment_app == "AZURE":
         </form>
         """
 
-# TODO Into View Factory?
+# TODO Into  some dedicated Blueprint module? Or Photo?
 @app.route("/video")
 def stream_video():
     # TODO Common call, decoding in PhotoFactory

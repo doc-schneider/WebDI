@@ -61,8 +61,8 @@ class AzureFactory:
         for i in range(len(table.table)):
             file_name = table.table.loc[i, 'FILE_NAME']
             path_name = AzureFactory.convert_path_to_blob(table.table['PATH'].iloc[i])
-            # blob_name = path_name.replace(path_discard, '') + "/" + file_name
-            blob_name = path_blob + "/" + file_name
+            blob_name = path_name.replace(path_blob, '') + "/" + file_name
+            # blob_name = path_blob + "/" + file_name
             with open(Path(path_name, file_name), "rb") as data:
                 AzureFactory.upload_blob(container_name, blob_name, data)
             # Add Azure path to table
@@ -75,7 +75,13 @@ class AzureFactory:
             AzureFactory.connection_string("LOCAL")
         )
         blob_client = blob_service_client.get_blob_client(container_name, blob_name)
-        blob_client.upload_blob(data, overwrite=flag_overwrite)
+        blob_client.upload_blob(
+            data,
+            overwrite=flag_overwrite,
+            max_concurrency=1,           # stabiler bei schlechten Netzen
+            blob_type="BlockBlob",
+            timeout=300                  # Sekunden
+        )
 
     @staticmethod
     def download_blob(container_name, blob_name, environment, stream=None):
