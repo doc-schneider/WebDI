@@ -45,7 +45,7 @@ layout = html.Div([
     Input('album-slider', 'value')
 )
 def select_photos(b1, b2, slider_value):
-    AlbumView = init_Album(session['ALBUM'], session["album_view"])
+    AlbumView = init_Album(session['ALBUM'], session["album_content"], session["album_view"])
     if ctx.triggered_id == "earlier":  # and b1 > 0:  # TODO ctx gives a wrong value for no click (earlier)?
         AlbumView.earlier()
     elif ctx.triggered_id == "later":
@@ -59,6 +59,7 @@ def select_photos(b1, b2, slider_value):
 
 def update_album(AlbumView):
     boxes_dct = AlbumView.view()
+    additional_item = AlbumView.column_sort
     n_dim = boxes_dct["N_DIM"]
     n_boxes = boxes_dct["N_BOXES"]
     slider_max = AlbumView.album["N_ELEMENTS"]
@@ -73,20 +74,16 @@ def update_album(AlbumView):
                 ViewFactory.media_type_box(
                     boxes_dct["FILE_FORMAT"][i],
                     boxes_dct["IMAGE"][i]
-                ) + [
-                    html.Div(
-                        boxes_dct["DATE_TIME"].dt.strftime('%Y-%m-%d %X').fillna('')[i] + ": " + boxes_dct["TEXT"][i]
-                    )
-                ],
+                ) + ViewFactory.additional_items(boxes_dct, i, additional_item) + [html.Div(boxes_dct["TEXT"][i])],
                 style={'flex': 1, 'padding': '10px', 'border': '1px solid black'},
                 id={"type": "album_box", "index": i}
             ) if i < n_boxes else html.Div(style={'flex': 1}) for i in range(r * n_dim[1], (r + 1) * n_dim[1])
         ], style={'display': 'flex', 'flexDirection': 'row'}) for r in range(n_dim[0])
     ], slider_max, slider_value, slider_marks
 
-def init_Album(album, album_view):
+def init_Album(album, album_content, album_view):
     return AlbumViewer(
-        config.table[TableType.PHOTO]["data_table"],
+        config.table[TableType[album_content]]["data_table"],
         album,
         album_view
     )

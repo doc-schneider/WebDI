@@ -62,8 +62,6 @@ def init_Content():
                 boxes_dct, 0, 'DATE_TIME'
             ) + ViewFactory.additional_items(
                 boxes_dct, 0, 'TEXT_ADDITIONAL'
-            ) + ViewFactory.additional_items(
-                boxes_dct, 0, 'MARKDOWN'
             ),
             style={
                 'padding': '10px',

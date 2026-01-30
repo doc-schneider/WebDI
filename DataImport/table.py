@@ -9,7 +9,6 @@ import config
 config.environment_storage = "LOCAL"
 initialize_MySQL()
 
-
 # Remove photo records wiht wrong ID_ALBUM
 #
 album_table = DataTable.fetch_table(TableType.ALBUM, "albums")
@@ -59,11 +58,11 @@ foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
 add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
-table_name = "photo_pages"
+table_name = "albums"
 add_columns(
     config.mysql["connector"], config.mysql["cursor"],
     table_name, {
-        "PAGE_NUMBER": table_columns_names_types["PAGE_NUMBER"]["mysqltype"],
+        "CONTENT_TYPE": table_columns_names_types["CONTENT_TYPE"]["mysqltype"],
     }
 )
 
@@ -75,14 +74,14 @@ mycursor.execute(query)
 conn.commit()
 
 # Set column values
-table_name = "photos"
-column_set = "AZURE_BLOB"
-update_column()
-# query = f"UPDATE {table_name} SET {column_set} =  %s"
+table_name = "albums"
+column_set = "CONTENT_TYPE"
+# update_column()
+query = f"UPDATE {table_name} SET {column_set} =  %s"
 # column_if = "ID_EVENT"
 # query = f"UPDATE {table_name} SET {column_set} =  CASE WHEN {column_if} = 24 THEN 5 END;"
-#config.mysql["cursor"].execute(query, ("photo", ))
-#config.mysql["connector"].commit()
+config.mysql["cursor"].execute(query, ("PHOTO", ))
+config.mysql["connector"].commit()
 
 # Fetch table subset (where)
 #
