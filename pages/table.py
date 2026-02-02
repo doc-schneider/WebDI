@@ -35,11 +35,17 @@ def create_Table():
 dash.register_page(__name__)
 
 def layout():
-    return html.Div([
-        html.Br(),
-        html.Br(),
-        create_Table()
-    ])
+    if "initialized" not in session:
+        return html.Div([
+            html.Br(),
+            html.Br(),
+        ])
+    else:
+        return html.Div([
+            html.Br(),
+            html.Br(),
+            create_Table()
+        ])
 
 def init_Table(table_content):
     data_table = config.table[TableType[table_content]]["data_table"]
