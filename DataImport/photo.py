@@ -13,11 +13,12 @@ import config
 config.environment_storage = "LOCAL"
 initialize_MySQL()
 
-flag_add_photos = False
+flag_add_photos = True
 flag_add_event = False
 
+# Add photo to existing album
 if flag_add_photos:
-    id_album = 163
+    id_album = 241
 
     photo_table_old = DataTable.fetch_table(
         TableType.PHOTO,
@@ -26,17 +27,18 @@ if flag_add_photos:
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
 # Raw photo table
-album_name = "Silvester 2025"
+album_name = "Wochenende"
 chapters = [
-    "Bensberg",
+    "Optiker & Melanie & Pempelfort",
 ]
 photo_table = PhotoFactory().table_from_folder(
+    TableType.PHOTO,
     [
-        Path("Y:/2025/2025_12_Silvester"),
+        Path("Y:/2026/2026_01_31_Melanie"),
     ],
     album_name,
     chapters,
-    pretable_file=Path("Y:/2025/2025_12_Silvester/PreDokumentliste.csv"),
+    pretable_file=Path("Y:/2026/2026_01_31_Melanie/PreDokumentliste.csv"),
 )   # Path("Y:/2025/2025_12_03_Weihnachtsmarkt Bärbel/PreDokumentliste.csv")
 
 if flag_add_photos:
@@ -44,7 +46,6 @@ if flag_add_photos:
     photo_table.table = photo_table.table[~photo_table.table["FILE_NAME"].isin(photo_table_old.table["FILE_NAME"])]
     photo_table.table["ID_ALBUM"] = id_album
     # TODO New DATE_FROM/TO for album
-    # TODO Album name copy
 
 # Add Event
 # Events from chapters
@@ -84,6 +85,7 @@ if not flag_add_photos:
     date_from = d_t.min()
     date_to = d_t.max()
     cols = list(table_definitions[TableType.ALBUM]["Columns"].keys())
+    print(cols)
     album_table = pd.DataFrame(
         index=[0],
         data={
@@ -91,7 +93,8 @@ if not flag_add_photos:
             "DATE_FROM": date_from,
             "DATE_TO": date_to,
             "DESCRIPTION": album_description,
-            "OWNER": owner
+            "OWNER": owner,
+            "CONTENT_TYPE": "PHOTO"
         }
     )
     #

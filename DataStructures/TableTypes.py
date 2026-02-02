@@ -83,6 +83,10 @@ table_columns_names_types = {
         "mysqltype": "integer",
         "sqlalchemytype": Integer
     },
+    "PAGE_NUMBER": {
+        "mysqltype": "integer",
+        "sqlalchemytype": Integer
+    },
     "PHOTO_ALBUM": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -171,6 +175,10 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
+    "CONTENT_TYPE": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
 }
 
 # TODO AZURE columns
@@ -190,7 +198,7 @@ table_definitions = {
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },
         "PrimaryKey": "ID_PHOTO",
-        "ForeignKey": ["ID_ALBUM", "ID_PHOTO_PAGE"],
+        "ForeignKey": "ID_ALBUM",
         "ParentTableType": TableType.ALBUM
     },
     TableType.PHOTO_PAGE: {
@@ -198,6 +206,7 @@ table_definitions = {
             "FILE_NAME": table_columns_names_types["FILE_NAME"],
             "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
             "PATH": table_columns_names_types["PATH"],
+            "PAGE_NUMBER": table_columns_names_types["PAGE_NUMBER"],
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
@@ -219,6 +228,7 @@ table_definitions = {
     TableType.ALBUM: {
         "Columns": {
             "PHOTO_ALBUM": table_columns_names_types["PHOTO_ALBUM"],
+            "CONTENT_TYPE": table_columns_names_types["CONTENT_TYPE"],
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],

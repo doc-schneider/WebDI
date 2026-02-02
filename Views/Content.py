@@ -11,11 +11,11 @@ date_format_German = '%d.%m.%Y %H:%M:%S'
 time_format_German = "%H:%M:%S"
 
 class ContentViewer():
-    def __init__(self, datatable, id_row, datatable_additional=None):
+    def __init__(self, datatable, id_element, datatable_additional=None):
         self.datatable = datatable
         self.datatable_show = None
         self.table_type = datatable.table_type
-        self.id = id_row
+        self.id = id_element
         self.datatable_additional = datatable_additional
         self.table_film_content = None
         self.update()

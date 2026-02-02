@@ -12,10 +12,75 @@ load_dotenv()
 config.environment_app = "LOCAL"
 initialize_MySQL()
 
+
+# Upload photo album
+#
+ID_ALBUM = 222
+#
+# Get meta table from Database
+# config.environment_storage = "LOCAL"
+# album_table_mysql = DataTable.fetch_table(
+#     TableType.ALBUM,
+#     "albums"
+# )
+# album_table_mysql = album_table_mysql.filter({"ID_ALBUM": ID_ALBUM})
+# # From Azure
+# config.environment_storage = "AZURE"
+# album_table_azure = DataTable.fetch_table(
+#     TableType.ALBUM,
+#     "albums.csv"
+# )
+# # Append
+# album_table = DataTable(
+#     pd.concat([album_table_mysql.table, album_table_azure.table], ignore_index=True),
+#     TableType.ALBUM,
+# )
+# # Upload to blob
+# AzureFactory.write_table_to_blob("tables", "albums.csv", album_table)
+#
+# Get file table and upload
+#
+config.environment_storage = "LOCAL"
+photo_table_mysql = DataTable.fetch_table(
+    TableType.PHOTO,
+    "photos"
+).filter({"ID_ALBUM": ID_ALBUM})
+# Add container name
+photo_table_mysql.table["AZURE_CONTAINER"] = "photo"
+# From Azure
+config.environment_storage = "AZURE"
+photo_table_azure = DataTable.fetch_table(
+    TableType.PHOTO,
+    "photos.csv"
+)
+# Upload files to blob
+PATH_AZURE_BLOB = AzureFactory.upload_from_table_to_blob("photo", "Y:/", photo_table_mysql)
+# Add Blob information
+photo_table_mysql.table["AZURE_BLOB"] = PATH_AZURE_BLOB
+# Append
+photo_table = DataTable(
+    pd.concat([photo_table_azure.table, photo_table_mysql.table], ignore_index=True),
+    TableType.PHOTO,
+)
+# Upload table to blob
+AzureFactory.write_table_to_blob("tables", "photos.csv", photo_table)
+# Write blob  names to MySQL table
+value_dct = dict(zip(photo_table_mysql.table["ID_PHOTO"], PATH_AZURE_BLOB))
+update_column(
+    config.mysql["connector"], config.mysql["cursor"],
+    "photos", "AZURE_BLOB", "ID_PHOTO", value_dct
+)
+value_dct = dict(zip(photo_table_mysql.table["ID_PHOTO"], ["photo"] * photo_table_mysql.table.shape[0]))
+update_column(
+    config.mysql["connector"], config.mysql["cursor"],
+    "photos", "AZURE_CONTAINER", "ID_PHOTO", value_dct
+)
+
+
 # New Container
 #
-# container_name = "film"
-# AzureFactory.create_container(container_name, config.environment_app)
+container_name = "film"
+AzureFactory.create_container(container_name, config.environment_app)
 
 
 # Upload films
@@ -66,68 +131,5 @@ message_table_mysql = DataTable.fetch_table(
     "messages"
 ).filter({"ID_MESSAGE_COLLECTION": ID_MESSAGE_COLLECTION})
 
-
-# Upload photo album
-#
-ID_ALBUM = 195
-#
-# Get meta table from Database
-config.environment_storage = "LOCAL"
-album_table_mysql = DataTable.fetch_table(
-    TableType.ALBUM,
-    "albums"
-)
-album_table_mysql = album_table_mysql.filter({"ID_ALBUM": ID_ALBUM})
-# From Azure
-config.environment_storage = "AZURE"
-album_table_azure = DataTable.fetch_table(
-    TableType.ALBUM,
-    "albums.csv"
-)
-# Append
-album_table = DataTable(
-    pd.concat([album_table_mysql.table, album_table_azure.table], ignore_index=True),
-    TableType.ALBUM,
-)
-# Upload to blob
-AzureFactory.write_table_to_blob("tables", "albums.csv", album_table)
-#
-# Get file table and upload
-#
-config.environment_storage = "LOCAL"
-photo_table_mysql = DataTable.fetch_table(
-    TableType.PHOTO,
-    "photos"
-).filter({"ID_ALBUM": ID_ALBUM})
-# Add container name
-photo_table_mysql.table["AZURE_CONTAINER"] = "photo"
-# From Azure
-config.environment_storage = "AZURE"
-photo_table_azure = DataTable.fetch_table(
-    TableType.PHOTO,
-    "photos.csv"
-)
-# Upload files to blob
-PATH_AZURE_BLOB = AzureFactory.upload_from_table_to_blob("photo", "Y:/", photo_table_mysql)
-# Add Blob information
-photo_table_mysql.table["AZURE_BLOB"] = PATH_AZURE_BLOB
-# Append
-photo_table = DataTable(
-    pd.concat([photo_table_azure.table, photo_table_mysql.table], ignore_index=True),
-    TableType.PHOTO,
-)
-# Upload table to blob
-AzureFactory.write_table_to_blob("tables", "photos.csv", photo_table)
-# Write blob  names to MySQL table
-value_dct = dict(zip(photo_table_mysql.table["ID_PHOTO"], PATH_AZURE_BLOB))
-update_column(
-    config.mysql["connector"], config.mysql["cursor"],
-    "photos", "AZURE_BLOB", "ID_PHOTO", value_dct
-)
-value_dct = dict(zip(photo_table_mysql.table["ID_PHOTO"], ["photo"] * photo_table_mysql.table.shape[0]))
-update_column(
-    config.mysql["connector"], config.mysql["cursor"],
-    "photos", "AZURE_CONTAINER", "ID_PHOTO", value_dct
-)
 
 print("done")

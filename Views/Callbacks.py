@@ -1,7 +1,7 @@
 from dash import Input, Output, callback, ctx, dcc, ALL
 from flask import session
 
-from DataStructures.TableTypes import TableType
+from DataStructures.TableTypes import TableType, table_definitions
 from pages.table import init_Table
 from pages.timeline import init_Timeline
 from pages.album import init_Album
@@ -20,9 +20,10 @@ from pages.album import init_Album
 def click_box(n_clicks_list_album, n_clicks_list_timeline, n_clicks_list_table):
     if any(c is not None for c in n_clicks_list_album):
         ix = ctx.triggered_id["index"]
-        session["content_content"] = TableType.PHOTO.name
-        AlbumView = init_Album(session['ALBUM'], session["album_view"])
-        session['content_view']["ID_PHOTO"] = AlbumView.datatable_show.table.loc[ix, "ID_PHOTO"]
+        AlbumView = init_Album(session['ALBUM'], session["album_content"], session["album_view"])
+        session["content_content"] = session["album_content"]
+        primary_key = table_definitions[TableType[session["album_content"]]]["PrimaryKey"]
+        session['content_view'][primary_key] = AlbumView.datatable_show.table.loc[ix, primary_key]
         return "/content"
     elif any(c is not None for c in n_clicks_list_timeline):
         ix = ctx.triggered_id["index"]
@@ -32,8 +33,9 @@ def click_box(n_clicks_list_album, n_clicks_list_timeline, n_clicks_list_table):
         )
         if TimelineView.datatable_show.table_type.name == TableType.ALBUM.name:
             id_album = TimelineView.datatable_show.table.loc[ix, "ID_ALBUM"]
+            session["album_content"] = TimelineView.datatable_show.table.loc[ix, "CONTENT_TYPE"]
             session['ALBUM']["ID_ALBUM"] = id_album
-            session['album_view'] = {"IX_PHOTO": [None]}
+            session['album_view'] = {"IX_PHOTO": [None], "IX_PHOTO_PAGE": [None]}
             return "/album"
         elif TimelineView.datatable_show.table_type.name == TableType.MESSAGE.name:
             session["content_content"] = TableType.MESSAGE.name

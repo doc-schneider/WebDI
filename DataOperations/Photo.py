@@ -30,12 +30,15 @@ rotation_mapping = {
     8: 90
 }
 
+# TODO Into some central module
 date_format_German = '%d.%m.%Y %H:%M:%S'
 
+# Reading photo (eg, jpg) collections from folders which constitute a photo album, photo book, ..
 class PhotoFactory:
 
     @staticmethod
     def table_from_folder(
+            album_type,
             path_photo,
             album_name,
             chapters,
@@ -43,12 +46,13 @@ class PhotoFactory:
             pretable_file=None
     ):
         # Create table from standard columns
-        cols = list(table_definitions[TableType.PHOTO]["Columns"].keys())
+        cols = list(table_definitions[album_type]["Columns"].keys())
 
         # Get pretable
         # - Additional columns
         # - Replacement columns
         # - Replacement rows
+        # TODO: Into Helper
         if pretable_file:
             pretable = read_table_from_csv(
                 pretable_file
@@ -91,8 +95,9 @@ class PhotoFactory:
 
             table = pd.concat([table, table_part], axis=0, ignore_index=True)
 
-        # Get meta data (exif)
-        PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime)
+        # Get meta data (exif) for time of recording
+        if "DATE_TIME" in table.columns:
+            PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime)
 
         table["PHOTO_ALBUM"] = album_name
 
@@ -111,7 +116,13 @@ class PhotoFactory:
             ] = pretable
         table.reset_index(inplace=True)
 
-        photo_table = DataTable(table, TableType.PHOTO)
+        # Automated page numbering
+        if album_type.name == "PHOTO_PAGE":
+            # Presumes that files are sorted alphatically
+            table.sort_values(by="FILE_NAME", inplace=True)
+            table["PAGE_NUMBER"] = table.index + 1
+
+        photo_table = DataTable(table, album_type)
 
         photo_table.replace_nan()
         photo_table.format_path()

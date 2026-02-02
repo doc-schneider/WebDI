@@ -5,6 +5,7 @@ from flask import session
 from DataStructures.TableTypes import TableType, table_definitions
 from Views.Content import ContentViewer
 from Views.View_Factory import ViewFactory
+from Initialize.Initialize import init_session
 import config
 
 # TODO Why is this not working?
@@ -62,8 +63,6 @@ def init_Content():
                 boxes_dct, 0, 'DATE_TIME'
             ) + ViewFactory.additional_items(
                 boxes_dct, 0, 'TEXT_ADDITIONAL'
-            ) + ViewFactory.additional_items(
-                boxes_dct, 0, 'MARKDOWN'
             ),
             style={
                 'padding': '10px',
@@ -110,9 +109,15 @@ def init_Content():
 dash.register_page(__name__)
 
 def layout():
-    return html.Div([
-        html.H1('Inhalt'),
-        html.Hr(),
-        html.Div(init_Content())
-    ])
+    if "initialized" not in session:
+        return html.Div([
+            html.H1('Inhalt'),
+            html.Hr()
+        ])
+    else:
+        return html.Div([
+            html.H1('Inhalt'),
+            html.Hr(),
+            html.Div(init_Content())
+        ])
 

@@ -42,7 +42,9 @@ class DocumentFactory:
             table = pd.concat([table, table_part], axis=0, ignore_index=True)
 
         # Get creation time
-        get_creation_time(table, timezone_default)
+        # TODO Update to PhotoFactory
+        # get_creation_time(table, timezone_default)
+        # t = table.loc[i, "TIME_MODIFIED"].floor("S")   ?
 
         # Drop non-required columns from files info
         table.drop(columns=set(table.columns) - set(cols + cols_add), inplace=True)

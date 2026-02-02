@@ -11,14 +11,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 import mimetypes
 
-from DataStructures.Data import DataTable
-from DataStructures.TableTypes import TableType
 from DataOperations.Photo import PhotoFactory
-from Initialize.Initialize import initialize_MySQL
+from Initialize.Initialize import session_init, init_tables
 import config
 
-config.environment_app = "AZURE"   # "AZURE"  # LOCAL
-config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
+config.environment_app = "LOCAL"   # "AZURE"  # LOCAL
+config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
 
 FAILED_LOGINS = {}
 MAX_ATTEMPTS = 3
@@ -31,84 +29,7 @@ if config.environment_app == "LOCAL":
 elif config.environment_app == "AZURE":
         VALID_USERNAME_PASSWORD_PAIRS = json.loads(os.environ["USERS_JSON"])
 
-if config.environment_storage == "LOCAL":
-    # MySQL
-    initialize_MySQL()
-    # Tables
-    config.table = {
-        TableType.ALBUM: {
-            "storage_name": "albums",
-            "data_table": None
-        },
-        TableType.PHOTO: {
-            "storage_name": "photos",
-            "data_table": None
-        },
-        TableType.FILM: {
-            "storage_name": "films",
-            "data_table": None
-        },
-        TableType.FILM_CONTENT: {
-            "storage_name": "film_contents",
-            "data_table": None
-        },
-        TableType.MESSAGE: {
-            "storage_name": "messages",
-            "data_table": None
-        },
-        TableType.MESSAGE_COLLECTION: {
-            "storage_name": "message_collections",
-            "data_table": None
-        },
-        TableType.NOTE: {
-            "storage_name": "notes",
-            "data_table": None
-        },
-        TableType.NOTEBOOK: {
-            "storage_name": "notebooks",
-            "data_table": None
-        },
-        TableType.DOCUMENT: {
-            "storage_name": "documents",
-            "data_table": None
-        },
-        TableType.DOCUMENT_COLLECTION: {
-            "storage_name": "document_collections",
-            "data_table": None
-        },
-        TableType.TAG: {
-            "storage_name": "tags",
-            "data_table": None
-        },
-        TableType.EVENT: {
-            "storage_name": "events",
-            "data_table": None
-        },
-    }
-elif config.environment_storage == "AZURE":
-    config.table = {
-        TableType.ALBUM: {
-            "storage_name": "albums.csv",
-            "data_table": None
-        },
-        TableType.PHOTO: {
-            "storage_name": "photos.csv",
-            "data_table": None
-        },
-        TableType.FILM: {
-            "storage_name": "films.csv",
-            "data_table": None
-        },
-        TableType.FILM_CONTENT: {
-            "storage_name": "film_contents.csv",
-            "data_table": None
-        },
-    }
-for key in config.table.keys():
-    config.table[key]["data_table"] = DataTable.fetch_table(
-        key,
-        config.table[key]["storage_name"]
-    )
+init_tables(config.environment_storage)
 
 dash_app = Dash(__name__, use_pages=True)
 app = dash_app.server
@@ -120,6 +41,7 @@ app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'sessions')  # Direct
 app.config['SESSION_PERMANENT'] = False  # Sessions will expire when the browser is closed
 app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
 Session(app)
+session_init(app)
 
 if config.environment_app == "AZURE":
     @app.before_request
@@ -127,27 +49,6 @@ if config.environment_app == "AZURE":
         if request.path.startswith("/") and not request.path.startswith("/login"):
             if "user" not in session:
                 return redirect("/login")
-
-# TODO Into View Factory?
-@app.before_request
-def ensure_session_initialized():
-    # TODO Into Initialize module
-    if 'initialized' not in session:
-        session['ALBUM'] = {"ID_ALBUM": 7}
-        session['FILM'] = {"ID_FILM": 1}
-        session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['NOTEBOOK'] = {"ID_NOTEBOOK": 1}
-        session['table_content'] = TableType.FILM.name
-        session['album_view'] = {"IX_PHOTO": [None]}
-        # session['timeline_content'] = TableType.MESSAGE.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
-        session['timeline_content'] = TableType.ALBUM.name
-        session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        # session['timeline_content'] = TableType.NOTE.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        session['content_content'] = TableType.PHOTO.name
-        session['content_view'] = {"ID_PHOTO": 313}
-        session['initialized'] = True
 
 if config.environment_app == "AZURE":
     def is_locked(username):
@@ -200,7 +101,7 @@ if config.environment_app == "AZURE":
         </form>
         """
 
-# TODO Into View Factory?
+# TODO Into  some dedicated Blueprint module? Or Photo?
 @app.route("/video")
 def stream_video():
     # TODO Common call, decoding in PhotoFactory

@@ -111,6 +111,12 @@ class ViewFactory:
             boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
             boxes['TEXT'] = dct["DESCRIPTION"]["value"]
             boxes["CHAPTER"] = dct["CHAPTER"]["value"]
+        elif datatable.table_type.name == "PHOTO_PAGE":
+            # Album View
+            boxes['FILE_NAME'] = dct['FILE_NAME']["value"]
+            boxes['PAGE_NUMBER'] = dct['PAGE_NUMBER']["value"]
+            boxes['TEXT'] = dct["DESCRIPTION"]["value"]
+            boxes["CHAPTER"] = dct["CHAPTER"]["value"]
         elif datatable.table_type.name == "ALBUM":
             boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
             boxes["ID"] = dct["ID_ALBUM"]["value"]
@@ -179,7 +185,13 @@ class ViewFactory:
                 return [
                     html.Div(boxes_dct[item].dt.strftime('%Y-%m-%d %X').fillna('')[i])
                 ]
+            elif item in ["PAGE_NUMBER"]:
+                # TODO Merge with below?
+                return [
+                    html.Div(boxes_dct[item][i])
+                ]
             else:
+                # TODO What is this doing?
                 return [
                     html.Div(txt_add[i]) for _, txt_add in boxes_dct[item].items()
                 ]
