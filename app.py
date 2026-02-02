@@ -15,8 +15,8 @@ from DataOperations.Photo import PhotoFactory
 from Initialize.Initialize import session_init, init_tables
 import config
 
-config.environment_app = "LOCAL"   # "AZURE"  # LOCAL
-config.environment_storage = "LOCAL"  # "AZURE"  # LOCAL
+config.environment_app = "AZURE"   # "AZURE"  # LOCAL
+config.environment_storage = "AZURE"  # "AZURE"  # LOCAL
 
 FAILED_LOGINS = {}
 MAX_ATTEMPTS = 3
