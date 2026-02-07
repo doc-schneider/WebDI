@@ -11,7 +11,7 @@ dash.register_page(__name__, path='/')
 
 layout = html.Div([
     html.H1('Homepage'),
-    html.Label("Timeline content:"),
+    html.Label("Timeline Inhalt:"),
     dcc.Dropdown(
         id="home-dropdown",
         options=[{"label": "Wählen", "value": "empty"}] + [{"label": x, "value": x} for x in timeline_contents],

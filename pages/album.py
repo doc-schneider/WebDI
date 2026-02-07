@@ -5,6 +5,7 @@ from flask import session
 from DataStructures.TableTypes import TableType
 from Views.Album import AlbumViewer
 from Views.View_Factory import ViewFactory
+from Initialize.Formats import button_style
 import config
 
 '''
@@ -17,9 +18,13 @@ dash.register_page(__name__)
 layout = html.Div([
     html.Br(),
     html.Div([
-        html.Button('früher', id='earlier', n_clicks=0),
-        html.Button('später', id='later', n_clicks=0),
-    ], style={'display': 'flex', 'justify-content': 'center'}
+        html.Button(
+            'früher', id='earlier', n_clicks=0, style=button_style
+        ),
+        html.Button(
+            'später', id='later', n_clicks=0, style=button_style
+        ),
+    ], style={'display': 'flex', 'justify-content': 'center', "gap": "25px"}
     ),
     html.Div(id="photos"),
     html.Br(),

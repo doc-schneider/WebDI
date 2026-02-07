@@ -1,11 +1,12 @@
 import dash
 import pandas as pd
-from dash import html, Input, Output, callback, ctx, dcc, ALL
+from dash import html, Input, Output, callback, ctx, dcc
 from flask import session
 
 from Views.View_Factory import ViewFactory
 from Views.Timeline import TimelineViewer
-from DataStructures.TableTypes import TableType, table_definitions
+from DataStructures.TableTypes import TableType
+from Initialize.Formats import button_style
 import config
 
 # Definition of layout on page
@@ -21,17 +22,17 @@ dash.register_page(__name__)
 layout = html.Div([
     html.Br(),
     html.Div([
-        html.Button('earlier', id='earlier', n_clicks=0),
-        html.Button('later', id='later', n_clicks=0),
-        html.Button('zoom in', id='zoom-in', n_clicks=0),
-        html.Button('zoom out', id='zoom-out', n_clicks=0),
-        html.Label("Max number of rows:"),
+        html.Button('früher', id='earlier', n_clicks=0, style=button_style),
+        html.Button('später', id='later', n_clicks=0, style=button_style),
+        html.Button('hineinzoomen', id='zoom-in', n_clicks=0, style=button_style),
+        html.Button('herauszoomen', id='zoom-out', n_clicks=0, style=button_style),
+        html.Label(html.B("Max Anzahl Reihen:")),
         dcc.Input(
             id='number-rows',
             type='number',
             value=n_rows_default,
         ),
-    ], style={'display': 'flex', 'justify-content': 'center'}
+    ], style={'display': 'flex', 'justify-content': 'center', "gap": "25px"}
     ),
     html.Br(),
     html.Div(id="timeline"),
