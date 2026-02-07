@@ -4,7 +4,7 @@ from flask import session
 
 from DataStructures.TableTypes import TableType
 
-timeline_contents = [TableType.ALBUM.name, TableType.MESSAGE.name, TableType.NOTE.name]
+timeline_contents = [TableType.ALBUM.name]  # , TableType.MESSAGE.name, TableType.NOTE.name
 
 
 dash.register_page(__name__, path='/')
