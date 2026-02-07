@@ -8,26 +8,6 @@ from Views.View_Factory import ViewFactory
 from Initialize.Initialize import init_session
 import config
 
-# TODO Why is this not working?
-# def layout_content(boxes_dct):
-#     [html.Div(
-#         ViewFactory.media_type_box(
-#             boxes_dct["FILE_FORMAT"][0],
-#             boxes_dct["IMAGE"][0]
-#         ) + [
-#             html.Div(boxes_dct["TEXT"][0])
-#         ] + ViewFactory.additional_items(
-#             boxes_dct, 0, 'DATE_TIME'
-#         ) + ViewFactory.additional_items(
-#             boxes_dct, 0, 'TEXT_ADDITIONAL'
-#         ) + ViewFactory.additional_items(
-#             boxes_dct, 0, 'MARKDOWN'
-#         ),
-#         style={
-#             'padding': '10px',
-#             'border': '1px solid black',
-#         },
-#     )]
 
 def init_Content():
     # TODO How to deal with the initial session error?

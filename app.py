@@ -124,11 +124,18 @@ def stream_video():
 
 dash_app.layout = html.Div([
     dcc.Location(id="url-redirect"),
-    html.Div([
-        html.Div(
-            dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
-        ) for page in dash.page_registry.values()
-    ]),
+    html.Div(
+        [
+            html.Div(html.B("Links zu Seiten")),
+            html.Br()
+        ] + [
+            html.Div(
+                dcc.Link(f"{page['name']} - {page['path']}", href=page["relative_path"])
+            ) for page in dash.page_registry.values()
+        ] + [
+            html.Hr()
+        ]
+    ),
     dash.page_container,
 ])
 
