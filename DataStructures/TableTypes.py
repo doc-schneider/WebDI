@@ -23,6 +23,8 @@ class TableType(Enum):
     MESSAGE = 90
     MESSAGE_COLLECTION = 100
     PERSON = 110
+    BIOGRAPHY_SECTION = 120
+    BIOGRAPHY = 130
 
 # All column names and their types
 # TODO ALBUM instead of PHOTO_ALBUM
@@ -87,6 +89,10 @@ table_columns_names_types = {
         "mysqltype": "integer",
         "sqlalchemytype": Integer
     },
+    "CHAPTER": {
+        "mysqltype": "text",
+        "sqlalchemytype": Text
+    },
     "PHOTO_ALBUM": {
         "mysqltype": "text",
         "sqlalchemytype": Text
@@ -95,7 +101,7 @@ table_columns_names_types = {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
-    "CHAPTER": {
+    "BIOGRAPHY": {
         "mysqltype": "text",
         "sqlalchemytype": Text
     },
@@ -273,15 +279,36 @@ table_definitions = {
         },
         "PrimaryKey": "ID_FILM"
     },
+    TableType.BIOGRAPHY_SECTION: {
+        "Columns": {
+            "TITLE": table_columns_names_types["TITLE"],
+            "DATE_FROM": table_columns_names_types["DATE_FROM"],
+            "DATE_TO": table_columns_names_types["DATE_TO"],
+            "CHAPTER": table_columns_names_types["CHAPTER"],
+            "BIOGRAPHY": table_columns_names_types["BIOGRAPHY"]
+        },
+        "PrimaryKey": "ID_BIOGRAPHY_SECTION",
+        "ForeignKey": "ID_BIOGRAPHY",
+        "ParentTableType": TableType.BIOGRAPHY
+    },
+    TableType.BIOGRAPHY: {
+        "Columns": {
+            "BIOGRAPHY": table_columns_names_types["NOTEBOOK"],
+            "TITLE": table_columns_names_types["TITLE"],
+            "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "OWNER": table_columns_names_types["OWNER"],
+        },
+        "PrimaryKey": "ID_BIOGRAPHY"
+    },
     TableType.NOTE: {
         "Columns": {
-            "FILE_NAME": table_columns_names_types["FILE_NAME"],
-            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
-            "PATH": table_columns_names_types["PATH"],
             "DATE_TIME": table_columns_names_types["DATE_TIME"],
             "TITLE": table_columns_names_types["TITLE"],
             "ATTACHMENT": table_columns_names_types["ATTACHMENT"],
             "NOTEBOOK": table_columns_names_types["NOTEBOOK"],
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
         },
         "PrimaryKey": "ID_NOTE",
         "ForeignKey": "ID_NOTEBOOK",
@@ -294,6 +321,9 @@ table_definitions = {
             "NOTEBOOK_TYPE": table_columns_names_types["NOTEBOOK_TYPE"],
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
+            "FILE_NAME": table_columns_names_types["FILE_NAME"],
+            "FILE_FORMAT": table_columns_names_types["FILE_FORMAT"],
+            "PATH": table_columns_names_types["PATH"],
         },
         "PrimaryKey": "ID_NOTEBOOK"
     },
@@ -317,6 +347,7 @@ table_definitions = {
             "DATE_FROM": table_columns_names_types["DATE_FROM"],
             "DATE_TO": table_columns_names_types["DATE_TO"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
+            "OWNER": table_columns_names_types["OWNER"],
         },
         "PrimaryKey": "ID_DOCUMENT_COLLECTION"
     },

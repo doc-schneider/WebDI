@@ -13,12 +13,12 @@ import config
 config.environment_storage = "LOCAL"
 initialize_MySQL()
 
-flag_add_photos = True
+flag_add_photos = False
 flag_add_event = False
 
 # Add photo to existing album
 if flag_add_photos:
-    id_album = 241
+    id_album = 2
 
     photo_table_old = DataTable.fetch_table(
         TableType.PHOTO,
@@ -26,20 +26,24 @@ if flag_add_photos:
     )
     photo_table_old = photo_table_old.match_foreignkey(id_album)
 
+owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
+
 # Raw photo table
 album_name = "Wochenende"
 chapters = [
-    "Optiker & Melanie & Pempelfort",
+    "Zurheide & Knechtsteden"
+]
+chapters_path = [
+    Path("Y:/2026/2026_04_04_Wochenende"),
 ]
 photo_table = PhotoFactory().table_from_folder(
     TableType.PHOTO,
-    [
-        Path("Y:/2026/2026_01_31_Melanie"),
-    ],
+    chapters_path,
     album_name,
     chapters,
-    pretable_file=Path("Y:/2026/2026_01_31_Melanie/PreDokumentliste.csv"),
-)   # Path("Y:/2025/2025_12_03_Weihnachtsmarkt Bärbel/PreDokumentliste.csv")
+    pretable_file=Path("Y:/2026/2026_04_04_Wochenende/PreDokumentliste.csv"),
+)   # Path("Y:/2016/2016_11_Australien/Australien_Auswahl/PreDokumentliste.csv")
+# exif_key_time="DateTimeOriginal",
 
 if flag_add_photos:
     # Only keep new entries
@@ -78,14 +82,13 @@ if flag_add_event:
 # Extract album data from a new photo dataframe
 # TODO from - to not quite right for non CET time ?
 if not flag_add_photos:
-    owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
+    owner = owner
     album_description = ""
     album = photo_table.table["PHOTO_ALBUM"].unique()[0]
     d_t = photo_table.table["DATE_TIME"]
     date_from = d_t.min()
     date_to = d_t.max()
     cols = list(table_definitions[TableType.ALBUM]["Columns"].keys())
-    print(cols)
     album_table = pd.DataFrame(
         index=[0],
         data={

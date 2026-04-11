@@ -23,6 +23,7 @@ MAX_ATTEMPTS = 3
 LOCK_TIME = timedelta(hours=24)
 
 if config.environment_app == "LOCAL":
+    # Only for testing
     load_dotenv()
     with open("resources/auth_hash.json", "r") as f:
         VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
@@ -143,6 +144,7 @@ import Views.Callbacks
 
 if __name__ == '__main__':
     if config.environment_app == "LOCAL":
+        # dash_app.run(host='0.0.0.0', port=5000, debug=False)
         dash_app.run(host='192.168.0.225', port=5000, debug=False)
     elif config.environment_app == "AZURE":
         dash_app.run(host='192.168.0.225', port=5000, debug=False)

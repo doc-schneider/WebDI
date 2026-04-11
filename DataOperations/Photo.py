@@ -43,6 +43,7 @@ class PhotoFactory:
             album_name,
             chapters,
             timezone_default="CET",
+            exif_key_time="DateTime",
             pretable_file=None
     ):
         # Create table from standard columns
@@ -52,7 +53,8 @@ class PhotoFactory:
         # - Additional columns
         # - Replacement columns
         # - Replacement rows
-        # TODO: Into Helper
+        # TODO: Test
+        # pretable, pretable_file_name, cols_add, pretable_datetime = get_pretable(pretable_file, cols)
         if pretable_file:
             pretable = read_table_from_csv(
                 pretable_file
@@ -97,10 +99,12 @@ class PhotoFactory:
 
         # Get meta data (exif) for time of recording
         if "DATE_TIME" in table.columns:
-            PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime)
+            PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime, exif_key_time)
 
         table["PHOTO_ALBUM"] = album_name
 
+        # TODO Test
+        # merge_pretable(pretable, table)
         table.set_index("FILE_NAME", inplace=True)
         if pretable_file:
             pretable.set_index("FILE_NAME", inplace=True)
@@ -137,7 +141,7 @@ class PhotoFactory:
             df[c] = pd.to_datetime(df[c], format=date_format_German)
 
     @staticmethod
-    def get_creation_time(table, timezone_default="CET", pretable_datetime=None):
+    def get_creation_time(table, timezone_default="CET", pretable_datetime=None, exif_key_time="DateTime"):
         # Get meta data (exif)
         # - Recording time
         for i in range(table.shape[0]):
@@ -155,13 +159,13 @@ class PhotoFactory:
                 )
                 # Extracting local time when image was taken
                 # TODO There can be a difference between the two DateTime: Clarify
-                if any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
-                    t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
-                    t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
+                if exif_key_time in exif_dct.keys():  #  any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
+                    # t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
+                    t = pd.to_datetime(exif_dct[exif_key_time], format="%Y:%m:%d %H:%M:%S")
                     # TODO There are old photos with correct timestamp nevertheless
                     # TODO Apple photos on flights do not have GPS <- Doesn't matter here
                     if not exif_gps:
-                        # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
+                        # Eg, non Apple camera, ie, no localization. Assuming that no GPS info means camera always records CET time
                         t = t.tz_localize("CET", ambiguous=True)
                         t = t.tz_convert(timezone_default)
                         t = t.tz_localize(None)

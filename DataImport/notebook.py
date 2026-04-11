@@ -14,25 +14,27 @@ initialize_MySQL()
 
 # Script new notebook + entry in collection
 #
+path_notebook = Path("W:/Biographie/Stefan/Logs&Blogs/Evernote/Biography/Mama/Mama.enex")
+#
 # Raw table
-note_table = NotebookFactory().table_from_folder(
-    Path("W:/Biographie/Stefan/Logs&Blogs/Evernote/Biography/Mama/Mama.enex")
-)
+note_table = NotebookFactory().table_from_folder(path_notebook)
 #
 # Extract notebook data from a new photo dataframe
 notebook = note_table.table["NOTEBOOK"].unique()[0]
 d_t = note_table.table["DATE_TIME"]
 date_from = d_t.min()
 date_to = d_t.max()
-cols = list(table_definitions[TableType.NOTEBOOK]["Columns"].keys())
 notebook_table = pd.DataFrame(
     index=[0],
     data={
-        cols[0]: notebook,
-        cols[1]: "Biography",
-        cols[2]: "Evernote",
-        cols[3]: date_from,
-        cols[4]: date_to,
+        "NOTEBOOK": notebook,
+        "NOTEBOOK_COLLECTION": "Biography",
+        "NOTEBOOK_TYPE": "Evernote",
+        "DATE_FROM": date_from,
+        "DATE_TO": date_to,
+        "FILE_NAME": path_notebook.name,
+        "FILE_FORMAT": path_notebook.suffix[1:],
+        "PATH": str(path_notebook.parent),
     }
 )
 #
@@ -40,7 +42,7 @@ notebook_table = pd.DataFrame(
 table_insert(config.mysql["metadata"], config.mysql["conn"], "notebooks", notebook_table)
 #
 # Get the foreign key for the notes table
-note_table.add_foreignkey("NOTEBOOK", "notebooks")
+note_table.add_foreignkey("NOTEBOOK", "notebooks", TableType.NOTEBOOK)
 #
 # Insert the new notes
 table_insert(config.mysql["metadata"], config.mysql["conn"], "notes", note_table.table)

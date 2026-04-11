@@ -31,12 +31,20 @@ def get_pretable(pretable_file, cols):
         parse_datetime(pretable)
         cols_add = list(set(pretable.columns) - set(cols))
         pretable_file_name = pretable_file.name
+        if "DATE_TIME" in pretable.columns:
+            pretable_datetime = pretable.loc[
+                pretable["DATE_TIME"].notna(),
+                ["FILE_NAME", "DATE_TIME"]
+            ]
+        else:
+            pretable_datetime = None
     else:
         pretable = None
         cols_add = []
         pretable_file_name = None
+        pretable_datetime = None
 
-    return pretable, pretable_file_name, cols_add
+    return pretable, pretable_file_name, cols_add, pretable_datetime
 
 def merge_pretable(pretable, table):
     if pretable is not None:
@@ -47,6 +55,9 @@ def merge_pretable(pretable, table):
         pretable = pretable[pretable.index.isin(table.index)]
 
         # TODO More potential columns to drop?
+        cols_drop = ["PATH", "DATE_TIME"]
+        for c in list(set(cols_drop) & set(pretable.columns)):
+            pretable.drop(columns=c, inplace=True)
         if "PATH" in pretable.columns:
             pretable.drop(columns=["PATH"], inplace=True)
 

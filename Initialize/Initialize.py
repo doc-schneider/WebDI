@@ -18,7 +18,7 @@ def init_session():
         session['ALBUM'] = {"ID_ALBUM": 7}
         session['FILM'] = {"ID_FILM": 1}
         session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['NOTEBOOK'] = {"ID_NOTEBOOK": 1}
+        session['NOTEBOOK'] = {"ID_NOTEBOOK": 3}
         session['table_content'] = TableType.FILM.name
         session['album_content'] = TableType.PHOTO.name
         session['album_view'] = {"IX_PHOTO": [None], "IX_PHOTO_PAGE": [None]}
