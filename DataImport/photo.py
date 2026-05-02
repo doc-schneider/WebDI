@@ -29,19 +29,19 @@ if flag_add_photos:
 owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
 
 # Raw photo table
-album_name = "Wochenende"
+album_name = "Kurzurlaub"
 chapters = [
-    "Zurheide & Knechtsteden"
+    "Ostfriesland & Zuhause"
 ]
 chapters_path = [
-    Path("Y:/2026/2026_04_04_Wochenende"),
+    Path("Y:/2026/2026_04_25_Wochenende"),
 ]
 photo_table = PhotoFactory().table_from_folder(
     TableType.PHOTO,
     chapters_path,
     album_name,
     chapters,
-    pretable_file=Path("Y:/2026/2026_04_04_Wochenende/PreDokumentliste.csv"),
+    pretable_file=Path("Y:/2026/2026_04_25_Wochenende/PreDokumentliste.csv"),
 )   # Path("Y:/2016/2016_11_Australien/Australien_Auswahl/PreDokumentliste.csv")
 # exif_key_time="DateTimeOriginal",
 

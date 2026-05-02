@@ -45,11 +45,28 @@ for a_n in album_names:
 # create_table(db_engine, metadata, "documents", table_definitions[TableType.DOCUMENT], foreign_table="document_collections")
 create_table_mysql(
     config.mysql["connector"], config.mysql["cursor"],
-    "photo_pages",
-    table_definitions[TableType.PHOTO_PAGE],
-    foreign_table_name="albums",
-    foreign_table_dct=table_definitions[TableType.ALBUM],
+    "biography_sections",
+    table_definitions[TableType.BIOGRAPHY_SECTION],
+    foreign_table_name="biographies",
+    foreign_table_dct=table_definitions[TableType.BIOGRAPHY],
 )
+
+# Create Join Table
+#
+table_name = "biography_sections_jointable_documents"
+primary_key = "ID_BIOGRAPHY_SECTION_JOINTABLE"
+foreign_tables_keys = {
+    "biography_sections": table_definitions[TableType.BIOGRAPHY_SECTION]["PrimaryKey"],
+    "documents": table_definitions[TableType.DOCUMENT]["PrimaryKey"]
+}
+query = f'CREATE TABLE {table_name} ('
+query = query + primary_key + " int AUTO_INCREMENT PRIMARY KEY"
+for k, v in foreign_tables_keys.items():
+    query = query + ", " + v + " int,"
+    query = query + " FOREIGN KEY (" + v + ") REFERENCES " + k + "(" + v + ")"
+query = query + ");"
+config.mysql["cursor"].execute(query)
+config.mysql["connector"].commit()
 
 # Add foreign key column
 #

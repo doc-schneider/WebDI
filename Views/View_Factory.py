@@ -111,7 +111,7 @@ class ViewFactory:
             boxes['TEXT_ADDITIONAL'] = {}
             boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
         elif datatable.table_type.name == "FILM":
-            boxes['TEXT'] = dct['TITLE']["value"]
+            boxes['TEXT'] = dct['TITLE']
             boxes['TEXT_ADDITIONAL'] = {}
             boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
             # TODO More,
@@ -127,7 +127,7 @@ class ViewFactory:
                 return [
                     html.Img(
                         src="data:image/jpeg;base64," + content_display,
-                        style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                        style={"max-width": "100%", "max-height": "90vh", "height": "auto", "display": "block", "margin": "0 auto"}
                     )
                 ]
             elif media_type in allow_formats_video:
@@ -136,7 +136,7 @@ class ViewFactory:
                         html.Video(
                             src=f"/video?name={content_display}",
                             controls=True,
-                            style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                            style={"max-width": "100%", "max-height": "90vh", "height": "auto", "display": "block", "margin": "0 auto"}
                         )
                     ]
                 elif config.environment_storage == "AZURE":
