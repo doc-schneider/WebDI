@@ -29,21 +29,22 @@ if flag_add_photos:
 owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
 
 # Raw photo table
-album_name = "Kurzurlaub"
+album_name = "Haus Horst"
 chapters = [
-    "Ostfriesland & Zuhause"
+    "Planung für Augen-OP",
 ]
 chapters_path = [
-    Path("Y:/2026/2026_04_25_Wochenende"),
+    Path("Y:/2026/2026_05_17_Haus Horst"),
 ]
 photo_table = PhotoFactory().table_from_folder(
     TableType.PHOTO,
     chapters_path,
     album_name,
     chapters,
-    pretable_file=Path("Y:/2026/2026_04_25_Wochenende/PreDokumentliste.csv"),
+    pretable_file=Path("Y:/2026/2026_05_17_Haus Horst/PreDokumentliste.csv")
 )   # Path("Y:/2016/2016_11_Australien/Australien_Auswahl/PreDokumentliste.csv")
 # exif_key_time="DateTimeOriginal",
+# timezone_default="Asia/Tokyo",
 
 if flag_add_photos:
     # Only keep new entries
