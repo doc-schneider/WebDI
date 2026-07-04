@@ -37,6 +37,7 @@ for a_n in album_names:
                         config.mysql["connector"], config.mysql["cursor"],
                         "photos", "ID_PHOTO", int(id)
                     )
+
 # Delete Table
 #
 

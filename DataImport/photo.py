@@ -18,7 +18,7 @@ flag_add_event = False
 
 # Add photo to existing album
 if flag_add_photos:
-    id_album = 2
+    id_album = 282
 
     photo_table_old = DataTable.fetch_table(
         TableType.PHOTO,
@@ -29,22 +29,23 @@ if flag_add_photos:
 owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
 
 # Raw photo table
-album_name = "Haus Horst"
+album_name = "Arbeitspause Hafen in der Hitze"
 chapters = [
-    "Planung für Augen-OP",
+    "Interessante Perspektive",
 ]
 chapters_path = [
-    Path("Y:/2026/2026_05_17_Haus Horst"),
+    Path("Y:/2026/2026_06_29_Hafen"),
 ]
 photo_table = PhotoFactory().table_from_folder(
     TableType.PHOTO,
     chapters_path,
     album_name,
     chapters,
-    pretable_file=Path("Y:/2026/2026_05_17_Haus Horst/PreDokumentliste.csv")
-)   # Path("Y:/2016/2016_11_Australien/Australien_Auswahl/PreDokumentliste.csv")
+    pretable_file=None
+)
+# Path("Y:/2016/2016_11_Australien/Australien_Auswahl/PreDokumentliste.csv")
 # exif_key_time="DateTimeOriginal",
-# timezone_default="Asia/Tokyo",
+# timezone_default="America/Toronto",
 
 if flag_add_photos:
     # Only keep new entries

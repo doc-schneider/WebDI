@@ -112,6 +112,7 @@ def stream_video():
         stream = Path(name)
         mimetype, _ = mimetypes.guess_type(name)
     elif config.environment_storage == "AZURE":
+        # TODO No longer used, remove
         container = request.args.get("container")
         blob = request.args.get("blob")
         stream = PhotoFactory.stream_image(
@@ -123,8 +124,28 @@ def stream_video():
         mimetype = "application/octet-stream"  # fallback
     return send_file(stream, mimetype=mimetype)
 
+#
+import json
+import zipfile
+
+with zipfile.ZipFile("assets/stickers/2026-03-07 18 13 12 - Konstanze Walther - b86d2f6e-b795-40de-82dd-eaf0523437c2.was") as z:
+    lottie_json = json.loads(z.read("animation/animation.json"))
+#
+# dcc.Store(
+#     id="lottie-data",
+#     data={
+#         "wave": wave_json,
+#         "smile": smile_json,
+#         "dance": dance_json,
+#     }
+# )
+
 dash_app.layout = html.Div([
     dcc.Location(id="url-redirect"),
+    dcc.Store(
+        id="lottie-data",
+        data=lottie_json
+    ),
     html.Div(
         [
             html.Div(html.B("Links zu Seiten")),

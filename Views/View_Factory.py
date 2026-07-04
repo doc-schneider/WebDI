@@ -5,8 +5,8 @@ import pandas as pd
 from urllib.parse import quote
 from dash import html, dcc
 
-from DataStructures.TableTypes import table_columns_names_types, table_definitions
-from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video
+from DataStructures.TableTypes import table_definitions
+from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video, base64_mapping
 from DataOperations.Azure import AzureFactory
 import config  # TODO Not in this this module
 
@@ -126,7 +126,7 @@ class ViewFactory:
             if media_type in allow_formats_image:
                 return [
                     html.Img(
-                        src="data:image/jpeg;base64," + content_display,
+                        src=f"data:image/{base64_mapping[media_type]};base64," + content_display,
                         style={"max-width": "100%", "max-height": "90vh", "height": "auto", "display": "block", "margin": "0 auto"}
                     )
                 ]
@@ -140,6 +140,7 @@ class ViewFactory:
                         )
                     ]
                 elif config.environment_storage == "AZURE":
+                    # TODO Into Photo.py, replace old stream
                     container = config.AZURE_CONTAINER
                     blob = content_display
                     sas = AzureFactory.create_blob_sas(container, blob, config.environment_app)

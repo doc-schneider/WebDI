@@ -16,8 +16,17 @@ register_heif_opener()
 
 allow_formats_image_JPEG = ["JPG", "JPEG", "PNG"]
 allow_formats_image_HEVC = ["HEIC"]
-allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC
+allow_formats_image_WEBP = ["WEBP"]  # WhatsAp
+# allow_formats_image_LOTTIE = ["WAS"]  # Lottie format exported as WAS from WhatsApp by imazing
+allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC + allow_formats_image_WEBP # + allow_formats_image_LOTTIE
 allow_formats_video = ["MOV", "MP4"]
+
+base64_mapping = {
+    k: "jpeg" for k in allow_formats_image_JPEG + allow_formats_image_HEVC
+}
+base64_mapping.update(
+    {k: "webp" for k in allow_formats_image_WEBP}
+)
 
 # Mapping for image orientation correction
 # -90: Rotate the image by 90 degrees clockwise
@@ -218,33 +227,41 @@ class PhotoFactory:
 
     @staticmethod
     def convert_image(file_location, file_format, environment_storage, environment_app, correct_orientation=True):
-        # Conversion to jpeg and base64
-        image = PhotoFactory.open_image(file_location, environment_storage, environment_app)
 
-        # Wenn PNG Bild einen Alpha-Kanal hat, konvertieren.
-        # TODO Keep RGBA to keep quality?
-        if image.mode == 'RGBA':
-            image = image.convert("RGB")
+        if file_format == "WEBP":
+            # TODO: environments!
+            with open(Path(file_location["PATH"], file_location["FILE_NAME"]), "rb") as f:
+                data = base64.b64encode(f.read()).decode('ascii')
 
-        if correct_orientation:
-            # Prevent rotated display on web page
-            exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format, environment_storage, environment_app)
-            if "Orientation" in exif_dct.keys():
-                # 1 - Normal (no rotation)
-                # 2 - Flipped horizontally
-                # 3 - Rotated 180 degrees
-                # 4 - Flipped vertically
-                # 5 - Transposed (flipped horizontally and rotated 270 degrees clockwise)
-                # 6 - Rotated 90 degrees clockwise
-                # 7 - Transverse (flipped horizontally and rotated 90 degrees clockwise)
-                # 8 - Rotated 270 degrees clockwise
-                image_orientation = exif_dct["Orientation"]
-                image = image.rotate(rotation_mapping[image_orientation], expand=True)
+        else:
+            # Conversion to jpeg and base64
+            image = PhotoFactory.open_image(file_location, environment_storage, environment_app)
 
-        buffered = BytesIO()
-        image.save(buffered, format="JPEG")
+            # Wenn PNG Bild einen Alpha-Kanal hat, konvertieren.
+            # TODO Keep RGBA to keep quality?
+            if image.mode == 'RGBA':
+                image = image.convert("RGB")
 
-        return base64.b64encode(buffered.getvalue()).decode('ascii')  # TODO base64 not good for very large data?
+            if correct_orientation:
+                # Prevent rotated display on web page
+                exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format, environment_storage, environment_app)
+                if "Orientation" in exif_dct.keys():
+                    # 1 - Normal (no rotation)
+                    # 2 - Flipped horizontally
+                    # 3 - Rotated 180 degrees
+                    # 4 - Flipped vertically
+                    # 5 - Transposed (flipped horizontally and rotated 270 degrees clockwise)
+                    # 6 - Rotated 90 degrees clockwise
+                    # 7 - Transverse (flipped horizontally and rotated 90 degrees clockwise)
+                    # 8 - Rotated 270 degrees clockwise
+                    image_orientation = exif_dct["Orientation"]
+                    image = image.rotate(rotation_mapping[image_orientation], expand=True)
+
+            buffered = BytesIO()
+            image.save(buffered, format="JPEG")
+            data = base64.b64encode(buffered.getvalue()).decode('ascii')
+
+        return data  # TODO base64 not good for very large data -> Stream
 
     @staticmethod
     def open_image(file_location, environment_storage, environment_app):
@@ -265,10 +282,12 @@ class PhotoFactory:
     @staticmethod
     def stream_image(file_location, environment_storage, environment_app):
         if environment_storage == "LOCAL":
+            # TODO ..
             pass
             # with open(Path(file_location["PATH"], file_location["FILE_NAME"]), 'rb') as f:
             #     stream = BytesIO(f.read())
         elif environment_storage == "AZURE":
+            # TODO No longer needed!
             # TODO return necessary?
             stream = BytesIO()
             stream = AzureFactory.download_blob(

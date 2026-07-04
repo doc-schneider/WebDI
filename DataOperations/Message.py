@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 from DataStructures.Data import DataTable
-from DataOperations.Files import get_files_info
+from DataOperations.Files import get_files_info, read_table_from_csv
 from DataStructures.TableTypes import TableType, table_definitions
 
 
@@ -15,6 +15,7 @@ class MessageFactory:
     def table_from_folder(
             path_message_stream,
             message_collection,
+            message_type,
             attachments_folder=None,
             format_stream="iMazing"
     ):
@@ -24,11 +25,13 @@ class MessageFactory:
 
         if format_stream == "iMazing":
             # This reads a csv file exported by iMazing for one "Chat-Sitzung". The communication between me and someone else.
-            table_stream = pd.read_csv(path_message_stream, sep=",")  # comma separator # TODO Move to File
-            message_table["MESSAGE_TYPE"] = table_stream["Service"]
+            table_stream = read_table_from_csv(path_message_stream, sep=",")
+
+            # message_table["MESSAGE_TYPE"] = table_stream["Service"]  # SMS
+            message_table["MESSAGE_TYPE"] = [message_type] * table_stream.shape[0]
             message_table["DATE_TIME"] = pd.to_datetime(table_stream["Datum der Nachricht"])
             message_table["SENDER"] = table_stream["Absendername"]
-            ix = message_table["SENDER"].isnull()
+            ix = message_table["SENDER"].isnull()  # Self ist empty
             sender_receiver = message_table.loc[~ix, "SENDER"].unique()[0]
             message_table.loc[ix, "SENDER"] = sender_receiver_default
             message_table.loc[ix, "RECEIVER"] = sender_receiver
@@ -38,14 +41,20 @@ class MessageFactory:
 
             # Attachments
             path_attachments = path_message_stream.parent / Path(attachments_folder)
-            ats = get_files_info(path_attachments)
+            ats = get_files_info(path_attachments, exclude_files="Thumbs.db")
+            ats["FILE_FORMAT"].unique()
+            # was: lottie
+            # 3gp (nur eine alte) -> mp4: Handbrake
+            # url: SCheint auch im normalen TExt zu erscheinen
             message_table["ATTACHMENT"] = ""
             ix = ~table_stream["Anhang"].isnull()
             attachment_names = table_stream.loc[
                 ix, "Anhang"
             ]
             # Match names in table with real file names
-            # TODO Missing videos?
+            # - There are less real files than in the table
+            # - Real endings can be different
+            # TODO Clarify what is happning
             attachment_real = list()
             for a_n in attachment_names:
                 ix_at = ats["FILE_NAME"].str.contains(
@@ -58,6 +67,7 @@ class MessageFactory:
                 else:
                     attachment_real.append("")
             message_table.loc[ix, "ATTACHMENT"] = attachment_real  # TODO Not ideal. No separation into path and file
+
             message_table["MESSAGE_COLLECTION"] = message_collection
 
         message_table = DataTable(message_table, TableType.MESSAGE)

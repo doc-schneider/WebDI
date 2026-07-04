@@ -15,23 +15,23 @@ initialize_MySQL()
 # Script new document collection + entry in collection
 #
 # Raw  table
-collection_name = "Unterlagen Mama"
+collection_name = "Unterlagen Stefan"  # "Unterlagen Mama"
 chapters = [
-    "Geburturkunde Mama",
-    "Taufschein Mama"
+    "Geburturkunde Stefan",
+    "Taufschein Stefan"
 ]
 chapters_path = [
-    Path("W:/Biographie/Schneider/Stammbuch/Geburtsurkunde Mama"),
-    Path("W:/Biographie/Schneider/Stammbuch/Taufschein Mama"),
+    Path("W:/Biographie/Schneider/Stammbuch/Geburtsurkunde Stefan"),
+    Path("W:/Biographie/Schneider/Stammbuch/Taufschein Stefan"),
 ]
 document_table = DocumentFactory().table_from_folder(
     chapters_path,
     collection_name,
     chapters,
-    pretable_file=Path("W:/Biographie/Mama/TABLES/DOCUMENT_COLLECTION_Mama_Unterlagen.csv"),
+    pretable_file=Path("W:/Biographie/Stefan/TABLES/Dokumente/DOCUMENT_COLLECTION_Stefan_Unterlagen.csv"),
 )
 #
-# Extract album data from a new photo dataframe
+# Extract album data from a new dataframe
 document_collection = document_table.table["DOCUMENT_COLLECTION"].unique()[0]
 d_t = document_table.table["DATE_TIME"]
 date_from = d_t.min()
@@ -44,7 +44,7 @@ document_collection_table = pd.DataFrame(
         "DATE_FROM": date_from,
         "DATE_TO": date_to,
         "DESCRIPTION": "",
-        "OWNER": "Mama"
+        "OWNER": "Stefan"
     }
 )
 #
