@@ -76,11 +76,11 @@ foreign_column = table_definitions[TableType.EVENT]["PrimaryKey"]
 add_foreign_key(conn, mycursor, "photos", foreign_column, foreign_table)
 
 # Add column
-table_name = "document_collections"
+table_name = "documents"
 add_columns(
     config.mysql["connector"], config.mysql["cursor"],
     table_name, {
-        "OWNER": table_columns_names_types["OWNER"]["mysqltype"],
+        "PAGE_NUMBER": table_columns_names_types["PAGE_NUMBER"]["mysqltype"],
     }
 )
 

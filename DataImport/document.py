@@ -15,21 +15,23 @@ initialize_MySQL()
 # Script new document collection + entry in collection
 #
 # Raw  table
-collection_name = "Unterlagen Stefan"  # "Unterlagen Mama"
+collection_name = "Briefe Mama-Papa"  # "Unterlagen Stefan"  # "Unterlagen Mama"
 chapters = [
-    "Geburturkunde Stefan",
-    "Taufschein Stefan"
+    "26.03.1968",
+    "27.03.1968",
+    "01.04.1968"
 ]
 chapters_path = [
-    Path("W:/Biographie/Schneider/Stammbuch/Geburtsurkunde Stefan"),
-    Path("W:/Biographie/Schneider/Stammbuch/Taufschein Stefan"),
+    Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/1968-03-26"),
+    Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/1968-03-27"),
+    Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/1968-04-01")
 ]
 document_table = DocumentFactory().table_from_folder(
     chapters_path,
     collection_name,
     chapters,
-    pretable_file=Path("W:/Biographie/Stefan/TABLES/Dokumente/DOCUMENT_COLLECTION_Stefan_Unterlagen.csv"),
-)
+    pretable_file=Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/PreDokumentliste.csv"),
+)  # Path("W:/Biographie/Stefan/TABLES/Dokumente/DOCUMENT_COLLECTION_Stefan_Unterlagen.csv"),
 #
 # Extract album data from a new dataframe
 document_collection = document_table.table["DOCUMENT_COLLECTION"].unique()[0]
@@ -43,8 +45,8 @@ document_collection_table = pd.DataFrame(
         "DOCUMENT_COLLECTION": document_collection,
         "DATE_FROM": date_from,
         "DATE_TO": date_to,
-        "DESCRIPTION": "",
-        "OWNER": "Stefan"
+        "DESCRIPTION": "Briefe, die Mama an Papa 1968 schrieb, als er in Westerstede war",
+        "OWNER": "Mama"
     }
 )
 #

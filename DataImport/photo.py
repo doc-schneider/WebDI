@@ -29,19 +29,19 @@ if flag_add_photos:
 owner = "Stefan|Konstanze"  # "Stefan"  "Stefan|Konstanze"
 
 # Raw photo table
-album_name = "Arbeitspause Hafen in der Hitze"
+album_name = "Gottesanbeterin"
 chapters = [
-    "Interessante Perspektive",
+    "Interessanter Fund",
 ]
 chapters_path = [
-    Path("Y:/2026/2026_06_29_Hafen"),
+    Path("Y:/2026/2026_07_30_Gottesanbeterin"),
 ]
 photo_table = PhotoFactory().table_from_folder(
     TableType.PHOTO,
     chapters_path,
     album_name,
     chapters,
-    pretable_file=None
+    pretable_file=Path("Y:/2026/2026_07_30_Gottesanbeterin/PreDokumentliste.csv")
 )
 # Path("Y:/2016/2016_11_Australien/Australien_Auswahl/PreDokumentliste.csv")
 # exif_key_time="DateTimeOriginal",

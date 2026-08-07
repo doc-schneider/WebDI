@@ -335,6 +335,7 @@ table_definitions = {
             "DATE_TIME": table_columns_names_types["DATE_TIME"],
             "DESCRIPTION": table_columns_names_types["DESCRIPTION"],
             "DOCUMENT_GROUP": table_columns_names_types["DOCUMENT_GROUP"],
+            "PAGE_NUMBER": table_columns_names_types["PAGE_NUMBER"],
             "DOCUMENT_COLLECTION": table_columns_names_types["DOCUMENT_COLLECTION"],
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },

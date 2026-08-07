@@ -21,10 +21,8 @@ class DocumentFactory:
         table = pd.DataFrame(
             columns=cols
         )
-
         # Get pretable
         pretable, pretable_file_name, cols_add, pretable_datetime = get_pretable(pretable_file, cols)
-
         # Concatenate chapters
         for i in range(len(path_document)):
             table_part = pd.DataFrame(
@@ -38,23 +36,20 @@ class DocumentFactory:
             )
             table_files.drop(columns=set(table_files.columns) - set(cols), inplace=True)
             table_part = pd.concat([table_part, table_files], axis=0, ignore_index=True)
+            # TODO Presumes that files are already sorted correctly
+            table_part["PAGE_NUMBER"] = table_part.index + 1
             table_part["CHAPTER"] = chapters[i]
             table = pd.concat([table, table_part], axis=0, ignore_index=True)
-
         # Get creation time
+        # TODO Date of photo ect maybe never relevant for documents -> if not specified leave NaT?
         if "DATE_TIME" in table.columns:
             PhotoFactory.get_creation_time(table, pretable_datetime=pretable_datetime)
-
         table["DOCUMENT_COLLECTION"] = collection_name
-
         # Merge pre-table into main table
         merge_pretable(pretable, table)
-
         # Crate standard table object
         document_table = DataTable(table, TableType.DOCUMENT)
-
         document_table.replace_nan()
         document_table.format_path()
         document_table.format_documentgroup()
-
         return document_table
