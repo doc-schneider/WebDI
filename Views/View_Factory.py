@@ -5,8 +5,8 @@ import pandas as pd
 from urllib.parse import quote
 from dash import html, dcc
 
-from DataStructures.TableTypes import table_columns_names_types, table_definitions
-from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video
+from DataStructures.TableTypes import table_definitions
+from DataOperations.Photo import PhotoFactory, allow_formats_image, allow_formats_video, base64_mapping
 from DataOperations.Azure import AzureFactory
 import config  # TODO Not in this this module
 
@@ -49,84 +49,71 @@ class ViewFactory:
 
         dct = datatable.table[datatable.table.columns].to_dict("series")
 
-        # Enrich by type information
-        # TODO No longer needed
-        for k in dct.keys():
-            if k[:2] == "ID":  # MySQl key
-                dct[k] = {
-                    "mysqltype": "integer",
-                    "value": dct[k]
-                }
-            else:
-                dct[k] = {
-                    "mysqltype": table_columns_names_types[k]["mysqltype"],
-                    "value": dct[k]
-                }
-
-        # Source specifc
-        dct["IMAGE"] = []  # TODO type / value ?
-        for i in range(datatable.table.shape[0]):
-            file_format = datatable.table.loc[i, "FILE_FORMAT"]
-            # Extract data
-            if load_media and file_format in allow_formats_image:  # TODO in Operations/Photo
-                # Return image as base64 jpg
-                dct["IMAGE"].append(
-                    PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage, config.environment_app)
-                )
-            elif load_media and file_format in allow_formats_video:
-                # TODO Can load as byte object in memory
-                if config.environment_storage == "LOCAL":
-                    file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
-                    dct["IMAGE"].append(quote(str(file_pth), safe=""))
-                elif config.environment_storage == "AZURE":
-                    config.AZURE_CONTAINER = datatable.table.loc[i, "AZURE_CONTAINER"]
-                    dct["IMAGE"].append(datatable.table.loc[i, "AZURE_BLOB"])
-            else:
-                dct["IMAGE"].append(None)
-        dct["IMAGE"] = pd.Series(dct["IMAGE"])
+        # Source specific
+        if "IMAGE" not in dct:
+            dct["IMAGE"] = []  # TODO type / value ?
+            for i in range(datatable.table.shape[0]):
+                file_format = datatable.table.loc[i, "FILE_FORMAT"]
+                # Extract data
+                if load_media and file_format in allow_formats_image:  # TODO in Operations/Photo
+                    # Return image as base64 jpg
+                    dct["IMAGE"].append(
+                        PhotoFactory.convert_image(datatable.table.loc[i], file_format, config.environment_storage, config.environment_app)
+                    )
+                elif load_media and file_format in allow_formats_video:
+                    # TODO Can load as byte object in memory
+                    if config.environment_storage == "LOCAL":
+                        file_pth = Path(datatable.table.loc[i, "PATH"], datatable.table.loc[i, "FILE_NAME"])
+                        dct["IMAGE"].append(quote(str(file_pth), safe=""))
+                    elif config.environment_storage == "AZURE":
+                        config.AZURE_CONTAINER = datatable.table.loc[i, "AZURE_CONTAINER"]
+                        dct["IMAGE"].append(datatable.table.loc[i, "AZURE_BLOB"])
+                else:
+                    dct["IMAGE"].append(None)
+            dct["IMAGE"] = pd.Series(dct["IMAGE"])
 
         boxes = {}
         boxes["IMAGE"] = dct["IMAGE"]
-        boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]["value"]
+        boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]
 
         # Convert to format for viewing boxes
         # TODO Distinguish Timeline and other viewing formats?
         if datatable.table_type.name == "MESSAGE":
-            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-            boxes["ID"] = dct["ID_MESSAGE"]["value"]
-            boxes['TEXT'] = dct['TEXT']["value"]
+            boxes['DATE_TIME'] = dct['DATE_TIME']
+            boxes["ID"] = dct["ID_MESSAGE"]
+            boxes['TEXT'] = dct['TEXT']
             boxes['TEXT_ADDITIONAL'] = {}
-            boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]["value"]]
-            boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]["value"]]
+            boxes['TEXT_ADDITIONAL'][0] = ["Von: " + s if s else None for s in dct["SENDER"]]
+            boxes['TEXT_ADDITIONAL'][1] = ["An: " + s if s else None for s in dct["RECEIVER"]]
         elif datatable.table_type.name == "NOTE":
-            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-            boxes["ID"] = dct["ID_NOTE"]["value"]
-            boxes['TEXT'] = dct['TITLE']["value"]
-            if "TEXT" in dct.keys():
-                boxes['MARKDOWN'] = dct["TEXT"]["value"]
+            boxes['DATE_TIME'] = dct['DATE_TIME']
+            boxes["ID"] = dct["ID_NOTE"]
+            boxes['TEXT'] = dct['TITLE']
+            if "TEXT" in dct.keys():  # TODO Directly into MARKDOWN
+                boxes['MARKDOWN'] = dct["TEXT"]
             # TODO As title for page: Notebook, Notebook Collection
         elif datatable.table_type.name == "PHOTO":
             # Album View
-            boxes['FILE_NAME'] = dct['FILE_NAME']["value"]
-            boxes['DATE_TIME'] = dct['DATE_TIME']["value"]
-            boxes['TEXT'] = dct["DESCRIPTION"]["value"]
-            boxes["CHAPTER"] = dct["CHAPTER"]["value"]
+            boxes['FILE_NAME'] = dct['FILE_NAME']
+            boxes['DATE_TIME'] = dct['DATE_TIME']
+            boxes['TEXT'] = dct["DESCRIPTION"]
+            boxes["CHAPTER"] = dct["CHAPTER"]
         elif datatable.table_type.name == "PHOTO_PAGE":
             # Album View
-            boxes['FILE_NAME'] = dct['FILE_NAME']["value"]
-            boxes['PAGE_NUMBER'] = dct['PAGE_NUMBER']["value"]
-            boxes['TEXT'] = dct["DESCRIPTION"]["value"]
-            boxes["CHAPTER"] = dct["CHAPTER"]["value"]
+            boxes['FILE_NAME'] = dct['FILE_NAME']
+            boxes['PAGE_NUMBER'] = dct['PAGE_NUMBER']
+            boxes['TEXT'] = dct["DESCRIPTION"]
+            boxes["CHAPTER"] = dct["CHAPTER"]
         elif datatable.table_type.name == "ALBUM":
-            boxes['DATE_TIME'] = dct['DATE_FROM']["value"]
-            boxes["ID"] = dct["ID_ALBUM"]["value"]
-            boxes['TEXT'] = dct['PHOTO_ALBUM']["value"]
+            boxes['DATE_TIME'] = dct['DATE_FROM']
+            boxes["ID"] = dct["ID_ALBUM"]
+            boxes['TEXT'] = dct['PHOTO_ALBUM']
             boxes['TEXT_ADDITIONAL'] = {}
-            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
         elif datatable.table_type.name == "FILM":
-            boxes['TEXT'] = dct['TITLE']["value"]
+            boxes['TEXT'] = dct['TITLE']
             boxes['TEXT_ADDITIONAL'] = {}
-            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]["value"]
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
             # TODO More,
         elif datatable.table_type.name == "FILM_CONTENT":
             pass
@@ -139,8 +126,8 @@ class ViewFactory:
             if media_type in allow_formats_image:
                 return [
                     html.Img(
-                        src="data:image/jpeg;base64," + content_display,
-                        style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                        src=f"data:image/{base64_mapping[media_type]};base64," + content_display,
+                        style={"max-width": "100%", "max-height": "90vh", "height": "auto", "display": "block", "margin": "0 auto"}
                     )
                 ]
             elif media_type in allow_formats_video:
@@ -149,10 +136,11 @@ class ViewFactory:
                         html.Video(
                             src=f"/video?name={content_display}",
                             controls=True,
-                            style={"max-width": "100%", "max-height": "90vh", "height": "auto"}
+                            style={"max-width": "100%", "max-height": "90vh", "height": "auto", "display": "block", "margin": "0 auto"}
                         )
                     ]
                 elif config.environment_storage == "AZURE":
+                    # TODO Into Photo.py, replace old stream
                     container = config.AZURE_CONTAINER
                     blob = content_display
                     sas = AzureFactory.create_blob_sas(container, blob, config.environment_app)

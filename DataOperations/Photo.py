@@ -16,8 +16,17 @@ register_heif_opener()
 
 allow_formats_image_JPEG = ["JPG", "JPEG", "PNG"]
 allow_formats_image_HEVC = ["HEIC"]
-allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC
+allow_formats_image_WEBP = ["WEBP"]  # WhatsAp
+# allow_formats_image_LOTTIE = ["WAS"]  # Lottie format exported as WAS from WhatsApp by imazing
+allow_formats_image = allow_formats_image_JPEG + allow_formats_image_HEVC + allow_formats_image_WEBP # + allow_formats_image_LOTTIE
 allow_formats_video = ["MOV", "MP4"]
+
+base64_mapping = {
+    k: "jpeg" for k in allow_formats_image_JPEG + allow_formats_image_HEVC
+}
+base64_mapping.update(
+    {k: "webp" for k in allow_formats_image_WEBP}
+)
 
 # Mapping for image orientation correction
 # -90: Rotate the image by 90 degrees clockwise
@@ -43,6 +52,7 @@ class PhotoFactory:
             album_name,
             chapters,
             timezone_default="CET",
+            exif_key_time="DateTime",
             pretable_file=None
     ):
         # Create table from standard columns
@@ -52,7 +62,8 @@ class PhotoFactory:
         # - Additional columns
         # - Replacement columns
         # - Replacement rows
-        # TODO: Into Helper
+        # TODO: Test
+        # pretable, pretable_file_name, cols_add, pretable_datetime = get_pretable(pretable_file, cols)
         if pretable_file:
             pretable = read_table_from_csv(
                 pretable_file
@@ -97,10 +108,12 @@ class PhotoFactory:
 
         # Get meta data (exif) for time of recording
         if "DATE_TIME" in table.columns:
-            PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime)
+            PhotoFactory.get_creation_time(table, timezone_default, pretable_datetime, exif_key_time)
 
         table["PHOTO_ALBUM"] = album_name
 
+        # TODO Test
+        # merge_pretable(pretable, table)
         table.set_index("FILE_NAME", inplace=True)
         if pretable_file:
             pretable.set_index("FILE_NAME", inplace=True)
@@ -137,7 +150,7 @@ class PhotoFactory:
             df[c] = pd.to_datetime(df[c], format=date_format_German)
 
     @staticmethod
-    def get_creation_time(table, timezone_default="CET", pretable_datetime=None):
+    def get_creation_time(table, timezone_default="CET", pretable_datetime=None, exif_key_time="DateTime"):
         # Get meta data (exif)
         # - Recording time
         for i in range(table.shape[0]):
@@ -155,13 +168,13 @@ class PhotoFactory:
                 )
                 # Extracting local time when image was taken
                 # TODO There can be a difference between the two DateTime: Clarify
-                if any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
-                    t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
-                    t = pd.to_datetime(exif_dct[t_key], format="%Y:%m:%d %H:%M:%S")
+                if exif_key_time in exif_dct.keys():  #  any(k in exif_dct.keys() for k in ["DateTime", "DateTimeOriginal"]):
+                    # t_key = next(iter(set(exif_dct.keys()) & set(["DateTime", "DateTimeOriginal"])))
+                    t = pd.to_datetime(exif_dct[exif_key_time], format="%Y:%m:%d %H:%M:%S")
                     # TODO There are old photos with correct timestamp nevertheless
                     # TODO Apple photos on flights do not have GPS <- Doesn't matter here
                     if not exif_gps:
-                        # Eg, non Apple camera. Assuming that no GPS info means camera always records CET time
+                        # Eg, non Apple camera, ie, no localization. Assuming that no GPS info means camera always records CET time
                         t = t.tz_localize("CET", ambiguous=True)
                         t = t.tz_convert(timezone_default)
                         t = t.tz_localize(None)
@@ -214,33 +227,41 @@ class PhotoFactory:
 
     @staticmethod
     def convert_image(file_location, file_format, environment_storage, environment_app, correct_orientation=True):
-        # Conversion to jpeg and base64
-        image = PhotoFactory.open_image(file_location, environment_storage, environment_app)
 
-        # Wenn PNG Bild einen Alpha-Kanal hat, konvertieren.
-        # TODO Keep RGBA to keep quality?
-        if image.mode == 'RGBA':
-            image = image.convert("RGB")
+        if file_format == "WEBP":
+            # TODO: environments!
+            with open(Path(file_location["PATH"], file_location["FILE_NAME"]), "rb") as f:
+                data = base64.b64encode(f.read()).decode('ascii')
 
-        if correct_orientation:
-            # Prevent rotated display on web page
-            exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format, environment_storage, environment_app)
-            if "Orientation" in exif_dct.keys():
-                # 1 - Normal (no rotation)
-                # 2 - Flipped horizontally
-                # 3 - Rotated 180 degrees
-                # 4 - Flipped vertically
-                # 5 - Transposed (flipped horizontally and rotated 270 degrees clockwise)
-                # 6 - Rotated 90 degrees clockwise
-                # 7 - Transverse (flipped horizontally and rotated 90 degrees clockwise)
-                # 8 - Rotated 270 degrees clockwise
-                image_orientation = exif_dct["Orientation"]
-                image = image.rotate(rotation_mapping[image_orientation], expand=True)
+        else:
+            # Conversion to jpeg and base64
+            image = PhotoFactory.open_image(file_location, environment_storage, environment_app)
 
-        buffered = BytesIO()
-        image.save(buffered, format="JPEG")
+            # Wenn PNG Bild einen Alpha-Kanal hat, konvertieren.
+            # TODO Keep RGBA to keep quality?
+            if image.mode == 'RGBA':
+                image = image.convert("RGB")
 
-        return base64.b64encode(buffered.getvalue()).decode('ascii')  # TODO base64 not good for very large data?
+            if correct_orientation:
+                # Prevent rotated display on web page
+                exif_dct, _ = PhotoFactory.get_exif_data(file_location, file_format, environment_storage, environment_app)
+                if "Orientation" in exif_dct.keys():
+                    # 1 - Normal (no rotation)
+                    # 2 - Flipped horizontally
+                    # 3 - Rotated 180 degrees
+                    # 4 - Flipped vertically
+                    # 5 - Transposed (flipped horizontally and rotated 270 degrees clockwise)
+                    # 6 - Rotated 90 degrees clockwise
+                    # 7 - Transverse (flipped horizontally and rotated 90 degrees clockwise)
+                    # 8 - Rotated 270 degrees clockwise
+                    image_orientation = exif_dct["Orientation"]
+                    image = image.rotate(rotation_mapping[image_orientation], expand=True)
+
+            buffered = BytesIO()
+            image.save(buffered, format="JPEG")
+            data = base64.b64encode(buffered.getvalue()).decode('ascii')
+
+        return data  # TODO base64 not good for very large data -> Stream
 
     @staticmethod
     def open_image(file_location, environment_storage, environment_app):
@@ -261,10 +282,12 @@ class PhotoFactory:
     @staticmethod
     def stream_image(file_location, environment_storage, environment_app):
         if environment_storage == "LOCAL":
+            # TODO ..
             pass
             # with open(Path(file_location["PATH"], file_location["FILE_NAME"]), 'rb') as f:
             #     stream = BytesIO(f.read())
         elif environment_storage == "AZURE":
+            # TODO No longer needed!
             # TODO return necessary?
             stream = BytesIO()
             stream = AzureFactory.download_blob(

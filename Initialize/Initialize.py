@@ -17,19 +17,15 @@ def init_session():
     if 'initialized' not in session:
         session['ALBUM'] = {"ID_ALBUM": 7}
         session['FILM'] = {"ID_FILM": 1}
-        session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 1}
-        session['NOTEBOOK'] = {"ID_NOTEBOOK": 1}
+        session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 2}
+        session['NOTEBOOK'] = {"ID_NOTEBOOK": 3}
         session['table_content'] = TableType.FILM.name
         session['album_content'] = TableType.PHOTO.name
         session['album_view'] = {"IX_PHOTO": [None], "IX_PHOTO_PAGE": [None]}
-        # session['timeline_content'] = TableType.MESSAGE.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1)}
         session['timeline_content'] = TableType.ALBUM.name
         session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
-        # session['timeline_content'] = TableType.NOTE.name
-        # session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
         session['content_content'] = TableType.PHOTO.name
-        session['content_view'] = {"ID_PHOTO": 313, "ID_PHOTO_PAGE": 1, "ID_NOTE": 1, "ID_MESSAGE": 1}
+        session['content_view'] = {"ID_PHOTO": 313, "ID_PHOTO_PAGE": 1, "ID_NOTE": 1, "ID_MESSAGE": 1}  # TODO Necessary to pre-specify?
         session['initialized'] = True
 
 def initialize_MySQL():

@@ -5,34 +5,35 @@ import pandas as pd
 from DataStructures.TableTypes import TableType, table_definitions
 from DataOperations.Document import DocumentFactory
 from DataOperations.MySQL import table_insert
+from Initialize.Initialize import initialize_MySQL
 import config
 
-db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
-db_engine = create_engine(db_connection_str)
-db_conn = db_engine.connect()
-metadata = MetaData()
-metadata.reflect(bind=db_engine)
-config.mysql = {
-    "engine": db_engine,
-    "conn": db_conn,
-    "metadata": metadata,
-}
+
+config.environment_storage = "LOCAL"
+initialize_MySQL()
 
 # Script new document collection + entry in collection
 #
 # Raw  table
+collection_name = "Briefe Mama-Papa"  # "Unterlagen Stefan"  # "Unterlagen Mama"
+chapters = [
+    "26.03.1968",
+    "27.03.1968",
+    "01.04.1968"
+]
+chapters_path = [
+    Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/1968-03-26"),
+    Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/1968-03-27"),
+    Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/1968-04-01")
+]
 document_table = DocumentFactory().table_from_folder(
-    [
-        Path("W:/Reisen/2008-04 Berlin"),
-    ],
-    "Reiseunterlagen Berlin 2008",
-    [
-        "Unterlagen",
-    ],
-    pretable_file=None
-)
+    chapters_path,
+    collection_name,
+    chapters,
+    pretable_file=Path("W:/Biographie/Mama/Mamas Texte/Briefe/Briefe an Papa/PreDokumentliste.csv"),
+)  # Path("W:/Biographie/Stefan/TABLES/Dokumente/DOCUMENT_COLLECTION_Stefan_Unterlagen.csv"),
 #
-# Extract album data from a new photo dataframe
+# Extract album data from a new dataframe
 document_collection = document_table.table["DOCUMENT_COLLECTION"].unique()[0]
 d_t = document_table.table["DATE_TIME"]
 date_from = d_t.min()
@@ -41,25 +42,22 @@ cols = list(table_definitions[TableType.DOCUMENT_COLLECTION]["Columns"].keys())
 document_collection_table = pd.DataFrame(
     index=[0],
     data={
-        cols[0]: document_collection,
-        cols[1]: date_from,
-        cols[2]: date_to,
-        cols[3]: ""
+        "DOCUMENT_COLLECTION": document_collection,
+        "DATE_FROM": date_from,
+        "DATE_TO": date_to,
+        "DESCRIPTION": "Briefe, die Mama an Papa 1968 schrieb, als er in Westerstede war",
+        "OWNER": "Mama"
     }
 )
-document_collection_table["DESCRIPTION"] = "Noch mit AirBerlin nach Tegel"
-#TODO Adding new column doesn't work with metadata
-# document_collection_table["TAG"] = "Papa Tod"
-document_collection_table["ID_EVENT"] = 6
 #
-# Insert new album
-table_insert(metadata, db_conn, "document_collections", document_collection_table)
+# Insert new document collection
+table_insert(config.mysql["metadata"], config.mysql["conn"], "document_collections", document_collection_table)
 #
 # Get the foreign key for the  table
-document_table.add_foreignkey("DOCUMENT_COLLECTION", "document_collections")
+document_table.add_foreignkey("DOCUMENT_COLLECTION", "document_collections", TableType.DOCUMENT_COLLECTION)
 #
 # Insert the new
-table_insert(metadata, db_conn, "documents", document_table.table)
+table_insert(config.mysql["metadata"], config.mysql["conn"], "documents", document_table.table)
 
 print("done")
 

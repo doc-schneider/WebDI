@@ -23,6 +23,7 @@ MAX_ATTEMPTS = 3
 LOCK_TIME = timedelta(hours=24)
 
 if config.environment_app == "LOCAL":
+    # Only for testing
     load_dotenv()
     with open("resources/auth_hash.json", "r") as f:
         VALID_USERNAME_PASSWORD_PAIRS = json.load(f)
@@ -110,6 +111,7 @@ def stream_video():
         stream = Path(name)
         mimetype, _ = mimetypes.guess_type(name)
     elif config.environment_storage == "AZURE":
+        # TODO No longer used, remove
         container = request.args.get("container")
         blob = request.args.get("blob")
         stream = PhotoFactory.stream_image(
@@ -120,6 +122,26 @@ def stream_video():
     if not mimetype:
         mimetype = "application/octet-stream"  # fallback
     return send_file(stream, mimetype=mimetype)
+
+# import json
+# import zipfile
+#
+# with zipfile.ZipFile("assets/stickers/2026-03-07 18 13 12 - Konstanze Walther - b86d2f6e-b795-40de-82dd-eaf0523437c2.was") as z:
+#     lottie_json = json.loads(z.read("animation/animation.json"))
+#
+# dcc.Store(
+#     id="lottie-data",
+#     data={
+#         "wave": wave_json,
+#         "smile": smile_json,
+#         "dance": dance_json,
+#     }
+# )
+#
+# dcc.Store(
+#     id="lottie-data",
+#     data=lottie_json
+# ),
 
 dash_app.layout = html.Div([
     dcc.Location(id="url-redirect"),
@@ -142,6 +164,7 @@ import Views.Callbacks
 
 if __name__ == '__main__':
     if config.environment_app == "LOCAL":
+        # dash_app.run(host='0.0.0.0', port=5000, debug=False)
         dash_app.run(host='192.168.0.225', port=5000, debug=False)
     elif config.environment_app == "AZURE":
         dash_app.run(debug=False)

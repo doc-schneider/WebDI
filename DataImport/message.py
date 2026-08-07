@@ -5,31 +5,27 @@ import pandas as pd
 from DataOperations.Message import MessageFactory
 from DataStructures.TableTypes import TableType, table_definitions
 from DataOperations.MySQL import table_insert
+from Initialize.Initialize import initialize_MySQL
 import config
 
 config.environment_storage = "LOCAL"
-
-db_connection_str = 'mysql+mysqlconnector://root:Moppel3!@localhost/lives'
-db_engine = create_engine(db_connection_str)
-db_conn = db_engine.connect()
-metadata = MetaData()
-metadata.reflect(bind=db_engine)
-config.mysql = {
-    "engine": db_engine,
-    "conn": db_conn,
-    "metadata": metadata,
-}
+initialize_MySQL()
 
 # Script new message stream + entry in collection
 #
-message_collection = "iPhone Nachrichten Stefan Konstanze"
-path_message_stream = Path("W:/Biographie/Stefan/iPhone/Nachrichten/Konstanze Walther/Nachrichten - Konstanze Walther.csv")
+message_type = "WhatsApp"
+participant = "Konstanze"
+# message_collection = "iPhone Nachrichten Stefan Konstanze"
+message_collection = "iPhone WhatsApp Stefan Konstanze"
+# path_message_stream = Path("W:/Biographie/Stefan/iPhone/Nachrichten/Konstanze Walther/Nachrichten - Konstanze Walther.csv")
+path_message_stream = Path("W:/Biographie/Stefan/iPhone/WhatsApp/Konstanze Walther/WhatsApp - Konstanze Walther.csv")
 #
 # Raw table
 message_table = MessageFactory().table_from_folder(
     path_message_stream,
+    message_type=message_type,
     message_collection=message_collection,
-    attachments_folder="Messages - Konstanze Walther"
+    attachments_folder="WhatsApp - Konstanze Walther"
 )
 #
 # Create Message Collection table
@@ -47,12 +43,13 @@ collection_table["PATH"] = str(path_message_stream.parent)  # TODO Process with 
 collection_table["FILE_NAME"] = path_message_stream.name
 collection_table["FILE_FORMAT"] = path_message_stream.suffix.lstrip(".").upper()
 collection_table["DESCRIPTION"] = ""
-table_insert(metadata, db_conn, "message_collections", collection_table)
+# Insert new collection
+table_insert(config.mysql["metadata"], config.mysql["conn"], "message_collections", collection_table)
 #
 # Get the foreign key
 message_table.add_foreignkey("MESSAGE_COLLECTION", "message_collections", TableType.MESSAGE_COLLECTION)
 #
 # Insert the new messages
-table_insert(metadata, db_conn, "messages", message_table.table)
+table_insert(config.mysql["metadata"], config.mysql["conn"], "messages", message_table.table)
 
 print("done")
