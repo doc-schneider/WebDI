@@ -19,13 +19,21 @@ def init_session():
         session['FILM'] = {"ID_FILM": 1}
         session['MESSAGE_COLLECTION'] = {"ID_MESSAGE_COLLECTION": 2}
         session['NOTEBOOK'] = {"ID_NOTEBOOK": 3}
-        session['table_content'] = TableType.FILM.name
+        session['DOCUMENT_COLLECTION'] = {"ID_DOCUMENT_COLLECTION": 7}
+        session['table_content'] = TableType.DOCUMENT_COLLECTION.name  # TableType.DOCUMENT.name  # TableType.FILM.name
         session['album_content'] = TableType.PHOTO.name
         session['album_view'] = {"IX_PHOTO": [None], "IX_PHOTO_PAGE": [None]}
         session['timeline_content'] = TableType.ALBUM.name
         session['timeline_view'] = {"GRANULARITY": "Y", "DATETIME_START": pd.Timestamp(2024, 1, 1), "n_rows": 10}
         session['content_content'] = TableType.PHOTO.name
-        session['content_view'] = {"ID_PHOTO": 313, "ID_PHOTO_PAGE": 1, "ID_NOTE": 1, "ID_MESSAGE": 1}  # TODO Necessary to pre-specify?
+        session['content_view'] = {
+            "ID_PHOTO": 1,
+            "ID_PHOTO_PAGE": 1,
+            "ID_NOTE": 1,
+            "ID_MESSAGE": 1,
+            "CHAPTER": None,
+            "IX_DOCUMENT": 0
+        }  # TODO Necessary to pre-specify?
         session['initialized'] = True
 
 def initialize_MySQL():

@@ -33,6 +33,9 @@ def click_box(n_clicks_list_home, n_clicks_list_album, n_clicks_list_timeline, n
         elif ctx.triggered_id["index"] == TableType.NOTE.name:
             session['timeline_content'] = TableType.NOTE.name
             return "/timeline"
+        elif ctx.triggered_id["index"] == TableType.DOCUMENT_COLLECTION.name:
+            session['table_content'] = TableType.DOCUMENT_COLLECTION.name
+            return "/table"
     elif any(c is not None for c in n_clicks_list_album):
         ix = ctx.triggered_id["index"]
         AlbumView = init_Album(session['ALBUM'], session["album_content"], session["album_view"])
@@ -65,12 +68,22 @@ def click_box(n_clicks_list_home, n_clicks_list_album, n_clicks_list_timeline, n
     elif any(c is not None for c in n_clicks_list_table):
         ix = ctx.triggered_id["index"]
         TableView = init_Table(session['table_content'])
-        # TODO General Table content
-        id_film = TableView.datatable.table.loc[ix, "ID_FILM"]
-        session["content_content"] = session['table_content']
-        session['FILM']["ID_FILM"] = id_film
-        session['content_view'] = {"ID_FILM": id_film}
-        return "/content"
+        if TableView.datatable.table_type.name == TableType.FILM.name:
+            id_film = TableView.datatable.table.loc[ix, "ID_FILM"]
+            session["content_content"] = session['table_content']
+            session['FILM']["ID_FILM"] = id_film
+            session['content_view'] = {"ID_FILM": id_film}
+            return "/content"
+        elif TableView.datatable.table_type.name == TableType.DOCUMENT_COLLECTION.name:
+            id_document_collection = TableView.datatable.table.loc[ix, "ID_DOCUMENT_COLLECTION"]
+            session['DOCUMENT_COLLECTION'] = {"ID_DOCUMENT_COLLECTION": id_document_collection}
+            session['table_content'] = TableType.DOCUMENT.name
+            return "/table"
+        elif TableView.datatable.table_type.name == TableType.DOCUMENT.name:
+            session["content_content"] = TableType.DOCUMENT.name
+            session['content_view']["CHAPTER"] = TableView.datatable.table["CHAPTER"].unique()[ix]
+            session['content_view']["IX_DOCUMENT"] = 0
+            return "/content"
 
 
 

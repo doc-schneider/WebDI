@@ -340,7 +340,8 @@ table_definitions = {
             "CHAPTER": table_columns_names_types["CHAPTER"],
         },
         "PrimaryKey": "ID_DOCUMENT",
-        "ForeignKey": "ID_DOCUMENT_COLLECTION"
+        "ForeignKey": "ID_DOCUMENT_COLLECTION",
+        "ParentTableType": TableType.DOCUMENT_COLLECTION
     },
     TableType.DOCUMENT_COLLECTION: {
         "Columns": {

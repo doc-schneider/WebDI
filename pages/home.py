@@ -28,7 +28,18 @@ layout = html.Div([
                 n_clicks=0,
                 style={**button_style, "width": ITEM_WIDTH}
             ),
-            html.Button('Notizen', id={"type": "button-home", "index": TableType.NOTE.name}, n_clicks=0, style={**button_style, "width": ITEM_WIDTH}),
+            html.Button(
+                'Notizen',
+                id={"type": "button-home", "index": TableType.NOTE.name},
+                n_clicks=0,
+                style={**button_style, "width": ITEM_WIDTH})
+            ,
+            html.Button(
+                'Dokumente',
+                id={"type": "button-home", "index": TableType.DOCUMENT_COLLECTION.name},
+                n_clicks=0,
+                style={**button_style, "width": ITEM_WIDTH})
+            ,
         ],
         style={
             "display": "flex",
@@ -58,6 +69,12 @@ layout = html.Div([
             ),
             dcc.Dropdown(
                 id={"type": "dropdown-home", "index": TableType.NOTE.name},
+                options=[],
+                placeholder="Filter...",
+                style={"width": ITEM_WIDTH},
+            ),
+            dcc.Dropdown(
+                id={"type": "dropdown-home", "index": TableType.DOCUMENT_COLLECTION.name},
                 options=[],
                 placeholder="Filter...",
                 style={"width": ITEM_WIDTH},

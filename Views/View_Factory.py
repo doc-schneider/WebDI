@@ -26,8 +26,8 @@ class ViewFactory:
 
     @staticmethod
     def view(datatable, load_media=True):
-        # Adding FILE information if not present
-        if datatable.table_type.name in ["MESSAGE", "ALBUM"]:
+        # Adding FILE information if not present  # TODO Figure out table content
+        if datatable.table_type.name in ["MESSAGE", "ALBUM", "DOCUMENT_COLLECTION"]:
             datatable.table["FILE_NAME"] = None
             datatable.table["PATH"] = None
             datatable.table["FILE_FORMAT"] = None
@@ -76,7 +76,7 @@ class ViewFactory:
         boxes["IMAGE"] = dct["IMAGE"]
         boxes["FILE_FORMAT"] = dct["FILE_FORMAT"]
 
-        # Convert to format for viewing boxes
+        # Convert to format for viewing boxes  # TODO Does this make sense? Fields are already generic?
         # TODO Distinguish Timeline and other viewing formats?
         if datatable.table_type.name == "MESSAGE":
             boxes['DATE_TIME'] = dct['DATE_TIME']
@@ -92,6 +92,18 @@ class ViewFactory:
             if "TEXT" in dct.keys():  # TODO Directly into MARKDOWN
                 boxes['MARKDOWN'] = dct["TEXT"]
             # TODO As title for page: Notebook, Notebook Collection
+        elif datatable.table_type.name == "DOCUMENT_COLLECTION":
+            boxes['DATE_FROM'] = dct['DATE_FROM']
+            boxes['DATE_TO'] = dct['DATE_TO']
+            boxes['TEXT'] = dct['DOCUMENT_COLLECTION']
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
+        elif datatable.table_type.name == "DOCUMENT":
+            # TODO PAGE_NUMBER
+            boxes['DATE_TIME'] = dct['DATE_TIME']
+            boxes['TEXT'] = dct['CHAPTER']
+            boxes['TEXT_ADDITIONAL'] = {}
+            boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
         elif datatable.table_type.name == "PHOTO":
             # Album View
             boxes['FILE_NAME'] = dct['FILE_NAME']
@@ -111,6 +123,8 @@ class ViewFactory:
             boxes['TEXT_ADDITIONAL'] = {}
             boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
         elif datatable.table_type.name == "FILM":
+            boxes['DATE_FROM'] = dct['DATE_FROM']
+            boxes['DATE_TO'] = dct['DATE_TO']
             boxes['TEXT'] = dct['TITLE']
             boxes['TEXT_ADDITIONAL'] = {}
             boxes['TEXT_ADDITIONAL'][0] = dct["DESCRIPTION"]
@@ -163,25 +177,25 @@ class ViewFactory:
 
     # Additional Text items
     @staticmethod
-    def additional_items(boxes_dct, i, item):
+    def additional_items(boxes_dct, i, item, style={}):
         if item in boxes_dct.keys():
             if item == "MARKDOWN":
                 return [
-                    html.Div(dcc.Markdown(boxes_dct[item][i]))
+                    html.Div(dcc.Markdown(boxes_dct[item][i]), style=style)
                 ]
-            elif item == "DATE_TIME":
+            elif item in ["DATE_TIME", "DATE_FROM", "DATE_TO"]:
                 return [
-                    html.Div(boxes_dct[item].dt.strftime('%Y-%m-%d %X').fillna('')[i])
+                    html.Div(boxes_dct[item].dt.strftime('%Y-%m-%d %X').fillna('')[i], style=style)
                 ]
             elif item in ["PAGE_NUMBER"]:
                 # TODO Merge with below?
                 return [
-                    html.Div(boxes_dct[item][i])
+                    html.Div(boxes_dct[item][i], style=style)
                 ]
             else:
                 # TODO What is this doing?
                 return [
-                    html.Div(txt_add[i]) for _, txt_add in boxes_dct[item].items()
+                    html.Div(txt_add[i], style=style) for _, txt_add in boxes_dct[item].items()
                 ]
         else:
             return []
